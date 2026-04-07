@@ -156,6 +156,20 @@
   background: white;
 }
 
+/* ===== Lightbox ===== */
+#lightbox {
+  animation: fade-in 0.2s ease;
+}
+
+#lightbox img {
+  animation: lightbox-zoom 0.25s ease;
+}
+
+@keyframes lightbox-zoom {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
 /* ===== Example chips ===== */
 .example-chip {
   font-size: 0.75rem;

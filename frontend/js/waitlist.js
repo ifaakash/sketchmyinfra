@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initScrollReveal();
   initMobileMenu();
   initWaitlistForm();
+  initLightbox();
 });
 
 // ===== Theme =====
@@ -78,6 +79,35 @@ function initMobileMenu() {
       document.getElementById('mobile-menu')?.classList.add('hidden');
     });
   });
+}
+
+// ===== Lightbox =====
+
+function initLightbox() {
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeLightbox();
+  });
+}
+
+function openLightbox(img) {
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightbox-img');
+  if (!lightbox || !lightboxImg) return;
+
+  lightboxImg.src = img.src;
+  lightboxImg.alt = img.alt;
+  lightbox.classList.remove('hidden');
+  lightbox.classList.add('flex');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  const lightbox = document.getElementById('lightbox');
+  if (!lightbox) return;
+
+  lightbox.classList.add('hidden');
+  lightbox.classList.remove('flex');
+  document.body.style.overflow = '';
 }
 
 // ===== Waitlist form =====

@@ -386,29 +386,35 @@
       </div>
 
       <div class="grid md:grid-cols-3 gap-6">
-        <div class="sample-card group">
-          <div class="overflow-hidden rounded-xl mb-3 border border-gray-200 dark:border-gray-700/50">
-            <img src="assets/sample-datadog.png" alt="Datadog observability architecture" class="w-full h-auto group-hover:scale-105 transition-transform duration-300" />
+        <div class="sample-card group cursor-pointer" onclick="openLightbox(this.querySelector('img'))">
+          <div class="overflow-hidden rounded-xl mb-3 border border-gray-200 dark:border-gray-700/50 h-48 flex items-center justify-center bg-white dark:bg-gray-900">
+            <img src="assets/dev-and-prod.png" alt="Dev and Production environment architecture" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 p-2" />
           </div>
-          <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Production Observability</p>
-          <p class="text-xs text-gray-400 dark:text-gray-500">ECS Fargate + Aurora + Datadog + CloudWatch</p>
+          <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Dev & Prod Environments</p>
+          <p class="text-xs text-gray-400 dark:text-gray-500">Multi-VPC + ECS + RDS + EventBridge</p>
         </div>
 
-        <div class="sample-card group">
-          <div class="overflow-hidden rounded-xl mb-3 border border-gray-200 dark:border-gray-700/50">
-            <img src="assets/sample-optic.png" alt="Development environment architecture" class="w-full h-auto group-hover:scale-105 transition-transform duration-300" />
+        <div class="sample-card group cursor-pointer" onclick="openLightbox(this.querySelector('img'))">
+          <div class="overflow-hidden rounded-xl mb-3 border border-gray-200 dark:border-gray-700/50 h-48 flex items-center justify-center bg-white dark:bg-gray-900">
+            <img src="assets/eventbridge.png" alt="EventBridge secret rotation flow" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 p-2" />
           </div>
-          <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Dev Environment</p>
-          <p class="text-xs text-gray-400 dark:text-gray-500">VPC + ALB + ECS + MariaDB + CloudWatch</p>
+          <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Secret Rotation</p>
+          <p class="text-xs text-gray-400 dark:text-gray-500">Secrets Manager + CloudTrail + EventBridge + Lambda</p>
         </div>
 
-        <div class="sample-card group">
-          <div class="overflow-hidden rounded-xl mb-3 border border-gray-200 dark:border-gray-700/50">
-            <img src="assets/sample-sequence.png" alt="Authentication sequence diagram" class="w-full h-auto group-hover:scale-105 transition-transform duration-300" />
+        <div class="sample-card group cursor-pointer" onclick="openLightbox(this.querySelector('img'))">
+          <div class="overflow-hidden rounded-xl mb-3 border border-gray-200 dark:border-gray-700/50 h-48 flex items-center justify-center bg-white dark:bg-gray-900">
+            <img src="assets/ssm-port-forwarding.png" alt="SSM port forwarding architecture" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 p-2" />
           </div>
-          <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Auth Sequence</p>
-          <p class="text-xs text-gray-400 dark:text-gray-500">User login flow with JWT tokens</p>
+          <p class="text-sm font-medium text-gray-700 dark:text-gray-300">SSM Port Forwarding</p>
+          <p class="text-xs text-gray-400 dark:text-gray-500">IAM Identity Center + Systems Manager + Bastion</p>
         </div>
+      </div>
+
+      <!-- Lightbox modal -->
+      <div id="lightbox" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4" onclick="closeLightbox()">
+        <button class="absolute top-4 right-4 text-white/70 hover:text-white text-3xl leading-none" onclick="closeLightbox()">&times;</button>
+        <img id="lightbox-img" src="" alt="" class="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl" onclick="event.stopPropagation()" />
       </div>
     </div>
   </section>
