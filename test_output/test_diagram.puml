@@ -1,0 +1,43 @@
+@startuml
+skinparam handwritten false
+skinparam sequence {
+    ParticipantBorderColor #3b82f6
+    ParticipantBackgroundColor #eff6ff
+    LifeLineBorderColor #3b82f6
+    LifeLineBackgroundColor #dbeafe
+
+    ArrowColor #1d4ed8
+    ArrowFontColor #1e40af
+    ArrowFontBold true
+}
+
+participant "User" as user
+participant "Client Application" as clientApp
+participant "Authentication Service" as authService
+database "User Database" as userDB
+participant "Resource Server" as resourceServer
+
+title JWT Authentication Flow
+
+user -> clientApp : 1. Enters Credentials (Username/Password)
+clientApp -> authService : 2. POST /login (Credentials)
+authService -> userDB : 3. Validate Credentials
+userDB --> authService : 4. User Found/Not Found
+alt Credentials Valid
+    authService --> clientApp : 5. Returns JWT (Access Token)
+    clientApp -> clientApp : 6. Stores JWT (e.g., Local Storage, Cookie)
+    clientApp -> resourceServer : 7. Request with JWT (Bearer Token in Header)
+    resourceServer -> authService : 8. Validate JWT (Optional - can be stateless)
+    authService --> resourceServer : 9. JWT Valid/Invalid
+    alt JWT Valid
+        resourceServer --> clientApp : 10. Returns Requested Data
+    else JWT Invalid
+        resourceServer --> clientApp : 10. Returns 401 Unauthorized
+        clientApp -> clientApp : 11. Redirects to Login or Refreshes Token
+    end
+else Credentials Invalid
+    authService --> clientApp : 5. Returns 401 Unauthorized
+    clientApp --> user : 6. Displays Login Error
+end
+
+@enduml

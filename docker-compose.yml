@@ -15,6 +15,8 @@ services:
     env_file: .env
     expose:
       - "8000"
+    volumes:
+      - ./test_output:/backend/test_output
     depends_on:
       db:
         condition: service_healthy
@@ -39,6 +41,8 @@ services:
 
   plantuml:
     image: plantuml/plantuml-server:jetty
+    environment:
+      JAVA_TOOL_OPTIONS: "-DPLANTUML_SECURITY_PROFILE=UNSECURE"
     expose:
       - "8080"
     restart: unless-stopped
