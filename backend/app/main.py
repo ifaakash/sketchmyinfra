@@ -10,6 +10,7 @@ def create_app() -> FastAPI:
         title="SketchMyInfra API",
         version="2.0.0",
         docs_url="/api/docs" if settings.environment == "development" else None,
+        openapi_url="/api/openapi.json" if settings.environment == "development" else None,
         redoc_url=None,
     )
 
