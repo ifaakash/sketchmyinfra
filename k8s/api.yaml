@@ -15,10 +15,24 @@ spec:
       labels:
         app: sketchmyinfra-api
     spec:
-      # Init container runs alembic migrations before the API starts.
-      # On every rollout we auto-migrate; if migrations fail, the pod
-      # never becomes Ready — which is the correct behavior.
+      # Init containers run in order:
+      #   1. wait-for-postgres — block until postgres accepts TCP connections.
+      #   2. migrate           — alembic upgrade head.
+      # If either fails the main api container never starts, which is the
+      # correct behavior (don't serve traffic on a broken / unmigrated DB).
       initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for postgres to accept connections..."
+              until nc -z postgres 5432; do
+                echo "  postgres not ready, sleeping 2s"
+                sleep 2
+              done
+              echo "postgres is up."
         - name: migrate
           image: sketchmyinfra-api:local
           imagePullPolicy: IfNotPresent
