@@ -1,0 +1,47 @@
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./frontend:/usr/share/nginx/html:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  api:
+    build: ./backend
+    env_file: .env
+    expose:
+      - "8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: sketchmyinfra
+      POSTGRES_USER: smi
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-localdev}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smi -d sketchmyinfra"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  plantuml:
+    image: plantuml/plantuml-server:jetty
+    expose:
+      - "8080"
+    restart: unless-stopped
+
+volumes:
+  pgdata:

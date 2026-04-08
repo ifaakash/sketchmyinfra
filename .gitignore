@@ -1,2 +1,13 @@
 *claude*
 *CLAUDE.md*
+
+# Environment
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Postgres data
+pgdata/
