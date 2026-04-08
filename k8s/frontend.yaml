@@ -1,0 +1,73 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sketchmyinfra-frontend
+  labels:
+    app: sketchmyinfra-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sketchmyinfra-frontend
+  template:
+    metadata:
+      labels:
+        app: sketchmyinfra-frontend
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: frontend-files
+              mountPath: /usr/share/nginx/html
+              readOnly: true
+      volumes:
+        - name: frontend-files
+          hostPath:
+            path: /home/ubuntu/sketchmyinfra/frontend
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sketchmyinfra-frontend
+spec:
+  selector:
+    app: sketchmyinfra-frontend
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sketchmyinfra-frontend
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: sketchmyinfra.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sketchmyinfra-frontend
+                port:
+                  number: 80
+    - host: www.sketchmyinfra.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sketchmyinfra-frontend
+                port:
+                  number: 80
