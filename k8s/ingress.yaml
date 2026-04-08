@@ -1,0 +1,74 @@
+---
+# Single Ingress for the whole stack.
+#
+# Routing:
+#   /api/*  -> sketchmyinfra-api:8000   (FastAPI backend)
+#   /       -> sketchmyinfra-frontend:80 (nginx serving static files)
+#
+# Order matters for Traefik: the more specific /api path wins over / because
+# pathType: Prefix with a longer prefix has higher priority.
+#
+# No TLS block here on purpose. Cloudflare Tunnel proxies plain HTTP from
+# cloudflared to Traefik's `web` entrypoint (port 80) inside the cluster.
+# Traffic between Pi5 and Cloudflare is already encrypted by the tunnel.
+# Serving a self-signed cert from Traefik would just add noise.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sketchmyinfra
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: sketchmyinfra.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: sketchmyinfra-api
+                port:
+                  number: 8000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sketchmyinfra-frontend
+                port:
+                  number: 80
+    - host: www.sketchmyinfra.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: sketchmyinfra-api
+                port:
+                  number: 8000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sketchmyinfra-frontend
+                port:
+                  number: 80
+    - host: dev.sketchmyinfra.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: sketchmyinfra-api
+                port:
+                  number: 8000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sketchmyinfra-frontend
+                port:
+                  number: 80

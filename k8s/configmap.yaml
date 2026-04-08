@@ -1,0 +1,29 @@
+---
+# Non-secret application config.
+# Secrets (passwords, API keys, OAuth client secrets) live in k8s/secret.yaml.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sketchmyinfra-config
+data:
+  ENVIRONMENT: "production"
+  APP_URL: "https://dev.sketchmyinfra.com"
+  CORS_ORIGINS: "https://dev.sketchmyinfra.com,https://sketchmyinfra.com"
+
+  # In-cluster service DNS names
+  PLANTUML_SERVER_URL: "http://plantuml:8080"
+
+  # Gemini
+  GEMINI_MODEL: "gemini-2.0-flash"
+
+  # Rate limits (per day)
+  RATE_LIMIT_ANONYMOUS: "3"
+  RATE_LIMIT_FREE: "5"
+
+  # JWT
+  JWT_ALGORITHM: "HS256"
+  JWT_EXPIRY_DAYS: "7"
+
+  # Postgres (non-secret parts)
+  POSTGRES_DB: "sketchmyinfra"
+  POSTGRES_USER: "smi"
