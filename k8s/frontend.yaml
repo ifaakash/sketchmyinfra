@@ -1,0 +1,59 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sketchmyinfra-frontend
+  labels:
+    app: sketchmyinfra-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sketchmyinfra-frontend
+  template:
+    metadata:
+      labels:
+        app: sketchmyinfra-frontend
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+              name: http
+          volumeMounts:
+            - name: frontend-files
+              mountPath: /usr/share/nginx/html
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+      volumes:
+        - name: frontend-files
+          hostPath:
+            path: /home/ubuntu/sketchmyinfra/frontend
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sketchmyinfra-frontend
+  labels:
+    app: sketchmyinfra-frontend
+spec:
+  selector:
+    app: sketchmyinfra-frontend
+  ports:
+    - port: 80
+      targetPort: 80
+      name: http
+  type: ClusterIP

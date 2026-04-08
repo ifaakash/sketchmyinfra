@@ -1,0 +1,76 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sketchmyinfra-api
+  labels:
+    app: sketchmyinfra-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sketchmyinfra-api
+  template:
+    metadata:
+      labels:
+        app: sketchmyinfra-api
+    spec:
+      # Init container runs alembic migrations before the API starts.
+      # On every rollout we auto-migrate; if migrations fail, the pod
+      # never becomes Ready — which is the correct behavior.
+      initContainers:
+        - name: migrate
+          image: sketchmyinfra-api:local
+          imagePullPolicy: IfNotPresent
+          command: ["alembic", "upgrade", "head"]
+          envFrom:
+            - configMapRef:
+                name: sketchmyinfra-config
+            - secretRef:
+                name: sketchmyinfra-secret
+      containers:
+        - name: api
+          image: sketchmyinfra-api:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: sketchmyinfra-config
+            - secretRef:
+                name: sketchmyinfra-secret
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sketchmyinfra-api
+  labels:
+    app: sketchmyinfra-api
+spec:
+  selector:
+    app: sketchmyinfra-api
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: http
+  type: ClusterIP

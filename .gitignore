@@ -1,2 +1,16 @@
 *claude*
 *CLAUDE.md*
+
+# Environment
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Postgres data
+pgdata/
+
+# Kubernetes secrets (copy secret.example.yaml to secret.yaml and fill in)
+k8s/secret.yaml
