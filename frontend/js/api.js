@@ -32,6 +32,7 @@ async function apiGenerate(prompt, context = null) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt, context }),
+      credentials: 'include',
       signal: controller.signal
     });
     return handleResponse(response);
@@ -59,6 +60,7 @@ async function apiRender(puml, format = 'png') {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ puml, format }),
+      credentials: 'include',
       signal: controller.signal
     });
     return handleResponse(response);
