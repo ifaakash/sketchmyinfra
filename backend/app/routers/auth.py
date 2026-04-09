@@ -10,10 +10,13 @@ Flow:
 
 State (CSRF) is a short-lived signed JWT — no server-side storage needed.
 """
+import logging
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.responses import RedirectResponse
+
+logger = logging.getLogger(__name__)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -106,7 +109,14 @@ async def callback(
     try:
         info = await oauth.exchange_code(provider, code)
     except oauth.OAuthError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        # Log the full upstream error so we can see WHY Google/GitHub rejected
+        # the exchange. Without this, the detail vanishes into an HTTP response
+        # body the browser drops mid-redirect.
+        logger.error("OAuth %s exchange failed: %s", provider, e)
+        return RedirectResponse(
+            url=f"{settings.app_url}/?auth_error=exchange_failed",
+            status_code=302,
+        )
 
     # Upsert user by (oauth_provider, oauth_id)
     result = await db.execute(
