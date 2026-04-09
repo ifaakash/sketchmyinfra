@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import String, Text, ForeignKey, Index
+from sqlalchemy import DateTime, String, Text, ForeignKey, Index
 from sqlalchemy.dialects.postgresql import UUID, INET
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -20,8 +20,12 @@ class User(Base):
     oauth_provider: Mapped[str] = mapped_column(String(20), nullable=False)
     oauth_id: Mapped[str] = mapped_column(String(255), nullable=False)
     tier: Mapped[str] = mapped_column(String(20), nullable=False, default="free")
-    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+    )
     updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
@@ -42,7 +46,10 @@ class Generation(Base):
     prompt: Mapped[str] = mapped_column(Text, nullable=False)
     puml_code: Mapped[str | None] = mapped_column(Text)
     ip_address: Mapped[str] = mapped_column(INET, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+    )
 
     __table_args__ = (
         Index("idx_generations_user_date", "user_id", "created_at", postgresql_where=(user_id.isnot(None))),
