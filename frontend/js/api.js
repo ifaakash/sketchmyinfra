@@ -6,6 +6,12 @@ const API_BASE = '';
 const USE_MOCKS = !window.location.hostname || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
 async function handleResponse(response) {
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    // Gateway/proxy returned an HTML error page — avoid the cryptic
+    // "Unexpected token '<'" parse failure and surface a clean message.
+    throw new Error(`Request failed (${response.status})`);
+  }
   const data = await response.json();
   if (!response.ok) {
     throw new Error(data.detail || data.error || `Request failed (${response.status})`);
