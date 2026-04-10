@@ -98,12 +98,22 @@ function showDiagram(dataUri) {
 
 /**
  * Show error state with title and detail.
+ * @param {string} title
+ * @param {string} detail
+ * @param {string|null} lastImageUri - data URI of the last rendered diagram;
+ *   shown blurred behind the card. Falls back to the sample image in the HTML.
  */
-function showError(title, detail) {
+function showError(title, detail, lastImageUri = null) {
   const titleEl = $('#error-title');
   const detailEl = $('#error-detail');
   if (titleEl) titleEl.textContent = title;
   if (detailEl) detailEl.textContent = detail;
+
+  const bgImg = $('#error-bg-image');
+  if (bgImg && lastImageUri) {
+    bgImg.src = lastImageUri;
+  }
+
   showPanel('error');
 }
 

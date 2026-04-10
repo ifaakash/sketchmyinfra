@@ -179,7 +179,7 @@ async function handleGenerate() {
     });
 
   } catch (err) {
-    showError('Generation Failed', err.message || 'Something went wrong. Please try again.');
+    showError('Oops! That\'s a tricky one.', err.message || 'Can you tweak your prompt and try again?', currentImageUri || null);
     showToast(err.message || 'Generation failed', 'error', 4000);
   } finally {
     setGenerateLoading(false);
@@ -218,7 +218,7 @@ async function handleReRender() {
     });
 
   } catch (err) {
-    showError('Render Failed', err.message || 'Failed to render the diagram.');
+    showError('Oops! That\'s a tricky one.', err.message || 'The render hit a snag — try generating again.', currentImageUri || null);
     showToast(err.message || 'Render failed', 'error', 4000);
   } finally {
     isGenerating = false;

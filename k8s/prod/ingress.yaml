@@ -1,0 +1,51 @@
+---
+# Prod ingress — routes sketchmyinfra.com and www.sketchmyinfra.com.
+# Dev ingress lives in k8s/ingress.yaml (default namespace).
+#
+# Traefik in k3s watches Ingress objects across all namespaces, so even though
+# this lives in the prod namespace, Traefik still picks it up and routes by
+# the host header. Services referenced here must be in the prod namespace.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sketchmyinfra-prod
+  namespace: prod
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: sketchmyinfra.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: sketchmyinfra-api
+                port:
+                  number: 8000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sketchmyinfra-frontend
+                port:
+                  number: 80
+    - host: www.sketchmyinfra.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: sketchmyinfra-api
+                port:
+                  number: 8000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sketchmyinfra-frontend
+                port:
+                  number: 80

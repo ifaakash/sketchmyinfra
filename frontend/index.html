@@ -472,13 +472,22 @@
             </div>
           </div>
 
-          <div id="error-state" class="hidden flex-1 flex flex-col items-center justify-center p-8 text-center">
-            <svg class="w-16 h-16 text-red-500/50 mb-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
-            </svg>
-            <h3 id="error-title" class="text-lg font-medium text-red-500 dark:text-red-400 mb-2">Generation Failed</h3>
-            <p id="error-detail" class="text-sm text-gray-500 max-w-sm mb-4">Something went wrong. Please try again.</p>
-            <button id="btn-retry" class="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm px-4 py-2 rounded-lg transition-colors">Try Again</button>
+          <div id="error-state" class="hidden flex-1 relative overflow-hidden">
+            <!-- Blurred last diagram (or sample fallback) shown behind the card -->
+            <div class="absolute inset-0 flex items-center justify-center p-8 opacity-25 pointer-events-none">
+              <img id="error-bg-image" src="assets/sample-sequence.png" alt="" class="max-w-full max-h-full object-contain" style="filter: blur(8px);" />
+            </div>
+            <!-- Error card overlay -->
+            <div class="relative flex flex-col items-center justify-center h-full p-8 text-center">
+              <div class="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl px-8 py-8 shadow-2xl max-w-sm border border-gray-200/50 dark:border-gray-700/50">
+                <div class="text-5xl mb-4">😅</div>
+                <h3 id="error-title" class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Oops! That's a tricky one.</h3>
+                <p id="error-detail" class="text-sm text-gray-500 dark:text-gray-400 max-w-xs mb-5">Can you tweak your prompt and hit Generate again? A little more context usually does the trick.</p>
+                <button id="btn-retry" class="bg-brand-600 hover:bg-brand-500 text-white font-medium text-sm px-5 py-2.5 rounded-lg transition-colors w-full">
+                  Try Again
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -505,7 +514,7 @@
           <a href="#how-it-works" class="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">How It Works</a>
           <a href="#generator" class="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">Generator</a>
         </div>
-        <p class="text-xs text-gray-400 dark:text-gray-600">sketchmyinfra.com — Built with AI. Diagrams powered by PlantUML.</p>
+        <p class="text-xs text-gray-400 dark:text-gray-600">sketchmyinfra.com — Built by engineers, for engineers. Powered by AI &amp; PlantUML.</p>
       </div>
     </div>
   </footer>
