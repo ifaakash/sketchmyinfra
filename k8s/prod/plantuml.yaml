@@ -1,0 +1,59 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plantuml
+  namespace: prod
+  labels:
+    app: plantuml
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: plantuml
+  template:
+    metadata:
+      labels:
+        app: plantuml
+    spec:
+      containers:
+        - name: plantuml
+          image: plantuml/plantuml-server:jetty
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: "-DPLANTUML_SECURITY_PROFILE=UNSECURE"
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: plantuml
+  namespace: prod
+  labels:
+    app: plantuml
+spec:
+  selector:
+    app: plantuml
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+  type: ClusterIP

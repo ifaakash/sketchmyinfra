@@ -14,3 +14,4 @@ pgdata/
 
 # Kubernetes secrets (copy secret.example.yaml to secret.yaml and fill in)
 k8s/secret.yaml
+k8s/prod/secret.yaml

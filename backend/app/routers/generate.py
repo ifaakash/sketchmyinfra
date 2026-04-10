@@ -10,6 +10,25 @@ from app.services.gemini import generate_puml, GeminiError
 router = APIRouter(prefix="/api", tags=["generate"])
 
 
+def _get_client_ip(request: Request) -> str:
+    """Return the real visitor IP, honouring X-Forwarded-For added by Traefik.
+
+    The header may be comma-separated when multiple proxies are in the chain
+    (Cloudflare Tunnel → Traefik → pod). The leftmost entry is always the
+    original client; subsequent entries are added by each intermediate hop.
+
+    We trust X-Forwarded-For because Traefik is the only ingress point into
+    the cluster. If you ever expose the pod directly, re-evaluate this.
+    """
+    xff = request.headers.get("x-forwarded-for")
+    if xff:
+        return xff.split(",")[0].strip()
+    x_real_ip = request.headers.get("x-real-ip")
+    if x_real_ip:
+        return x_real_ip.strip()
+    return request.client.host if request.client else "0.0.0.0"
+
+
 @router.post("/generate", response_model=GenerateResponse)
 async def generate(
     req: GenerateRequest,
@@ -24,17 +43,13 @@ async def generate(
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to generate diagram")
 
-    # Only record successful generations — we want the table to reflect
-    # "diagrams we actually served", which is also what rate limiting (later)
-    # will care about. `request.client.host` is whatever the ASGI server sees;
-    # behind Traefik in dev that's the ingress pod IP. Good enough for now —
-    # switch to X-Forwarded-For parsing when we wire real per-IP rate limits.
+    # Only record successful generations.
     db.add(
         Generation(
             user_id=user.id if user else None,
             prompt=req.prompt,
             puml_code=puml,
-            ip_address=request.client.host if request.client else "0.0.0.0",
+            ip_address=_get_client_ip(request),
         )
     )
     await db.commit()

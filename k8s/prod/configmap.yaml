@@ -1,0 +1,30 @@
+---
+# Production config — namespace: prod.
+# Dev config lives in k8s/configmap.yaml (default namespace).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sketchmyinfra-config
+  namespace: prod
+data:
+  ENVIRONMENT: "production"
+  APP_URL: "https://sketchmyinfra.com"
+  CORS_ORIGINS: "https://sketchmyinfra.com,https://www.sketchmyinfra.com"
+
+  # In-cluster service DNS — short names resolve within the prod namespace.
+  PLANTUML_SERVER_URL: "http://plantuml:8080"
+
+  # Gemini
+  GEMINI_MODEL: "gemini-2.5-flash"
+
+  # Rate limits (per day)
+  RATE_LIMIT_ANONYMOUS: "3"
+  RATE_LIMIT_FREE: "5"
+
+  # JWT
+  JWT_ALGORITHM: "HS256"
+  JWT_EXPIRY_DAYS: "7"
+
+  # Postgres (non-secret parts)
+  POSTGRES_DB: "sketchmyinfra"
+  POSTGRES_USER: "smi"
