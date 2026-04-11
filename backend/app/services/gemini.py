@@ -47,8 +47,10 @@ GCP Diagram Rules (when GCP services are mentioned):
 - Define icon base: !define GCPPuml https://raw.githubusercontent.com/Crashedmind/PlantUML-icons-GCP/master/dist
 - Always include: !include GCPPuml/GCPCommon.puml
 - Include ONLY the specific icon .puml files you actually use
-- Icons are in category folders: GCPPuml/Compute/, GCPPuml/Databases/, GCPPuml/Networking/, GCPPuml/Storage/, GCPPuml/Security/, GCPPuml/DevOps/, GCPPuml/DataAnalytics/
-- Common icon names: CloudRun, GKE, CloudSQL, BigQuery, CloudStorage, CloudFunctions, ComputeEngine, CloudCDN, CloudPubSub, CloudArmor
+- Icons are in category folders: GCPPuml/Compute/, GCPPuml/Databases/, GCPPuml/Networking/, GCPPuml/Storage/, GCPPuml/Security/, GCPPuml/DevOps/, GCPPuml/Data_Analytics/
+- IMPORTANT: GCP icon filenames and macros use underscores, not CamelCase
+- Common icon file names: Cloud_Run, Kubernetes_Engine, Cloud_SQL, Cloud_Bigtable, Cloud_Storage, Cloud_Functions, Compute_Engine, Cloud_CDN, Cloud_Load_Balancing, Cloud_Armor, Cloud_Pub_Sub
+- The macro name matches the filename: e.g., Cloud_Run(alias, "label", "tech")
 - Use rectangle blocks with labels for GCP projects and regions (no built-in GCP group macros):
   rectangle "GCP Project" as gcp { rectangle "us-central1" as region { ... } }
 - Use dotted lines for secondary flows, solid lines for primary traffic
@@ -59,7 +61,8 @@ Azure Diagram Rules (when Azure services are mentioned):
 - Always include: !include AzurePuml/AzureCommon.puml
 - Include ONLY the specific icon .puml files you actually use
 - Icons are in category folders: AzurePuml/Compute/, AzurePuml/Databases/, AzurePuml/Networking/, AzurePuml/Storage/, AzurePuml/Security/, AzurePuml/Containers/, AzurePuml/Web/
-- Common icon names: AzureAppService, AzureKubernetesService, AzureSQLDatabase, AzureCosmosDb, AzureBlobStorage, AzureFunctions, AzureVirtualMachine, AzureApplicationGateway, AzureFrontDoor, AzureContainerRegistry
+- IMPORTANT path gotchas: AzureAppService is in Compute/ (not Web/), and AzureSqlDatabase uses lowercase 'ql' (not 'SQL')
+- Common icon names: AzureAppService (Compute/), AzureKubernetesService (Containers/), AzureSqlDatabase (Databases/), AzureCosmosDb (Databases/), AzureBlobStorage (Storage/), AzureFunctions (Compute/), AzureVirtualMachine (Compute/), AzureApplicationGateway (Networking/), AzureFrontDoor (Networking/), AzureContainerRegistry (Containers/)
 - Use rectangle blocks with labels for resource groups and regions:
   rectangle "Azure" as azure { rectangle "East US" as region { rectangle "Resource Group" as rg { ... } } }
 - Use dotted lines for secondary flows, solid lines for primary traffic
@@ -131,17 +134,17 @@ Here is a reference example of a well-structured GCP diagram:
 allow_mixing
 !define GCPPuml https://raw.githubusercontent.com/Crashedmind/PlantUML-icons-GCP/master/dist
 !include GCPPuml/GCPCommon.puml
-!include GCPPuml/Compute/CloudRun.puml
-!include GCPPuml/Databases/CloudSQL.puml
-!include GCPPuml/Networking/CloudLoadBalancing.puml
+!include GCPPuml/Compute/Cloud_Run.puml
+!include GCPPuml/Databases/Cloud_SQL.puml
+!include GCPPuml/Networking/Cloud_Load_Balancing.puml
 
 top to bottom direction
 
 rectangle "GCP Project" as gcp {
   rectangle "us-central1" as region {
-    CloudLoadBalancing(lb, "Cloud LB", "HTTPS")
-    CloudRun(run, "Cloud Run", "App Service")
-    CloudSQL(sql, "Cloud SQL", "PostgreSQL")
+    Cloud_Load_Balancing(lb, "Cloud LB", "HTTPS")
+    Cloud_Run(run, "Cloud Run", "App Service")
+    Cloud_SQL(sql, "Cloud SQL", "PostgreSQL")
   }
 }
 
@@ -157,8 +160,8 @@ Here is a reference example of a well-structured Azure diagram:
 allow_mixing
 !define AzurePuml https://raw.githubusercontent.com/plantuml-stdlib/Azure-PlantUML/master/dist
 !include AzurePuml/AzureCommon.puml
-!include AzurePuml/Web/AzureAppService.puml
-!include AzurePuml/Databases/AzureSQLDatabase.puml
+!include AzurePuml/Compute/AzureAppService.puml
+!include AzurePuml/Databases/AzureSqlDatabase.puml
 !include AzurePuml/Networking/AzureApplicationGateway.puml
 
 top to bottom direction
@@ -167,7 +170,7 @@ rectangle "Azure" as azure {
   rectangle "East US" as region {
     AzureApplicationGateway(agw, "App Gateway", "HTTPS Ingress")
     AzureAppService(app, "App Service", "Web App")
-    AzureSQLDatabase(db, "Azure SQL", "Database")
+    AzureSqlDatabase(db, "Azure SQL", "Database")
   }
 }
 
