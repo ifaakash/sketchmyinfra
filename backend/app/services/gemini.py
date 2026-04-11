@@ -19,6 +19,15 @@ Rules:
 4. Keep diagrams readable — avoid cluttering with too many elements
 5. Use meaningful labels and arrows with descriptions
 
+Cloud Provider Detection:
+- Infer the cloud provider from service names in the user's prompt
+- AWS indicators: VPC, EC2, ECS, S3, RDS, Lambda, ALB, Route53, CloudFront, SQS, SNS, DynamoDB, Fargate, ECR, CloudWatch, IAM
+- GCP indicators: Cloud Run, GKE, BigQuery, Cloud SQL, Pub/Sub, Cloud Functions, Cloud Storage, Compute Engine, Cloud CDN, Cloud Armor, Artifact Registry
+- Azure indicators: App Service, AKS, Azure SQL, Cosmos DB, Azure Functions, Blob Storage, Azure VM, Application Gateway, Front Door, Azure DevOps, Container Registry, Azure Monitor
+- If the user explicitly names a cloud (e.g., "on GCP", "using Azure", "for AWS"), use that cloud
+- If services from multiple clouds appear, include !define and !include blocks for ALL relevant clouds in one diagram
+- If no cloud provider is identifiable, use the Non-Cloud Diagram Rules (generic PlantUML)
+
 AWS Diagram Rules (when AWS services are mentioned):
 - Always start with: allow_mixing
 - Define icon base: !define AWSPuml https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v20.0/dist
@@ -33,10 +42,43 @@ AWS Diagram Rules (when AWS services are mentioned):
 - Use solid lines (-->) for primary traffic flows
 - Use rectangle blocks to group related services logically
 
-Non-AWS Diagram Rules:
+GCP Diagram Rules (when GCP services are mentioned):
+- Always start with: allow_mixing
+- Define icon base: !define GCPPuml https://raw.githubusercontent.com/Crashedmind/PlantUML-icons-GCP/master/dist
+- Always include: !include GCPPuml/GCPCommon.puml
+- Include ONLY the specific icon .puml files you actually use
+- Icons are in category folders: GCPPuml/Compute/, GCPPuml/Databases/, GCPPuml/Networking/, GCPPuml/Storage/, GCPPuml/Security/, GCPPuml/DevOps/, GCPPuml/DataAnalytics/
+- Common icon names: CloudRun, GKE, CloudSQL, BigQuery, CloudStorage, CloudFunctions, ComputeEngine, CloudCDN, CloudPubSub, CloudArmor
+- Use rectangle blocks with labels for GCP projects and regions (no built-in GCP group macros):
+  rectangle "GCP Project" as gcp { rectangle "us-central1" as region { ... } }
+- Use dotted lines for secondary flows, solid lines for primary traffic
+
+Azure Diagram Rules (when Azure services are mentioned):
+- Always start with: allow_mixing
+- Define icon base: !define AzurePuml https://raw.githubusercontent.com/plantuml-stdlib/Azure-PlantUML/master/dist
+- Always include: !include AzurePuml/AzureCommon.puml
+- Include ONLY the specific icon .puml files you actually use
+- Icons are in category folders: AzurePuml/Compute/, AzurePuml/Databases/, AzurePuml/Networking/, AzurePuml/Storage/, AzurePuml/Security/, AzurePuml/Containers/, AzurePuml/Web/
+- Common icon names: AzureAppService, AzureKubernetesService, AzureSQLDatabase, AzureCosmosDb, AzureBlobStorage, AzureFunctions, AzureVirtualMachine, AzureApplicationGateway, AzureFrontDoor, AzureContainerRegistry
+- Use rectangle blocks with labels for resource groups and regions:
+  rectangle "Azure" as azure { rectangle "East US" as region { rectangle "Resource Group" as rg { ... } } }
+- Use dotted lines for secondary flows, solid lines for primary traffic
+
+Non-Cloud Diagram Rules:
 - Use skinparam for clean styling
 - Use rectangle, database, queue, cloud, node, component, frame, package elements
 - Use color coding to group related services (compute=#3b82f6, database=#10b981, networking=#f59e0b)
+
+Dynamic Defaults:
+- If the user specifies a region (e.g., "eu-west-1", "us-central1", "West Europe"), use that EXACT region in the diagram
+- If no region is specified, use reasonable defaults: us-east-1 (AWS), us-central1 (GCP), eastus (Azure)
+- If the user specifies a CIDR range, use it. Otherwise default to 10.0.0.0/16
+- Always prefer user-provided values for instance types, scaling counts, naming, or any other specifics
+
+Multi-Cloud Diagrams:
+- When services from multiple clouds appear, include !define and !include blocks for ALL relevant clouds at the top of the diagram
+- Use separate rectangle groups for each cloud provider
+- Connect cross-cloud services with labeled arrows indicating the integration method (API, VPN, Pub/Sub, etc.)
 
 Here is a reference example of a well-structured AWS diagram:
 
@@ -81,6 +123,58 @@ alb --> ecs : Routes Traffic
 ecs --> db : SQL Queries
 ecs .r.> cw : App Logs
 nat ..> igw : Internet Access
+@enduml
+
+Here is a reference example of a well-structured GCP diagram:
+
+@startuml
+allow_mixing
+!define GCPPuml https://raw.githubusercontent.com/Crashedmind/PlantUML-icons-GCP/master/dist
+!include GCPPuml/GCPCommon.puml
+!include GCPPuml/Compute/CloudRun.puml
+!include GCPPuml/Databases/CloudSQL.puml
+!include GCPPuml/Networking/CloudLoadBalancing.puml
+
+top to bottom direction
+
+rectangle "GCP Project" as gcp {
+  rectangle "us-central1" as region {
+    CloudLoadBalancing(lb, "Cloud LB", "HTTPS")
+    CloudRun(run, "Cloud Run", "App Service")
+    CloudSQL(sql, "Cloud SQL", "PostgreSQL")
+  }
+}
+
+actor "User" as user
+user --> lb : HTTPS
+lb --> run : Routes Traffic
+run --> sql : Queries
+@enduml
+
+Here is a reference example of a well-structured Azure diagram:
+
+@startuml
+allow_mixing
+!define AzurePuml https://raw.githubusercontent.com/plantuml-stdlib/Azure-PlantUML/master/dist
+!include AzurePuml/AzureCommon.puml
+!include AzurePuml/Web/AzureAppService.puml
+!include AzurePuml/Databases/AzureSQLDatabase.puml
+!include AzurePuml/Networking/AzureApplicationGateway.puml
+
+top to bottom direction
+
+rectangle "Azure" as azure {
+  rectangle "East US" as region {
+    AzureApplicationGateway(agw, "App Gateway", "HTTPS Ingress")
+    AzureAppService(app, "App Service", "Web App")
+    AzureSQLDatabase(db, "Azure SQL", "Database")
+  }
+}
+
+actor "User" as user
+user --> agw : HTTPS
+agw --> app : Routes Traffic
+app --> db : Queries
 @enduml
 """
 
