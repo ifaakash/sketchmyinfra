@@ -16,15 +16,23 @@ router = APIRouter(prefix="/api", tags=["generate"])
 
 
 def _get_client_ip(request: Request) -> str:
-    """Return the real visitor IP, honouring X-Forwarded-For added by Traefik.
+    """Return the real visitor IP.
 
-    The header may be comma-separated when multiple proxies are in the chain
-    (Cloudflare Tunnel → Traefik → pod). The leftmost entry is always the
-    original client; subsequent entries are added by each intermediate hop.
+    Behind Cloudflare Tunnel the request chain is:
+      Visitor → Cloudflare Edge → cloudflared pod → Traefik → API pod
 
-    We trust X-Forwarded-For because Traefik is the only ingress point into
-    the cluster. If you ever expose the pod directly, re-evaluate this.
+    Traefik sees cloudflared as the client, so X-Forwarded-For contains
+    the cloudflared pod's internal IP (10.42.x.x) — useless for rate
+    limiting. Cloudflare sets CF-Connecting-IP to the real visitor IP
+    before tunneling, so we check that first.
+
+    Priority: CF-Connecting-IP → X-Forwarded-For → X-Real-IP → direct peer
     """
+    # Cloudflare Tunnel — the only header with the real visitor IP
+    cf_ip = request.headers.get("cf-connecting-ip")
+    if cf_ip:
+        return cf_ip.strip()
+    # Standard proxy headers (useful if not behind Cloudflare, e.g. local dev)
     xff = request.headers.get("x-forwarded-for")
     if xff:
         return xff.split(",")[0].strip()
