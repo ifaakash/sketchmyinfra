@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy import func, select
+from sqlalchemy import cast, func, select
+from sqlalchemy.dialects.postgresql import INET
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -60,7 +61,7 @@ async def _check_rate_limit(
         limit = settings.rate_limit_anonymous
         stmt = select(func.count()).select_from(Generation).where(
             Generation.user_id.is_(None),
-            Generation.ip_address == ip,
+            Generation.ip_address == cast(ip, INET),
             Generation.created_at >= since,
         )
 
