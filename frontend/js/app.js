@@ -184,11 +184,8 @@ async function handleGenerate() {
       if (!err.authenticated) {
         showRateLimitLogin(err.limit, currentImageUri || null);
       } else {
-        showError(
-          'Daily limit reached',
-          `You\u2019ve used all ${err.limit} generations for today. Come back tomorrow!`,
-          currentImageUri || null
-        );
+        // Logged-in free user hit limit → show Pro upgrade prompt
+        showUpgradePrompt(err.limit, currentImageUri || null);
       }
     } else {
       showError('Oops! That\'s a tricky one.', err.message || 'Can you tweak your prompt and try again?', currentImageUri || null);

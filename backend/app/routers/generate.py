@@ -42,8 +42,12 @@ async def _check_rate_limit(
 
     Anonymous users are counted by IP (uses idx_generations_ip_date).
     Logged-in users are counted by user_id (uses idx_generations_user_date).
-    The check runs BEFORE the Gemini call so we don't waste an API call.
+    Pro users are unlimited. The check runs BEFORE the Gemini call so we
+    don't waste an API call.
     """
+    if user and user.tier == "pro":
+        return
+
     since = datetime.now(timezone.utc) - timedelta(days=1)
 
     if user:
