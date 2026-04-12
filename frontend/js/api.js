@@ -25,7 +25,11 @@ async function handleResponse(response) {
       err.used = detail.used;
       throw err;
     }
-    throw new Error(data.detail || data.error || `Request failed (${response.status})`);
+    // detail may be a string ("Gemini error") or an object ({message: "..."})
+    const msg = typeof data.detail === 'string'
+      ? data.detail
+      : data.detail?.message || data.error || `Request failed (${response.status})`;
+    throw new Error(msg);
   }
   return data;
 }
