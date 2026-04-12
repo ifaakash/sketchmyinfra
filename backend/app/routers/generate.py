@@ -1,6 +1,10 @@
+from datetime import datetime, timedelta, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.database import get_db
 from app.middleware.auth import get_current_user_optional
 from app.models import Generation, User
@@ -29,6 +33,48 @@ def _get_client_ip(request: Request) -> str:
     return request.client.host if request.client else "0.0.0.0"
 
 
+async def _check_rate_limit(
+    user: User | None,
+    ip: str,
+    db: AsyncSession,
+) -> None:
+    """Count generations in the last 24 hours and raise 429 if over limit.
+
+    Anonymous users are counted by IP (uses idx_generations_ip_date).
+    Logged-in users are counted by user_id (uses idx_generations_user_date).
+    The check runs BEFORE the Gemini call so we don't waste an API call.
+    """
+    since = datetime.now(timezone.utc) - timedelta(days=1)
+
+    if user:
+        limit = settings.rate_limit_free
+        stmt = select(func.count()).select_from(Generation).where(
+            Generation.user_id == user.id,
+            Generation.created_at >= since,
+        )
+    else:
+        limit = settings.rate_limit_anonymous
+        stmt = select(func.count()).select_from(Generation).where(
+            Generation.user_id.is_(None),
+            Generation.ip_address == ip,
+            Generation.created_at >= since,
+        )
+
+    result = await db.execute(stmt)
+    count = result.scalar_one()
+
+    if count >= limit:
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "message": "Daily generation limit reached",
+                "limit": limit,
+                "used": count,
+                "authenticated": user is not None,
+            },
+        )
+
+
 @router.post("/generate", response_model=GenerateResponse)
 async def generate(
     req: GenerateRequest,
@@ -36,6 +82,11 @@ async def generate(
     user: User | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
+    ip = _get_client_ip(request)
+
+    # Enforce rate limit before calling Gemini (don't waste an API call).
+    await _check_rate_limit(user, ip, db)
+
     try:
         puml = await generate_puml(req.prompt, req.context)
     except GeminiError as e:
@@ -49,7 +100,7 @@ async def generate(
             user_id=user.id if user else None,
             prompt=req.prompt,
             puml_code=puml,
-            ip_address=_get_client_ip(request),
+            ip_address=ip,
         )
     )
     await db.commit()

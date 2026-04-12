@@ -170,6 +170,7 @@ async function handleGenerate() {
     // Show result
     showDiagram(currentImageUri);
     showToast('Diagram generated successfully', 'success', 2000);
+    $('#btn-retry')?.classList.remove('hidden');
 
     // Add to history
     historyAdd({
@@ -179,7 +180,19 @@ async function handleGenerate() {
     });
 
   } catch (err) {
-    showError('Oops! That\'s a tricky one.', err.message || 'Can you tweak your prompt and try again?', currentImageUri || null);
+    if (err.rateLimited) {
+      if (!err.authenticated) {
+        showRateLimitLogin(err.limit, currentImageUri || null);
+      } else {
+        showError(
+          'Daily limit reached',
+          `You\u2019ve used all ${err.limit} generations for today. Come back tomorrow!`,
+          currentImageUri || null
+        );
+      }
+    } else {
+      showError('Oops! That\'s a tricky one.', err.message || 'Can you tweak your prompt and try again?', currentImageUri || null);
+    }
     showToast(err.message || 'Generation failed', 'error', 4000);
   } finally {
     setGenerateLoading(false);

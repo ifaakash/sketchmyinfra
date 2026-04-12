@@ -14,6 +14,17 @@ async function handleResponse(response) {
   }
   const data = await response.json();
   if (!response.ok) {
+    // 429 = rate limited — attach structured info so the UI can show
+    // "login to continue" (anonymous) or "limit reached" (logged-in).
+    if (response.status === 429) {
+      const detail = data.detail || {};
+      const err = new Error(detail.message || 'Rate limit reached');
+      err.rateLimited = true;
+      err.authenticated = detail.authenticated ?? false;
+      err.limit = detail.limit;
+      err.used = detail.used;
+      throw err;
+    }
     throw new Error(data.detail || data.error || `Request failed (${response.status})`);
   }
   return data;
