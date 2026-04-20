@@ -24,7 +24,7 @@ spec:
               name: http
           env:
             - name: JAVA_TOOL_OPTIONS
-              value: "-DPLANTUML_SECURITY_PROFILE=UNSECURE"
+              value: "-DPLANTUML_SECURITY_PROFILE=UNSECURE -Djava.net.preferIPv4Stack=true"
           readinessProbe:
             tcpSocket:
               port: 8080
