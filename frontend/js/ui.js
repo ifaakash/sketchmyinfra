@@ -168,11 +168,11 @@ function showUpgradePrompt(limit, lastImageUri = null) {
       `<p class="mb-3">You\u2019ve hit the free tier limit. But we see you, you\u2019re building something real.</p>` +
       `<div class="bg-gradient-to-r from-brand-600/10 to-emerald-500/10 border border-brand-500/20 rounded-xl p-4 mb-4 text-left">` +
         `<p class="text-sm font-semibold text-brand-400 mb-1">SketchMyInfra Pro</p>` +
-        `<ul class="text-xs text-gray-400 space-y-1 mb-2">` +
+        `<ul class="text-xs text-gray-700 dark:text-gray-300 space-y-1 mb-2">` +
           `<li>Unlimited diagram generations</li>` +
           `<li>Priority rendering</li>` +
           `<li>History saved across sessions</li>` +
-          `<li>Early supporter pricing: <strong class="text-emerald-400">$2/month</strong></li>` +
+          `<li>Early supporter pricing: <strong class="text-gray-900 dark:text-emerald-400">$2/month</strong></li>` +
         `</ul>` +
       `</div>` +
       `<button id="btn-notify-pro" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-medium text-sm px-5 py-2.5 rounded-lg transition-colors mb-2">` +

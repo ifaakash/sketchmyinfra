@@ -118,7 +118,7 @@ function initNavbar() {
  * Scroll reveal — animate sections into view.
  */
 function initScrollReveal() {
-  const sections = $$('#features, #how-it-works, #testimonials');
+  const sections = $$('#features, #how-it-works, #testimonials, #blog');
   if (!sections.length) return;
 
   sections.forEach(s => s.classList.add('reveal'));

@@ -91,11 +91,25 @@
   background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(229, 231, 235, 0.8);
   backdrop-filter: blur(4px);
+  transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(199, 210, 254, 0.8);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.08);
 }
 
 :is(.dark .stat-card) {
   background: rgba(17, 24, 39, 0.6);
   border-color: rgba(31, 41, 55, 0.5);
+}
+
+:is(.dark .stat-card:hover) {
+  background: rgba(17, 24, 39, 0.9);
+  border-color: rgba(67, 56, 202, 0.4);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.15);
 }
 
 /* ===== Feature cards ===== */
@@ -131,11 +145,14 @@
   border-radius: 1rem;
   background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(229, 231, 235, 0.8);
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .testimonial-card:hover {
   border-color: rgba(209, 213, 219, 1);
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
 }
 
 :is(.dark .testimonial-card) {
@@ -145,6 +162,8 @@
 
 :is(.dark .testimonial-card:hover) {
   border-color: rgba(75, 85, 99, 0.5);
+  background: rgba(17, 24, 39, 0.8);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 /* ===== Sample diagram cards ===== */
