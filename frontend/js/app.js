@@ -33,17 +33,35 @@ function bindEvents() {
     }
   });
 
-  // Example chips
+  // Example chips (including template items)
   $$('.example-chip').forEach(chip => {
     chip.addEventListener('click', () => {
       const prompt = chip.dataset.prompt;
+      if (!prompt) return;
       const input = $('#prompt-input');
       if (input) {
         input.value = prompt;
         input.focus();
+        // Collapse templates panel after selection
+        const panel = $('#templates-panel');
+        if (panel && !panel.classList.contains('hidden')) {
+          panel.classList.add('hidden');
+          $('#templates-chevron')?.classList.remove('rotate-180');
+        }
       }
     });
   });
+
+  // Templates panel toggle
+  const btnTemplates = $('#btn-show-templates');
+  const templatesPanel = $('#templates-panel');
+  const chevron = $('#templates-chevron');
+  if (btnTemplates && templatesPanel) {
+    btnTemplates.addEventListener('click', () => {
+      const isHidden = templatesPanel.classList.toggle('hidden');
+      chevron?.classList.toggle('rotate-180', !isHidden);
+    });
+  }
 
   // PUML actions
   $('#btn-edit-puml')?.addEventListener('click', togglePumlEdit);
@@ -118,7 +136,7 @@ function initNavbar() {
  * Scroll reveal — animate sections into view.
  */
 function initScrollReveal() {
-  const sections = $$('#features, #how-it-works, #testimonials');
+  const sections = $$('#features, #how-it-works, #testimonials, #blog');
   if (!sections.length) return;
 
   sections.forEach(s => s.classList.add('reveal'));

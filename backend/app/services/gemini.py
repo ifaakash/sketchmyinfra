@@ -18,6 +18,7 @@ Rules:
    - Activity diagrams for CI/CD pipelines or workflows
 4. Keep diagrams readable — avoid cluttering with too many elements
 5. Use meaningful labels and arrows with descriptions
+6. When using `actor` elements (for users, external systems, etc.), always add `skinparam actorStyle awesome` to render them as a person silhouette instead of a plain stick figure
 
 Cloud Provider Detection:
 - Infer the cloud provider from service names in the user's prompt
@@ -37,7 +38,7 @@ AWS Diagram Rules (when AWS services are mentioned):
 - Groups are in: AWSPuml/Groups/<Name>.puml
 - Icons are in category folders like: AWSPuml/Compute/, AWSPuml/Database/, AWSPuml/NetworkingContentDelivery/, AWSPuml/Containers/, AWSPuml/Storage/, AWSPuml/ManagementGovernance/, AWSPuml/SecurityIdentityCompliance/, AWSPuml/General/
 - Common icon names: ElasticLoadBalancingApplicationLoadBalancer, ElasticContainerService, ElasticContainerServiceService, EC2Instance, EC2AutoScaling, AuroraMariaDBInstance, AuroraPostgreSQLInstance, SimpleStorageService, CloudWatch, Route53, Route53HostedZone, VPCInternetGateway, VPCNATGateway
-- Do NOT use Internetalt1 or other General/ icons — they are unreliable. Use a plain "actor" or "cloud" element for internet/users instead
+- Do NOT use Internetalt1 or other General/ icons — they are unreliable. Use a plain `actor` element for users with `skinparam actorStyle awesome` for a person silhouette icon
 - Use dotted lines (.l.>, .r.>, ..>) for secondary flows like logs and monitoring
 - Use solid lines (-->) for primary traffic flows
 - Use rectangle blocks to group related services logically
@@ -101,6 +102,7 @@ allow_mixing
 !include AWSPuml/Database/AuroraMariaDBInstance.puml
 !include AWSPuml/ManagementGovernance/CloudWatch.puml
 
+skinparam actorStyle awesome
 top to bottom direction
 
 AWSCloudGroup(cloud) {
@@ -138,6 +140,7 @@ allow_mixing
 !include GCPPuml/Databases/Cloud_SQL.puml
 !include GCPPuml/Networking/Cloud_Load_Balancing.puml
 
+skinparam actorStyle awesome
 top to bottom direction
 
 rectangle "GCP Project" as gcp {
@@ -164,6 +167,7 @@ allow_mixing
 !include AzurePuml/Databases/AzureSqlDatabase.puml
 !include AzurePuml/Networking/AzureApplicationGateway.puml
 
+skinparam actorStyle awesome
 top to bottom direction
 
 rectangle "Azure" as azure {
