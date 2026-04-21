@@ -23,3 +23,14 @@ class GenerateResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     detail: str
+
+
+class HistoryItem(BaseModel):
+    id: str
+    prompt: str
+    puml_code: str
+    created_at: str
+
+
+class HistoryResponse(BaseModel):
+    items: list[HistoryItem]
