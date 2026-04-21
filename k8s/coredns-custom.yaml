@@ -6,5 +6,7 @@ metadata:
 data:
   block-aaaa.override: |
     template IN AAAA . {
-        rcode NXDOMAIN
+        rcode NOERROR
+        answer "{{ .Name }} 0 IN SOA ns.dns.{{ .Zone }} hostmaster.{{ .Zone }} 0 60 60 60 0"
+        nodata
     }
