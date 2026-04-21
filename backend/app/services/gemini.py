@@ -55,7 +55,9 @@ AWS Diagram Rules (when AWS services are mentioned):
   * Database/AuroraMariaDBInstance.puml → AuroraMariaDBInstance(...)
   * Database/AuroraPostgreSQLInstance.puml → AuroraPostgreSQLInstance(...)
   * Database/DynamoDB.puml → DynamoDB(...)
-  * Database/ElastiCache.puml → ElastiCache(...)  [NOT Elasticache, ElastiCacheForRedis]
+  * Database/ElastiCache.puml → ElastiCache(...)  [generic, use when no specific engine needed]
+  * Database/ElastiCacheElastiCacheforRedis.puml → ElastiCacheElastiCacheforRedis(...)  [Redis specifically — NOT ElastiCacheRedis]
+  * Database/ElastiCacheElastiCacheforMemcached.puml → ElastiCacheElastiCacheforMemcached(...)  [Memcached specifically]
   * Storage/SimpleStorageService.puml → SimpleStorageService(...)  [NOT S3]
   * Storage/SimpleStorageServiceBucket.puml → SimpleStorageServiceBucket(...)
   * ApplicationIntegration/SimpleQueueService.puml → SimpleQueueService(...)  [NOT SQS]
@@ -63,7 +65,22 @@ AWS Diagram Rules (when AWS services are mentioned):
   * ApplicationIntegration/EventBridge.puml → EventBridge(...)
   * NetworkingContentDelivery/APIGateway.puml → APIGateway(...)  [NOT ApplicationIntegration/APIGateway]
   * ManagementGovernance/CloudWatch.puml → CloudWatch(...)
+  * ManagementGovernance/CloudWatchAlarm.puml → CloudWatchAlarm(...)
+  * ManagementGovernance/CloudWatchLogs.puml → CloudWatchLogs(...)
+  * ManagementGovernance/CloudWatchRule.puml → CloudWatchRule(...)
+  * ManagementGovernance/CloudWatchEventTimeBased.puml → CloudWatchEventTimeBased(...)  [scheduled/cron triggers — NOT CloudWatchEvents]
+  * ManagementGovernance/CloudWatchEventEventBased.puml → CloudWatchEventEventBased(...)  [event-driven triggers — NOT CloudWatchEvents]
   * ManagementGovernance/CloudTrail.puml → CloudTrail(...)
+  * ManagementGovernance/SystemsManager.puml → SystemsManager(...)
+  * ManagementGovernance/CloudFormation.puml → CloudFormation(...)
+  * ApplicationIntegration/StepFunctions.puml → StepFunctions(...)
+  * ApplicationIntegration/EventBridgeScheduler.puml → EventBridgeScheduler(...)
+  * Analytics/Glue.puml → Glue(...)
+  * Analytics/Redshift.puml → Redshift(...)
+  * Analytics/QuickSight.puml → QuickSight(...)
+  * Analytics/Athena.puml → Athena(...)
+  * Analytics/KinesisDataStreams.puml → KinesisDataStreams(...)
+  * Analytics/EMR.puml → EMR(...)
   * SecurityIdentityCompliance/IdentityandAccessManagement.puml → IdentityandAccessManagement(...)  [NOT IAM]
   * SecurityIdentityCompliance/WAF.puml → WAF(...)
 - If a service has no verified icon above, use a plain rectangle or component element instead — never guess a path
