@@ -87,7 +87,7 @@ function renderLoggedIn(user) {
   if (slot) {
     slot.innerHTML = `
       <div class="flex items-center gap-2">
-        <div class="relative">${avatarHtml}${isPro ? `<span class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-400 border-2 border-white dark:border-gray-900"></span>` : ''}</div>
+        <div class="relative inline-flex">${avatarHtml}${isPro ? `<span class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-400 border-2 border-white dark:border-gray-900"></span>` : ''}</div>
         <span class="text-sm font-medium text-gray-700 dark:text-gray-300 hidden lg:block">${escapeHtml(user.name || user.email)}</span>
         ${proBadge}
         <button id="btn-logout"
@@ -103,7 +103,7 @@ function renderLoggedIn(user) {
   if (mobileSlot) {
     mobileSlot.innerHTML = `
       <div class="flex items-center gap-3 py-2">
-        <div class="relative">${avatarHtml}${isPro ? `<span class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-400 border-2 border-white dark:border-gray-900"></span>` : ''}</div>
+        <div class="relative inline-flex">${avatarHtml}${isPro ? `<span class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-400 border-2 border-white dark:border-gray-900"></span>` : ''}</div>
         <span class="text-sm font-medium text-gray-700 dark:text-gray-300 flex-1">${escapeHtml(user.name || user.email)}</span>
         ${proBadge}
         <button id="btn-logout-mobile"
