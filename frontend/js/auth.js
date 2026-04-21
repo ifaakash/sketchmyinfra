@@ -81,7 +81,7 @@ function renderLoggedIn(user) {
 
   const proBadge = isPro
     ? `<span class="text-xs font-semibold px-1.5 py-0.5 rounded-md bg-gradient-to-r from-amber-400 to-orange-400 text-white leading-none">PRO</span>`
-    : '';
+    : `<span class="text-xs font-semibold px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 leading-none">FREE</span>`;
 
   const slot = document.getElementById('auth-slot');
   if (slot) {
