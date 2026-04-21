@@ -1,9 +1,12 @@
 import base64
+import logging
 import re
 
 import httpx
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 PLANTUML_URL = settings.plantuml_server_url
 
@@ -43,6 +46,7 @@ async def render_puml(puml: str, fmt: str = "svg") -> str:
     if response.status_code != 200:
         error_detail = _extract_error(response.text) if response.headers.get("content-type", "").startswith("image/svg") else None
         msg = f"PlantUML render failed: {error_detail}" if error_detail else f"PlantUML server returned {response.status_code}"
+        logger.error("PlantUML render error: %s\n--- PUML ---\n%s\n--- END ---", msg, puml)
         raise PlantUMLError(msg)
 
     encoded = base64.b64encode(response.content).decode("utf-8")

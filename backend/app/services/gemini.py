@@ -263,6 +263,9 @@ async def generate_puml(prompt: str, context: str | None = None) -> str:
         lines = [l for l in lines if not l.strip().startswith("```")]
         text = "\n".join(lines).strip()
 
+    # Replace non-breaking spaces (U+00A0) with regular spaces — PlantUML rejects them
+    text = text.replace("\u00a0", " ")
+
     if "@startuml" not in text:
         raise GeminiError("Gemini did not produce valid PlantUML code")
 
