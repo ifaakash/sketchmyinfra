@@ -30,6 +30,7 @@ async function refreshAuth() {
       const user = await res.json();
       window.currentUser = user;
       renderLoggedIn(user);
+      if (typeof loadHistoryFromAPI === 'function') loadHistoryFromAPI();
     } else {
       window.currentUser = null;
       renderLoggedOut();
