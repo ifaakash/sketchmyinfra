@@ -61,6 +61,7 @@ AWS Diagram Rules (when AWS services are mentioned):
   * ApplicationIntegration/SimpleQueueService.puml → SimpleQueueService(...)  [NOT SQS]
   * ApplicationIntegration/SimpleNotificationService.puml → SimpleNotificationService(...)  [NOT SNS]
   * ApplicationIntegration/EventBridge.puml → EventBridge(...)
+  * NetworkingContentDelivery/APIGateway.puml → APIGateway(...)  [NOT ApplicationIntegration/APIGateway]
   * ManagementGovernance/CloudWatch.puml → CloudWatch(...)
   * ManagementGovernance/CloudTrail.puml → CloudTrail(...)
   * SecurityIdentityCompliance/IdentityandAccessManagement.puml → IdentityandAccessManagement(...)  [NOT IAM]
