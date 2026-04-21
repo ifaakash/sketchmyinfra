@@ -36,8 +36,36 @@ AWS Diagram Rules (when AWS services are mentioned):
 - Include ONLY the specific icon .puml files you actually use — check the path carefully
 - Use AWS grouping macros: AWSCloudGroup, RegionGroup, VPCGroup, PublicSubnetGroup, PrivateSubnetGroup
 - Groups are in: AWSPuml/Groups/<Name>.puml
-- Icons are in category folders like: AWSPuml/Compute/, AWSPuml/Database/, AWSPuml/NetworkingContentDelivery/, AWSPuml/Containers/, AWSPuml/Storage/, AWSPuml/ManagementGovernance/, AWSPuml/SecurityIdentityCompliance/, AWSPuml/General/
-- Common icon names: ElasticLoadBalancingApplicationLoadBalancer, ElasticContainerService, ElasticContainerServiceService, EC2Instance, EC2AutoScaling, AuroraMariaDBInstance, AuroraPostgreSQLInstance, SimpleStorageService, CloudWatch, Route53, Route53HostedZone, VPCInternetGateway, VPCNATGateway
+- CRITICAL: Use ONLY these verified icon paths (wrong names cause 404 errors):
+  * Compute/Lambda.puml → Lambda(...)  [NOT LambdaFunction]
+  * Compute/EC2Instance.puml → EC2Instance(...)
+  * Compute/EC2AutoScaling.puml → EC2AutoScaling(...)  [NOT AutoScaling]
+  * Containers/ElasticContainerService.puml → ElasticContainerService(...)
+  * Containers/ElasticContainerServiceService.puml → ElasticContainerServiceService(...)
+  * Containers/Fargate.puml → Fargate(...)  [NOT Compute/Fargate]
+  * Containers/ElasticContainerRegistry.puml → ElasticContainerRegistry(...)
+  * Containers/ElasticKubernetesService.puml → ElasticKubernetesService(...)
+  * NetworkingContentDelivery/ElasticLoadBalancingApplicationLoadBalancer.puml → ElasticLoadBalancingApplicationLoadBalancer(...)
+  * NetworkingContentDelivery/VPCInternetGateway.puml → VPCInternetGateway(...)
+  * NetworkingContentDelivery/VPCNATGateway.puml → VPCNATGateway(...)
+  * NetworkingContentDelivery/CloudFront.puml → CloudFront(...)  [NOT CloudFrontDistribution]
+  * NetworkingContentDelivery/Route53.puml → Route53(...)
+  * NetworkingContentDelivery/Route53HostedZone.puml → Route53HostedZone(...)
+  * Database/RDS.puml → RDS(...)  [NOT RDSInstance]
+  * Database/AuroraMariaDBInstance.puml → AuroraMariaDBInstance(...)
+  * Database/AuroraPostgreSQLInstance.puml → AuroraPostgreSQLInstance(...)
+  * Database/DynamoDB.puml → DynamoDB(...)
+  * Database/ElastiCache.puml → ElastiCache(...)  [NOT Elasticache, ElastiCacheForRedis]
+  * Storage/SimpleStorageService.puml → SimpleStorageService(...)  [NOT S3]
+  * Storage/SimpleStorageServiceBucket.puml → SimpleStorageServiceBucket(...)
+  * ApplicationIntegration/SimpleQueueService.puml → SimpleQueueService(...)  [NOT SQS]
+  * ApplicationIntegration/SimpleNotificationService.puml → SimpleNotificationService(...)  [NOT SNS]
+  * ApplicationIntegration/EventBridge.puml → EventBridge(...)
+  * ManagementGovernance/CloudWatch.puml → CloudWatch(...)
+  * ManagementGovernance/CloudTrail.puml → CloudTrail(...)
+  * SecurityIdentityCompliance/IdentityandAccessManagement.puml → IdentityandAccessManagement(...)  [NOT IAM]
+  * SecurityIdentityCompliance/WAF.puml → WAF(...)
+- If a service has no verified icon above, use a plain rectangle or component element instead — never guess a path
 - Do NOT use Internetalt1 or other General/ icons — they are unreliable. Use a plain `actor` element for users with `skinparam actorStyle awesome` for a person silhouette icon
 - Use dotted lines (.l.>, .r.>, ..>) for secondary flows like logs and monitoring
 - Use solid lines (-->) for primary traffic flows
