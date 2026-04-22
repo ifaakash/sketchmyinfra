@@ -88,8 +88,10 @@ AWS Diagram Rules (when AWS services are mentioned):
   * Analytics/EMR.puml → EMR(...)
   * SecurityIdentityCompliance/IdentityandAccessManagement.puml → IdentityandAccessManagement(...)  [NOT IAM]
   * SecurityIdentityCompliance/WAF.puml → WAF(...)
+- KNOWN MISSING icons — these do NOT exist in the library, use a plain `rectangle` instead: SecurityGroup, TargetGroup, NATGateway (use VPCNATGateway), InternetGateway (use VPCInternetGateway)
 - If a service has no verified icon above, use a plain rectangle or component element instead — never guess a path
 - Do NOT use Internetalt1 or other General/ icons — they are unreliable. Use a plain `actor` element for users with `skinparam actorStyle awesome` for a person silhouette icon
+- All AWS icon macros require exactly 3 arguments: `IconName(alias, "Label", "Technology")` — if technology is not applicable use `""` as the third argument
 - Use dotted lines (.l.>, .r.>, ..>) for secondary flows like logs and monitoring
 - Use solid lines (-->) for primary traffic flows
 - Use rectangle blocks to group related services logically
