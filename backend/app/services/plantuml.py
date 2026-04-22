@@ -49,6 +49,14 @@ async def render_puml(puml: str, fmt: str = "svg") -> str:
         logger.error("PlantUML render error: %s\n--- PUML ---\n%s\n--- END ---", msg, puml)
         raise PlantUMLError(msg)
 
+    # PlantUML returns status 200 even for syntax errors — it renders an error SVG instead.
+    # Detect and reject those here so the frontend gets a proper error, not a broken image.
+    if fmt == "svg":
+        error_detail = _extract_error(response.text)
+        if error_detail:
+            logger.error("PlantUML syntax error (status 200): %s\n--- PUML ---\n%s\n--- END ---", error_detail, puml)
+            raise PlantUMLError(f"PlantUML syntax error: {error_detail}")
+
     encoded = base64.b64encode(response.content).decode("utf-8")
     return f"data:{mime};base64,{encoded}"
 
