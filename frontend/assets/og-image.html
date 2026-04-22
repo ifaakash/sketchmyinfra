@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 1200px;
+      height: 630px;
+      background: #060d1b;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 80px;
+      font-family: Inter, system-ui, sans-serif;
+      overflow: hidden;
+    }
+
+    /* Left blob */
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.25;
+    }
+    .blob-1 { width: 400px; height: 400px; background: #4f46e5; top: -100px; left: -100px; }
+    .blob-2 { width: 300px; height: 300px; background: #10b981; bottom: -80px; right: 200px; }
+
+    .left {
+      position: relative;
+      z-index: 1;
+      max-width: 580px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(79, 70, 229, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 999px;
+      padding: 6px 16px;
+      font-size: 14px;
+      color: #818cf8;
+      margin-bottom: 28px;
+    }
+
+    .title {
+      font-size: 64px;
+      font-weight: 800;
+      line-height: 1.1;
+      color: #ffffff;
+      margin-bottom: 20px;
+    }
+    .title span {
+      background: linear-gradient(135deg, #6366f1, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 20px;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin-bottom: 36px;
+    }
+
+    .pills {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+
+    .right {
+      position: relative;
+      z-index: 1;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 24px;
+      width: 440px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.8;
+    }
+    .code-line { display: flex; gap: 12px; }
+    .code-line .ln { color: #334155; min-width: 16px; }
+    .kw  { color: #818cf8; }
+    .str { color: #34d399; }
+    .cm  { color: #475569; }
+
+    .domain {
+      position: absolute;
+      bottom: 40px;
+      right: 80px;
+      font-size: 16px;
+      color: #475569;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="left">
+    <div class="badge">✦ Free · No signup required</div>
+    <div class="title">AI Architecture<br><span>Diagram Generator</span></div>
+    <div class="subtitle">Describe your infra in plain English.<br>Get AWS, GCP & Azure diagrams in seconds.</div>
+    <div class="pills">
+      <div class="pill">AWS</div>
+      <div class="pill">GCP</div>
+      <div class="pill">Azure</div>
+      <div class="pill">PlantUML</div>
+      <div class="pill">SVG / PNG export</div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="code-line"><span class="ln">1</span><span><span class="kw">@startuml</span></span></div>
+    <div class="code-line"><span class="ln">2</span><span><span class="kw">allow_mixing</span></span></div>
+    <div class="code-line"><span class="ln">3</span><span class="cm">!include AWSPuml/AWSCommon.puml</span></div>
+    <div class="code-line"><span class="ln">4</span><span class="cm">!include AWSPuml/Containers/ECS.puml</span></div>
+    <div class="code-line"><span class="ln">5</span><span>&nbsp;</span></div>
+    <div class="code-line"><span class="ln">6</span><span><span class="kw">AWSCloudGroup</span>(cloud) {</span></div>
+    <div class="code-line"><span class="ln">7</span><span>&nbsp;&nbsp;<span class="kw">RegionGroup</span>(r, <span class="str">"us-east-1"</span>) {</span></div>
+    <div class="code-line"><span class="ln">8</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">ElasticLoadBalancing</span>(alb,</span></div>
+    <div class="code-line"><span class="ln">9</span><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"ALB"</span>, <span class="str">"Ingress"</span>)</span></div>
+    <div class="code-line"><span class="ln">10</span><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">ElasticContainerService</span>(ecs,</span></div>
+    <div class="code-line"><span class="ln">11</span><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"ECS Fargate"</span>, <span class="str">"App"</span>)</span></div>
+    <div class="code-line"><span class="ln">12</span><span>&nbsp;&nbsp;}</span></div>
+    <div class="code-line"><span class="ln">13</span><span>}</span></div>
+    <div class="code-line"><span class="ln">14</span><span><span class="kw">actor</span> <span class="str">"User"</span> <span class="kw">as</span> user</span></div>
+    <div class="code-line"><span class="ln">15</span><span>user --> alb : <span class="str">HTTPS</span></span></div>
+    <div class="code-line"><span class="ln">16</span><span><span class="kw">@enduml</span></span></div>
+  </div>
+
+  <div class="domain">sketchmyinfra.com</div>
+</body>
+</html>
