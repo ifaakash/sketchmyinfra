@@ -3,20 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SketchMyInfra — Describe it. We diagram it.</title>
-  <meta name="description" content="Turn plain English into production-ready architecture diagrams in seconds. Powered by AI. Free to use, no credit card required.">
+  <title>SketchMyInfra — Free AI Architecture Diagram Generator for AWS, GCP & Azure</title>
+  <meta name="description" content="Generate production-ready AWS, GCP, and Azure architecture diagrams from plain English in seconds. Free AI diagram tool — no signup, no credit card, no drag-and-drop.">
+  <link rel="canonical" href="https://sketchmyinfra.com/">
 
   <!-- Open Graph (LinkedIn, Slack, Discord, Facebook) -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://sketchmyinfra.com">
-  <meta property="og:title" content="SketchMyInfra — Describe it. We diagram it.">
-  <meta property="og:description" content="Turn plain English into production-ready architecture diagrams in seconds. Powered by AI. Free to use, no credit card required.">
+  <meta property="og:title" content="SketchMyInfra — Free AI Architecture Diagram Generator">
+  <meta property="og:description" content="Generate production-ready AWS, GCP, and Azure architecture diagrams from plain English in seconds. Free, no signup required.">
   <meta property="og:image" content="https://sketchmyinfra.com/assets/og-image.png">
 
   <!-- Twitter / X card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="SketchMyInfra — Describe it. We diagram it.">
-  <meta name="twitter:description" content="Turn plain English into production-ready architecture diagrams in seconds. Powered by AI. Free to use, no credit card required.">
+  <meta name="twitter:title" content="SketchMyInfra — Free AI Architecture Diagram Generator">
+  <meta name="twitter:description" content="Generate production-ready AWS, GCP, and Azure architecture diagrams from plain English in seconds. Free, no signup required.">
   <meta name="twitter:image" content="https://sketchmyinfra.com/assets/og-image.png">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="assets/favicon-192.png" type="image/png" sizes="192x192">
@@ -174,8 +175,8 @@
       </div>
 
       <h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] mb-6">
-        Describe it.<br>
-        <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 dark:from-brand-400 to-emerald-500 dark:to-emerald-400">We diagram it.</span>
+        AI Architecture<br>
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 dark:from-brand-400 to-emerald-500 dark:to-emerald-400">Diagram Generator</span>
       </h1>
 
       <p class="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
@@ -289,7 +290,7 @@
             </svg>
           </div>
           <h3 class="text-lg font-semibold mb-2">Privacy First</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Your architecture descriptions are never stored or logged. Diagrams are generated on the fly and delivered directly to your browser. Nothing persists on our servers.</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Diagrams are generated on the fly and delivered directly to your browser. Logged-in users get their history saved — anonymous sessions leave no trace.</p>
         </div>
 
         <div class="feature-card">
@@ -298,8 +299,8 @@
               <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
           </div>
-          <h3 class="text-lg font-semibold mb-2">Session History</h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Every diagram you generate is saved in your browser session. Go back, compare, and restore previous versions without losing any work during your session.</p>
+          <h3 class="text-lg font-semibold mb-2">Persistent History</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Every diagram you generate is saved. Logged-in users get full history across sessions — go back, restore, and re-render any past diagram from any device.</p>
         </div>
       </div>
     </div>
@@ -574,7 +575,7 @@
 
           <div id="diagram-state" class="hidden flex-1 flex flex-col overflow-hidden">
             <div class="flex-1 overflow-auto p-6 flex items-start justify-center">
-              <img id="diagram-image" class="max-w-full h-auto rounded-lg shadow-2xl shadow-gray-400/30 dark:shadow-black/50 cursor-zoom-in transition-transform" alt="Generated diagram" />
+              <img id="diagram-image" class="max-w-full h-auto rounded-lg shadow-2xl shadow-gray-400/30 dark:shadow-black/50 cursor-zoom-in transition-transform" alt="AI-generated AWS architecture diagram" />
             </div>
             <div class="border-t border-gray-200 dark:border-gray-800 px-6 py-3 flex flex-wrap items-center gap-3">
               <button id="btn-download-png" class="action-btn">
