@@ -170,6 +170,11 @@ async function handleGenerate() {
   isGenerating = true;
   currentPrompt = prompt;
 
+  // After 8s still generating, hint that auto-fix may be running
+  const fixingHint = setTimeout(() => {
+    if (isGenerating) setLoadingText('Auto-fixing diagram...');
+  }, 8000);
+
   try {
     // Phase 1: Generate PUML
     setGenerateLoading(true);
@@ -202,14 +207,18 @@ async function handleGenerate() {
       if (!err.authenticated) {
         showRateLimitLogin(err.limit, currentImageUri || null);
       } else {
-        // Logged-in free user hit limit → show Pro upgrade prompt
         showUpgradePrompt(err.limit, currentImageUri || null);
       }
     } else {
-      showError('Oops! That\'s a tricky one.', err.message || 'Can you tweak your prompt and try again?', currentImageUri || null);
+      showError(
+        'Couldn\'t render this one',
+        err.message || 'Try simplifying your prompt or breaking the architecture into smaller parts.',
+        currentImageUri || null
+      );
     }
     showToast(err.message || 'Generation failed', 'error', 4000);
   } finally {
+    clearTimeout(fixingHint);
     setGenerateLoading(false);
     isGenerating = false;
   }

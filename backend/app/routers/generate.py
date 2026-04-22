@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -10,7 +11,10 @@ from app.database import get_db
 from app.middleware.auth import get_current_user_optional
 from app.models import Generation, User
 from app.schemas import GenerateRequest, GenerateResponse
-from app.services.gemini import generate_puml, GeminiError
+from app.services.gemini import generate_puml, fix_puml, GeminiError
+from app.services.plantuml import render_puml, PlantUMLError
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["generate"])
 
@@ -106,6 +110,22 @@ async def generate(
         raise HTTPException(status_code=502, detail=str(e))
     except Exception:
         raise HTTPException(status_code=500, detail="Failed to generate diagram")
+
+    # Validate by rendering server-side. If invalid, ask Gemini to fix it once.
+    try:
+        await render_puml(puml, "svg")
+    except PlantUMLError as render_err:
+        logger.warning("PlantUML validation failed, attempting auto-fix: %s", render_err)
+        try:
+            puml = await fix_puml(puml, str(render_err))
+            await render_puml(puml, "svg")
+            logger.info("Auto-fix succeeded")
+        except (PlantUMLError, GeminiError) as fix_err:
+            logger.error("Auto-fix failed: %s", fix_err)
+            raise HTTPException(
+                status_code=502,
+                detail="We couldn't generate a valid diagram for this architecture. Try simplifying your prompt or being more specific about the components.",
+            )
 
     # Only record successful generations.
     db.add(

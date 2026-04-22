@@ -19,6 +19,11 @@ Rules:
 4. Keep diagrams readable — avoid cluttering with too many elements
 5. Use meaningful labels and arrows with descriptions
 6. When using `actor` elements (for users, external systems, etc.), always add `skinparam actorStyle awesome` to render them as a person silhouette instead of a plain stick figure
+7. Element declaration rules (CRITICAL — violations cause render failures):
+   - NEVER define elements inline inside arrows or relationship lines (e.g., `A --> Component(b, ...)` is INVALID — declare `Component(b, ...)` first, then write `A --> b`)
+   - ALWAYS declare every element before referencing it in any arrow or relationship
+   - Use `note right of X` / `note left of X` / `note bottom of X` — NEVER `note on X` (that syntax does not exist)
+   - `actor` and `user` elements MUST be declared OUTSIDE all group containers (AWSCloudGroup, VPCGroup, RegionGroup, etc.) — place them before or after the group block
 
 Cloud Provider Detection:
 - Infer the cloud provider from service names in the user's prompt
@@ -231,6 +236,24 @@ app --> db : Queries
 @enduml
 """
 
+FIX_PROMPT = """The following PlantUML code failed to render with this error:
+
+Error: {error}
+
+Broken code:
+```
+{puml}
+```
+
+Fix the syntax error. Common mistakes to check:
+- Elements defined inline inside arrows — INVALID: `A --> Component(b, "label", "")` — VALID: declare Component(b, ...) first, then write `A --> b`
+- `note on X` does not exist — use `note right of X`, `note left of X`, or `note bottom of X`
+- `actor` or `user` declared inside group containers (AWSCloudGroup, VPCGroup, etc.) — must be declared outside all groups
+- Elements referenced in arrows before being declared
+
+Output ONLY the corrected PlantUML code — no explanations, no markdown."""
+
+
 ITERATION_PROMPT = """The user wants to modify an existing diagram. Here is the current PlantUML code:
 
 ```
@@ -285,6 +308,45 @@ async def generate_puml(prompt: str, context: str | None = None) -> str:
 
     if "@startuml" not in text:
         raise GeminiError("Gemini did not produce valid PlantUML code")
+
+    return text
+
+
+async def fix_puml(puml: str, error: str) -> str:
+    """Ask Gemini to fix a PlantUML syntax error and return corrected code."""
+    payload = {
+        "system_instruction": {"parts": [{"text": SYSTEM_PROMPT}]},
+        "contents": [{"parts": [{"text": FIX_PROMPT.format(puml=puml, error=error)}]}],
+        "generationConfig": {
+            "temperature": 0.2,
+            "maxOutputTokens": 4096,
+        },
+    }
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.post(
+            GEMINI_URL,
+            params={"key": settings.gemini_api_key},
+            json=payload,
+        )
+
+    if response.status_code != 200:
+        err_msg = response.json().get("error", {}).get("message", "Unknown error")
+        raise GeminiError(f"Gemini fix error: {err_msg}")
+
+    data = response.json()
+    text = data["candidates"][0]["content"]["parts"][0]["text"]
+
+    text = text.strip()
+    if text.startswith("```"):
+        lines = text.split("\n")
+        lines = [l for l in lines if not l.strip().startswith("```")]
+        text = "\n".join(lines).strip()
+
+    text = text.replace("\u00a0", " ")
+
+    if "@startuml" not in text:
+        raise GeminiError("Gemini did not produce valid PlantUML after fix attempt")
 
     return text
 
