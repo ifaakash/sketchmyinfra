@@ -2,7 +2,7 @@
 
 **Turn plain English into production-ready architecture diagrams in seconds.**
 
-[sketchmyinfra.com](https://sketchmyinfra.com) | [Dev environment](https://dev.sketchmyinfra.com)
+[sketchmyinfra.com](https://sketchmyinfra.com) | [About](https://sketchmyinfra.com/about/) | [AWS Diagrams](https://sketchmyinfra.com/aws-architecture-diagram-generator/) | [Lucidchart Alternative](https://sketchmyinfra.com/lucidchart-alternative/)
 
 SketchMyInfra is an AI-powered infrastructure diagram generator. Describe your cloud architecture in natural language and get a rendered PlantUML diagram you can download as SVG or PNG — no drag-and-drop, no manual drawing.
 

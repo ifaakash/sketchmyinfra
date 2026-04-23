@@ -136,7 +136,7 @@ function initNavbar() {
  * Scroll reveal — animate sections into view.
  */
 function initScrollReveal() {
-  const sections = $$('#features, #how-it-works, #testimonials, #blog');
+  const sections = $$('#features, #how-it-works, #testimonials, #blog, #gallery');
   if (!sections.length) return;
 
   sections.forEach(s => s.classList.add('reveal'));
@@ -292,15 +292,29 @@ function handleNew() {
 
 /**
  * Download the current diagram.
+ * SVG: use the already-rendered data URI directly.
+ * PNG: request a fresh PNG render from the backend (currentImageUri is always SVG).
  */
-function handleDownload(format) {
-  if (!currentImageUri) {
+async function handleDownload(format) {
+  if (!currentImageUri || !currentPuml) {
     showToast('No diagram to download', 'error', 2000);
     return;
   }
 
   const timestamp = new Date().toISOString().slice(0, 10);
-  const filename = `sketchmyinfra-${timestamp}.${format === 'png' ? 'png' : 'svg'}`;
+  const filename = `sketchmyinfra-${timestamp}.${format}`;
+
+  if (format === 'png') {
+    showToast('Preparing PNG…', 'info', 2000);
+    try {
+      const result = await apiRender(currentPuml, 'png');
+      downloadDataUri(result.image, filename);
+      showToast(`Downloaded ${filename}`, 'success', 2000);
+    } catch (err) {
+      showToast('PNG export failed — try SVG instead', 'error', 3000);
+    }
+    return;
+  }
 
   downloadDataUri(currentImageUri, filename);
   showToast(`Downloaded ${filename}`, 'success', 2000);
