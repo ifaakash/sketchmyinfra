@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Free AWS Architecture Diagram Generator — AI-Powered, No Signup — SketchMyInfra</title>
+  <meta name="description" content="Generate AWS architecture diagrams from plain English in seconds. Free AI-powered tool — supports EC2, ECS, Lambda, RDS, S3, VPC, ALB, CloudFront and 100+ services. No account required.">
+  <link rel="canonical" href="https://sketchmyinfra.com/aws-architecture-diagram-generator/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sketchmyinfra.com/aws-architecture-diagram-generator/">
+  <meta property="og:title" content="Free AWS Architecture Diagram Generator — SketchMyInfra">
+  <meta property="og:description" content="Generate AWS architecture diagrams from plain English in seconds. Free, AI-powered, no signup required.">
+  <meta property="og:image" content="https://sketchmyinfra.com/assets/og-image.png">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Free AWS Architecture Diagram Generator — SketchMyInfra">
+  <meta name="twitter:description" content="Generate AWS architecture diagrams from plain English in seconds. Free, AI-powered, no signup required.">
+  <meta name="twitter:image" content="https://sketchmyinfra.com/assets/og-image.png">
+
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="../assets/favicon-192.png" type="image/png" sizes="192x192">
+  <link rel="icon" href="../assets/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="../assets/favicon-192.png">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Free AWS Architecture Diagram Generator",
+    "url": "https://sketchmyinfra.com/aws-architecture-diagram-generator/",
+    "description": "AI-powered AWS architecture diagram generator. Describe your AWS infrastructure in plain English and get a diagram in seconds. Free, no signup.",
+    "isPartOf": { "@type": "WebSite", "url": "https://sketchmyinfra.com" }
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            surface: '#070f20',
+            border: '#1a3464',
+            brand: { 50: '#eef2ff', 100: '#e0e7ff', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 800: '#1e2a6e', 900: '#0f1840' },
+            night: { 800: '#0a1628', 900: '#060d1b', 950: '#030810' },
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="../css/style.css?v=4">
+</head>
+<body class="text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300 bg-pattern">
+
+  <!-- NAVBAR -->
+  <nav class="fixed top-0 inset-x-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-800/50">
+    <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2.5 group">
+        <div class="w-9 h-9 bg-brand-600 rounded-lg flex items-center justify-center group-hover:bg-brand-500 transition-colors">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
+            <path d="M6 18l1.5-4.5L11 17l-5 1z" fill="#fbbf24"/>
+            <path d="M7.5 13.5l7.5-7.5 3 3-7.5 7.5z" fill="white" opacity="0.9"/>
+            <circle cx="18" cy="6" r="2.5" fill="#34d399" opacity="0.85"/>
+            <circle cx="6" cy="6" r="2" fill="#818cf8" opacity="0.7"/>
+            <line x1="8" y1="6" x2="15.5" y2="6" stroke="white" stroke-width="0.8" opacity="0.4"/>
+          </svg>
+        </div>
+        <span class="text-xl font-bold tracking-tight">SketchMyInfra</span>
+      </a>
+      <div class="flex items-center gap-6">
+        <a href="/" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Home</a>
+        <a href="/about/" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">About</a>
+        <a href="/#generator" class="bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors">Try Free</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="pt-32 pb-16 px-6">
+    <div class="max-w-3xl mx-auto">
+      <div class="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-full px-4 py-1.5 text-sm text-amber-400 mb-6">
+        ☁️ AWS icon library · 100+ services supported
+      </div>
+      <h1 class="text-4xl md:text-5xl font-extrabold leading-tight mb-6">
+        Free AWS Architecture<br>
+        <span class="text-brand-400">Diagram Generator</span>
+      </h1>
+      <p class="text-xl text-gray-500 dark:text-gray-400 leading-relaxed mb-8">
+        Describe your AWS infrastructure in plain English and get a labeled architecture diagram in seconds — with official AWS icons, VPC grouping, and proper service connections. No drag-and-drop, no templates, no account required.
+      </p>
+      <div class="bg-white/5 dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-xl p-5 mb-8 font-mono text-sm text-gray-400">
+        <span class="text-gray-500 dark:text-gray-600 mr-3">Try:</span>
+        "Three-tier AWS app — CloudFront → ALB → ECS Fargate in private subnets → Aurora PostgreSQL. Users access via HTTPS."
+      </div>
+      <a href="/#generator" class="inline-block bg-brand-600 hover:bg-brand-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-colors text-lg">
+        Generate AWS Diagram Free →
+      </a>
+    </div>
+  </section>
+
+  <!-- AWS SERVICES SUPPORTED -->
+  <section class="py-16 px-6 border-t border-gray-200 dark:border-gray-800">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="text-2xl font-bold mb-2">100+ AWS services supported</h2>
+      <p class="text-gray-500 dark:text-gray-400 mb-8">Uses the official <a href="https://github.com/awslabs/aws-icons-for-plantuml" target="_blank" rel="noopener noreferrer" class="text-brand-400 hover:underline">AWS Icons for PlantUML</a> library (v20.0). Just describe the services you use — the AI picks the right icons.</p>
+
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div class="bg-white/5 dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-3">
+          <div class="text-xs text-amber-400 font-mono mb-1">Compute</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">EC2, Lambda, ECS, EKS, Fargate, Batch, Elastic Beanstalk</div>
+        </div>
+        <div class="bg-white/5 dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-3">
+          <div class="text-xs text-amber-400 font-mono mb-1">Storage</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">S3, EBS, EFS, Glacier, FSx, Storage Gateway</div>
+        </div>
+        <div class="bg-white/5 dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-3">
+          <div class="text-xs text-amber-400 font-mono mb-1">Database</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">RDS, Aurora, DynamoDB, ElastiCache, Redshift, DocumentDB</div>
+        </div>
+        <div class="bg-white/5 dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-3">
+          <div class="text-xs text-amber-400 font-mono mb-1">Networking</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">VPC, ALB, NLB, CloudFront, Route 53, API Gateway, WAF</div>
+        </div>
+        <div class="bg-white/5 dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-3">
+          <div class="text-xs text-amber-400 font-mono mb-1">Integration</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">SQS, SNS, EventBridge, Step Functions, AppSync, MQ</div>
+        </div>
+        <div class="bg-white/5 dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-3">
+          <div class="text-xs text-amber-400 font-mono mb-1">Security</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">IAM, Cognito, Secrets Manager, KMS, Shield, GuardDuty</div>
+        </div>
+        <div class="bg-white/5 dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-3">
+          <div class="text-xs text-amber-400 font-mono mb-1">Analytics</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">Athena, Glue, EMR, Kinesis, QuickSight, Lake Formation</div>
+        </div>
+        <div class="bg-white/5 dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-3">
+          <div class="text-xs text-amber-400 font-mono mb-1">DevOps</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">CodePipeline, CodeBuild, CodeDeploy, CloudFormation, CDK</div>
+        </div>
+        <div class="bg-white/5 dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-3">
+          <div class="text-xs text-amber-400 font-mono mb-1">Observability</div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">CloudWatch, CloudTrail, X-Ray, Systems Manager, Config</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXAMPLE PROMPTS -->
+  <section class="py-16 px-6 border-t border-gray-200 dark:border-gray-800">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="text-2xl font-bold mb-2">Example prompts that work great</h2>
+      <p class="text-gray-500 dark:text-gray-400 mb-8">Copy any of these into the generator to see a diagram in seconds.</p>
+
+      <div class="space-y-4">
+        <div class="bg-white/5 dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+          <div class="text-xs text-brand-400 font-semibold mb-2 uppercase tracking-wide">Serverless API</div>
+          <p class="font-mono text-sm text-gray-500 dark:text-gray-400 leading-relaxed">"AWS serverless REST API — Route 53 → API Gateway → Lambda → DynamoDB. Lambda reads config from Secrets Manager and sends events to SQS."</p>
+        </div>
+        <div class="bg-white/5 dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+          <div class="text-xs text-brand-400 font-semibold mb-2 uppercase tracking-wide">Multi-AZ Web App</div>
+          <p class="font-mono text-sm text-gray-500 dark:text-gray-400 leading-relaxed">"Three-tier AWS app in us-east-1 with two AZs. CloudFront → ALB → EC2 Auto Scaling Group in private subnets → RDS Aurora PostgreSQL with read replica. Bastion host in public subnet."</p>
+        </div>
+        <div class="bg-white/5 dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+          <div class="text-xs text-brand-400 font-semibold mb-2 uppercase tracking-wide">Data Pipeline</div>
+          <p class="font-mono text-sm text-gray-500 dark:text-gray-400 leading-relaxed">"AWS data lake — Kinesis Data Streams ingests events → S3 raw bucket → Glue ETL job → S3 curated bucket → Athena for queries → QuickSight dashboard."</p>
+        </div>
+        <div class="bg-white/5 dark:bg-white/[0.03] border border-gray-200 dark:border-gray-800 rounded-xl p-5">
+          <div class="text-xs text-brand-400 font-semibold mb-2 uppercase tracking-wide">Containerized Microservices</div>
+          <p class="font-mono text-sm text-gray-500 dark:text-gray-400 leading-relaxed">"EKS cluster with three microservices behind ALB. ECR for container images. RDS for persistence. ElastiCache for Redis. CloudWatch for logging and alerts."</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="py-16 px-6 border-t border-gray-200 dark:border-gray-800">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="text-2xl font-bold mb-8">How the AWS diagram generator works</h2>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="text-center">
+          <div class="w-12 h-12 rounded-xl bg-brand-600/20 border border-brand-600/30 text-brand-400 text-xl font-bold flex items-center justify-center mx-auto mb-4">1</div>
+          <h3 class="font-semibold mb-2">Describe your AWS infra</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Type a natural language description of your architecture. Include services, connectivity, AZs, subnets — whatever you know.</p>
+        </div>
+        <div class="text-center">
+          <div class="w-12 h-12 rounded-xl bg-brand-600/20 border border-brand-600/30 text-brand-400 text-xl font-bold flex items-center justify-center mx-auto mb-4">2</div>
+          <h3 class="font-semibold mb-2">AI generates PlantUML</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Gemini AI translates your description into PlantUML using the official AWS icon library paths and proper grouping syntax.</p>
+        </div>
+        <div class="text-center">
+          <div class="w-12 h-12 rounded-xl bg-brand-600/20 border border-brand-600/30 text-brand-400 text-xl font-bold flex items-center justify-center mx-auto mb-4">3</div>
+          <h3 class="font-semibold mb-2">Download SVG or PNG</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400">The diagram renders in seconds. Export as SVG, PNG, or copy the PlantUML code to refine further.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-20 px-6 border-t border-gray-200 dark:border-gray-800 text-center">
+    <div class="max-w-2xl mx-auto">
+      <h2 class="text-3xl font-extrabold mb-4">Generate your AWS diagram now</h2>
+      <p class="text-gray-500 dark:text-gray-400 mb-8">Free, no signup, no credit card. Describe your AWS architecture and get a diagram in under 30 seconds.</p>
+      <a href="/#generator" class="inline-block bg-brand-600 hover:bg-brand-500 text-white font-semibold px-10 py-4 rounded-xl transition-colors text-lg">
+        Start Generating →
+      </a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-gray-200 dark:border-gray-800 py-10 px-6 text-center text-sm text-gray-500 dark:text-gray-500">
+    <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <span>© 2026 SketchMyInfra</span>
+      <div class="flex items-center gap-6">
+        <a href="/" class="hover:text-gray-900 dark:hover:text-white transition-colors">Home</a>
+        <a href="/about/" class="hover:text-gray-900 dark:hover:text-white transition-colors">About</a>
+        <a href="/lucidchart-alternative/" class="hover:text-gray-900 dark:hover:text-white transition-colors">Lucidchart Alternative</a>
+        <a href="/aws-architecture-diagram-generator/" class="hover:text-gray-900 dark:hover:text-white transition-colors">AWS Diagrams</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
