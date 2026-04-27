@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback — SketchMyInfra</title>
+  <meta name="description" content="Share your experience with SketchMyInfra. Real feedback from real engineers using our AI architecture diagram generator.">
+  <link rel="canonical" href="https://sketchmyinfra.com/feedback/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sketchmyinfra.com/feedback/">
+  <meta property="og:title" content="Feedback — SketchMyInfra">
+  <meta property="og:description" content="Real feedback from engineers using SketchMyInfra to generate architecture diagrams.">
+  <meta property="og:image" content="https://sketchmyinfra.com/assets/og-image.png">
+
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="../assets/favicon-192.png" type="image/png" sizes="192x192">
+  <link rel="icon" href="../assets/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="../assets/favicon-192.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            surface: '#070f20',
+            border: '#1a3464',
+            brand: { 50: '#eef2ff', 100: '#e0e7ff', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 800: '#1e2a6e', 900: '#0f1840' },
+            night: { 800: '#0a1628', 900: '#060d1b', 950: '#030810' },
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="../css/style.css?v=4">
+</head>
+<body class="text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300 bg-pattern">
+
+  <!-- NAVBAR -->
+  <nav class="fixed top-0 inset-x-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-800/50">
+    <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2.5 group">
+        <div class="w-9 h-9 bg-brand-600 rounded-lg flex items-center justify-center group-hover:bg-brand-500 transition-colors">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
+            <path d="M6 18l1.5-4.5L11 17l-5 1z" fill="#fbbf24"/>
+            <path d="M7.5 13.5l7.5-7.5 3 3-7.5 7.5z" fill="white" opacity="0.9"/>
+            <circle cx="18" cy="6" r="2.5" fill="#34d399" opacity="0.85"/>
+            <circle cx="6" cy="6" r="2" fill="#818cf8" opacity="0.7"/>
+            <line x1="8" y1="6" x2="15.5" y2="6" stroke="white" stroke-width="0.8" opacity="0.4"/>
+          </svg>
+        </div>
+        <span class="text-xl font-bold tracking-tight">SketchMyInfra</span>
+      </a>
+      <div class="flex items-center gap-6">
+        <a href="/" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Home</a>
+        <a href="/#generator" class="bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors">Try Free</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="pt-32 pb-12 px-6">
+    <div class="max-w-3xl mx-auto text-center">
+      <span class="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 rounded-full px-4 py-1.5 text-sm text-purple-400 mb-6">
+        We listen
+      </span>
+      <h1 class="text-4xl md:text-5xl font-extrabold leading-tight mb-4">
+        What Engineers Are <span class="text-brand-400">Saying</span>
+      </h1>
+      <p class="text-lg text-gray-500 dark:text-gray-400 max-w-xl mx-auto mb-8">
+        Real feedback from real users. Tried SketchMyInfra? Share your experience — it helps us build something better.
+      </p>
+      <button id="open-feedback-btn"
+        onclick="document.getElementById('feedback-form-section').scrollIntoView({behavior:'smooth'})"
+        class="bg-brand-600 hover:bg-brand-500 text-white font-semibold px-8 py-3 rounded-xl transition-colors">
+        Share Your Feedback
+      </button>
+    </div>
+  </section>
+
+  <!-- FEEDBACK WALL -->
+  <section class="py-12 px-6">
+    <div class="max-w-5xl mx-auto">
+      <div id="fb-page-list" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Populated by JS -->
+      </div>
+      <p id="fb-page-empty" class="text-center text-gray-500 py-16 text-sm hidden">No feedback yet. Be the first!</p>
+    </div>
+  </section>
+
+  <!-- FEEDBACK FORM -->
+  <section id="feedback-form-section" class="py-16 px-6 border-t border-gray-200/50 dark:border-gray-800/50">
+    <div class="max-w-lg mx-auto">
+      <!-- Login prompt (shown when not logged in) -->
+      <div id="fb-login-prompt" class="text-center hidden">
+        <div class="w-16 h-16 bg-brand-600/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-brand-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+        </div>
+        <h3 class="text-xl font-bold mb-2">Login to share feedback</h3>
+        <p class="text-gray-500 text-sm mb-6">Sign in with Google or GitHub to submit your feedback.</p>
+        <div class="flex justify-center gap-3">
+          <a href="/api/auth/google/login" class="flex items-center gap-2 text-sm font-medium bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 px-5 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M21.8 10.2h-9.6v3.9h5.5c-.25 1.4-1.55 4.1-5.5 4.1-3.3 0-6-2.75-6-6.15s2.7-6.15 6-6.15c1.9 0 3.15.8 3.87 1.5l2.65-2.55C17.05 3.3 14.85 2.4 12.2 2.4 6.9 2.4 2.6 6.7 2.6 12s4.3 9.6 9.6 9.6c5.55 0 9.2-3.9 9.2-9.4 0-.63-.07-1.1-.15-1.55z" fill="currentColor"/></svg>
+            Google
+          </a>
+          <a href="/api/auth/github/login" class="flex items-center gap-2 text-sm font-medium bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 px-5 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12a11.5 11.5 0 007.86 10.93c.57.1.78-.25.78-.55 0-.27-.01-.98-.02-1.93-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.19-3.08-.12-.29-.52-1.46.11-3.04 0 0 .97-.31 3.18 1.18a11.01 11.01 0 015.79 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.58.23 2.75.11 3.04.74.8 1.18 1.82 1.18 3.08 0 4.42-2.69 5.4-5.25 5.68.41.35.78 1.05.78 2.12 0 1.53-.01 2.77-.01 3.14 0 .3.2.66.79.55A11.5 11.5 0 0023.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>
+            GitHub
+          </a>
+        </div>
+      </div>
+
+      <!-- Feedback form (shown when logged in) -->
+      <div id="fb-form" class="hidden">
+        <h3 class="text-xl font-bold mb-1 text-center">Share your experience</h3>
+        <p class="text-gray-500 text-sm mb-6 text-center">Your feedback is displayed publicly and helps others decide.</p>
+
+        <div class="border border-gray-200 dark:border-gray-800 rounded-2xl p-6 bg-white/5 dark:bg-white/[0.02]">
+          <div class="mb-5">
+            <label class="block text-sm font-medium text-gray-400 mb-2">How would you rate SketchMyInfra?</label>
+            <div id="fb-page-stars" class="flex gap-1.5 cursor-pointer">
+              <svg data-star="1" class="w-10 h-10 text-gray-300 dark:text-gray-700 hover:text-amber-400 transition-colors" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              <svg data-star="2" class="w-10 h-10 text-gray-300 dark:text-gray-700 hover:text-amber-400 transition-colors" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              <svg data-star="3" class="w-10 h-10 text-gray-300 dark:text-gray-700 hover:text-amber-400 transition-colors" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              <svg data-star="4" class="w-10 h-10 text-gray-300 dark:text-gray-700 hover:text-amber-400 transition-colors" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              <svg data-star="5" class="w-10 h-10 text-gray-300 dark:text-gray-700 hover:text-amber-400 transition-colors" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            </div>
+          </div>
+          <div class="mb-5">
+            <label class="block text-sm font-medium text-gray-400 mb-2">Your feedback</label>
+            <textarea id="fb-page-message" rows="4" maxlength="2000"
+              class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/50 resize-y"
+              placeholder="What did you like? What could be better? What's missing?"></textarea>
+          </div>
+          <button id="fb-page-submit"
+            class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold px-6 py-3 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+            Submit Feedback
+          </button>
+          <p id="fb-page-status" class="mt-3 text-sm text-center hidden"></p>
+        </div>
+      </div>
+
+      <!-- Already submitted -->
+      <div id="fb-already" class="hidden text-center">
+        <div class="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <h3 class="text-xl font-bold mb-2">Thanks for your feedback!</h3>
+        <p class="text-gray-500 text-sm">You've already shared your experience. We appreciate it.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-gray-200/50 dark:border-gray-800/50 py-12">
+    <div class="max-w-5xl mx-auto px-6 text-center">
+      <a href="/" class="text-sm text-gray-500 hover:text-gray-300 transition-colors">sketchmyinfra.com</a>
+      <span class="text-gray-700 mx-2">·</span>
+      <a href="/about/" class="text-sm text-gray-500 hover:text-gray-300 transition-colors">About</a>
+      <p class="text-xs text-gray-600 mt-4">Built by engineers, for engineers. Powered by AI & PlantUML.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Standalone feedback page logic — no dependency on main site JS
+    let pageRating = 0;
+    let pageUser = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      loadPageFeedback();
+      await checkPageAuth();
+      initPageStars();
+      document.getElementById('fb-page-submit')?.addEventListener('click', submitPageFeedback);
+    });
+
+    async function checkPageAuth() {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        if (res.ok) {
+          pageUser = await res.json();
+          document.getElementById('fb-login-prompt').classList.add('hidden');
+          document.getElementById('fb-form').classList.remove('hidden');
+        } else {
+          document.getElementById('fb-login-prompt').classList.remove('hidden');
+        }
+      } catch {
+        document.getElementById('fb-login-prompt').classList.remove('hidden');
+      }
+    }
+
+    function initPageStars() {
+      document.querySelectorAll('#fb-page-stars svg').forEach(star => {
+        star.addEventListener('click', () => {
+          pageRating = parseInt(star.dataset.star);
+          document.querySelectorAll('#fb-page-stars svg').forEach(s => {
+            const v = parseInt(s.dataset.star);
+            s.classList.toggle('text-amber-400', v <= pageRating);
+            s.classList.toggle('text-gray-300', v > pageRating);
+            s.classList.toggle('dark:text-gray-700', v > pageRating);
+          });
+        });
+      });
+    }
+
+    async function submitPageFeedback() {
+      const message = document.getElementById('fb-page-message').value.trim();
+      const statusEl = document.getElementById('fb-page-status');
+
+      if (!pageRating) { showPageStatus('Please select a rating', 'text-red-400'); return; }
+      if (!message) { showPageStatus('Please write a message', 'text-red-400'); return; }
+
+      const btn = document.getElementById('fb-page-submit');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ rating: pageRating, message }),
+        });
+
+        if (res.status === 409) {
+          document.getElementById('fb-form').classList.add('hidden');
+          document.getElementById('fb-already').classList.remove('hidden');
+          return;
+        }
+        if (!res.ok) throw new Error('Failed');
+
+        document.getElementById('fb-form').classList.add('hidden');
+        document.getElementById('fb-already').classList.remove('hidden');
+        loadPageFeedback();
+      } catch {
+        showPageStatus('Something went wrong. Try again.', 'text-red-400');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function showPageStatus(msg, cls) {
+      const el = document.getElementById('fb-page-status');
+      el.textContent = msg;
+      el.className = 'mt-3 text-sm text-center ' + cls;
+      el.classList.remove('hidden');
+    }
+
+    async function loadPageFeedback() {
+      try {
+        const res = await fetch('/api/feedback');
+        if (!res.ok) return;
+        const items = await res.json();
+        const list = document.getElementById('fb-page-list');
+        const empty = document.getElementById('fb-page-empty');
+
+        if (!items.length) { empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+
+        list.innerHTML = items.map(fb => {
+          const avatar = fb.avatar_url
+            ? `<img src="${esc(fb.avatar_url)}" class="w-9 h-9 rounded-full object-cover" alt="">`
+            : `<div class="w-9 h-9 bg-brand-600 rounded-full flex items-center justify-center text-sm font-bold text-white">${esc((fb.name||'?')[0].toUpperCase())}</div>`;
+          const stars = Array.from({length:5},(_,i)=>
+            `<svg class="w-4 h-4 ${i<fb.rating?'text-amber-400':'text-gray-300 dark:text-gray-700'}" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>`
+          ).join('');
+          return `
+            <div class="testimonial-card relative">
+              <span class="absolute top-4 right-4 inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Verified</span>
+              <div class="flex items-center gap-1 mb-3">${stars}</div>
+              <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed mb-4">"${esc(fb.message)}"</p>
+              <div class="flex items-center gap-3">
+                ${avatar}
+                <div>
+                  <p class="text-sm font-medium">${esc(fb.name)}</p>
+                  <p class="text-xs text-gray-500">SketchMyInfra user</p>
+                </div>
+              </div>
+            </div>`;
+        }).join('');
+      } catch {}
+    }
+
+    function esc(s) {
+      return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+  </script>
+</body>
+</html>

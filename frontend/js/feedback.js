@@ -1,92 +1,11 @@
 /**
- * Feedback — floating button + modal form + live cards in testimonials grid.
- * Form shown via floating button (logged-in users only).
- * Feedback cards render inside #feedback-list in the testimonials section.
+ * Feedback — floating FAB + live cards in testimonials grid + generation nudge.
+ * The actual form lives on /feedback/ page (standalone).
+ * This file handles: FAB visibility, loading feedback into testimonials, nudge toast.
  */
-
-let selectedRating = 0;
 
 function initFeedback() {
   loadFeedback();
-
-  const stars = document.querySelectorAll('#feedback-stars svg');
-  stars.forEach(star => {
-    star.addEventListener('click', () => {
-      selectedRating = parseInt(star.dataset.star);
-      updateStars();
-    });
-  });
-
-  const btn = document.getElementById('feedback-submit');
-  if (btn) btn.addEventListener('click', submitFeedback);
-}
-
-function updateStars() {
-  document.querySelectorAll('#feedback-stars svg').forEach(star => {
-    const val = parseInt(star.dataset.star);
-    if (val <= selectedRating) {
-      star.classList.remove('text-gray-300', 'dark:text-gray-700');
-      star.classList.add('text-amber-400');
-    } else {
-      star.classList.add('text-gray-300', 'dark:text-gray-700');
-      star.classList.remove('text-amber-400');
-    }
-  });
-}
-
-async function submitFeedback() {
-  const message = document.getElementById('feedback-message').value.trim();
-
-  if (!selectedRating) {
-    showFeedbackStatus('Please select a rating', 'text-red-400');
-    return;
-  }
-  if (!message) {
-    showFeedbackStatus('Please write a message', 'text-red-400');
-    return;
-  }
-
-  const btn = document.getElementById('feedback-submit');
-  btn.disabled = true;
-
-  try {
-    const res = await fetch('/api/feedback', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ rating: selectedRating, message }),
-    });
-
-    if (res.status === 409) {
-      showFeedbackStatus('You have already submitted feedback. Thank you!', 'text-amber-400');
-      return;
-    }
-    if (!res.ok) throw new Error('Failed to submit');
-
-    showFeedbackStatus('Thank you for your feedback!', 'text-emerald-400');
-    document.getElementById('feedback-message').value = '';
-    selectedRating = 0;
-    updateStars();
-
-    // Close modal after a brief delay
-    setTimeout(() => {
-      document.getElementById('feedback-modal').classList.add('hidden');
-      document.body.style.overflow = '';
-    }, 1500);
-
-    loadFeedback();
-  } catch {
-    showFeedbackStatus('Something went wrong. Please try again.', 'text-red-400');
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-function showFeedbackStatus(msg, colorClass) {
-  const el = document.getElementById('feedback-status');
-  el.textContent = msg;
-  el.className = 'mt-2 text-sm text-center ' + colorClass;
-  el.classList.remove('hidden');
 }
 
 async function loadFeedback() {
@@ -139,10 +58,10 @@ function escapeAttr(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-/** Called from auth.js when user state is known */
-function showFeedbackForm(isLoggedIn) {
+/** Called from auth.js — show FAB for all visitors */
+function showFeedbackForm() {
   const fab = document.getElementById('feedback-fab');
-  if (fab) fab.classList.toggle('hidden', !isLoggedIn);
+  if (fab) fab.classList.remove('hidden');
 }
 
 /** Rich toast nudge — called from app.js after 3rd generation */
@@ -156,15 +75,12 @@ function showFeedbackNudge() {
     <p class="font-semibold text-brand-400 mb-1">Enjoying SketchMyInfra?</p>
     <p class="text-gray-400 text-xs mb-3">You've generated 3 diagrams! We'd love your feedback — it takes 30 seconds.</p>
     <div class="flex gap-2">
-      <button onclick="document.getElementById('feedback-modal').classList.remove('hidden');document.body.style.overflow='hidden';this.closest('.border').remove()"
-        class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white transition-colors">Share feedback</button>
+      <a href="/feedback/" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white transition-colors no-underline">Share feedback</a>
       <button onclick="this.closest('.border').remove()"
         class="text-xs font-semibold px-3 py-1.5 rounded-lg text-gray-500 hover:text-gray-300 transition-colors">Later</button>
     </div>
   `;
   container.appendChild(toast);
-
-  // Auto-dismiss after 15 seconds
   setTimeout(() => { if (toast.parentNode) toast.remove(); }, 15000);
 }
 
