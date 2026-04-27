@@ -59,7 +59,8 @@ async def _check_rate_limit(
     don't waste an API call.
     """
     if user and user.tier == "pro":
-        return
+        if user.trial_expires_at is None or user.trial_expires_at > datetime.now(timezone.utc):
+            return
 
     since = datetime.now(timezone.utc) - timedelta(days=1)
 

@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, String, Text, ForeignKey, Index
+from sqlalchemy import DateTime, Integer, String, Text, ForeignKey, Index
 from sqlalchemy.dialects.postgresql import UUID, INET
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -20,6 +20,7 @@ class User(Base):
     oauth_provider: Mapped[str] = mapped_column(String(20), nullable=False)
     oauth_id: Mapped[str] = mapped_column(String(255), nullable=False)
     tier: Mapped[str] = mapped_column(String(20), nullable=False, default="free")
+    trial_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
@@ -54,4 +55,19 @@ class Generation(Base):
     __table_args__ = (
         Index("idx_generations_user_date", "user_id", "created_at", postgresql_where=(user_id.isnot(None))),
         Index("idx_generations_ip_date", "ip_address", "created_at", postgresql_where=(user_id.is_(None))),
+    )
+
+
+class Feedback(Base):
+    __tablename__ = "feedback"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False
+    )
+    rating: Mapped[int] = mapped_column(Integer, nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
     )

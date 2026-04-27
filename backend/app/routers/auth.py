@@ -165,6 +165,7 @@ async def me(user: User = Depends(get_current_user)) -> dict:
         "name": user.name,
         "avatar_url": user.avatar_url,
         "tier": user.tier,
+        "trial_expires_at": user.trial_expires_at.isoformat() if user.trial_expires_at else None,
         "oauth_provider": user.oauth_provider,
     }
 
