@@ -7,5 +7,5 @@ data:
   block-aaaa.override: |
     template IN AAAA . {
         rcode NOERROR
-        answer "{{ .Name }} 0 IN SOA ns.dns.{{ .Zone }} hostmaster.{{ .Zone }} 0 60 60 60 0"
+        answer "{{ .Name }} 0 IN SOA ns.dns.cluster.local. hostmaster.cluster.local. 0 60 60 60 0"
     }
