@@ -466,7 +466,7 @@
         </p>
       </div>
 
-      <div class="grid md:grid-cols-2 gap-6" id="gallery-grid">
+      <div class="grid md:grid-cols-3 gap-6" id="gallery-grid">
         <!-- Cards injected by gallery.js -->
       </div>
 
@@ -696,7 +696,18 @@
   <script src="js/ui.js?v=4"></script>
   <script src="js/history.js?v=5"></script>
   <script src="js/auth.js?v=6"></script>
-  <script src="js/gallery.js?v=1"></script>
+  <script src="js/gallery.js?v=2"></script>
+
+  <!-- Lightbox -->
+  <div id="gallery-lightbox" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onclick="closeLightbox()">
+    <div class="relative max-w-4xl w-full" onclick="event.stopPropagation()">
+      <button onclick="closeLightbox()" class="absolute -top-10 right-0 text-white/70 hover:text-white text-sm flex items-center gap-1">
+        <span>✕</span> Close
+      </button>
+      <img class="lb-img w-full h-auto max-h-[80vh] object-contain rounded-xl bg-white/5 p-4">
+      <p class="lb-caption mt-3 text-center text-xs text-gray-400"></p>
+    </div>
+  </div>
   <script src="js/app.js?v=5"></script>
 </body>
 </html>
