@@ -31,6 +31,7 @@ async function refreshAuth() {
       window.currentUser = user;
       renderLoggedIn(user);
       if (typeof loadHistoryFromAPI === 'function') loadHistoryFromAPI();
+      if (typeof showFeedbackForm === 'function') showFeedbackForm(true);
     } else {
       window.currentUser = null;
       renderLoggedOut();
