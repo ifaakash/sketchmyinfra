@@ -35,11 +35,13 @@ async function refreshAuth() {
     } else {
       window.currentUser = null;
       renderLoggedOut();
+      if (typeof showFeedbackForm === 'function') showFeedbackForm(false);
     }
   } catch (err) {
     // Network hiccup — treat as logged out so the UI still works.
     window.currentUser = null;
     renderLoggedOut();
+    if (typeof showFeedbackForm === 'function') showFeedbackForm(false);
   }
 }
 
