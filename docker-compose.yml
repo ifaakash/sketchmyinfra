@@ -7,7 +7,8 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./frontend:/usr/share/nginx/html:ro
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     restart: unless-stopped
 
   api:
@@ -15,8 +16,13 @@ services:
     env_file: .env
     expose:
       - "8000"
-    volumes:
-      - ./test_output:/backend/test_output
+    entrypoint: ["/bin/sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     depends_on:
       db:
         condition: service_healthy
@@ -42,7 +48,7 @@ services:
   plantuml:
     image: plantuml/plantuml-server:jetty
     environment:
-      JAVA_TOOL_OPTIONS: "-DPLANTUML_SECURITY_PROFILE=UNSECURE"
+      JAVA_TOOL_OPTIONS: "-DPLANTUML_SECURITY_PROFILE=UNSECURE -Djava.net.preferIPv4Stack=true"
     expose:
       - "8080"
     restart: unless-stopped
