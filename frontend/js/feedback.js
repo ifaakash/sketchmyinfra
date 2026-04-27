@@ -1,6 +1,7 @@
 /**
- * Feedback — star rating form + live display of user feedback.
- * Form shown only when user is logged in. Feedback list is public.
+ * Feedback — floating button + modal form + live cards in testimonials grid.
+ * Form shown via floating button (logged-in users only).
+ * Feedback cards render inside #feedback-list in the testimonials section.
  */
 
 let selectedRating = 0;
@@ -35,7 +36,6 @@ function updateStars() {
 
 async function submitFeedback() {
   const message = document.getElementById('feedback-message').value.trim();
-  const statusEl = document.getElementById('feedback-status');
 
   if (!selectedRating) {
     showFeedbackStatus('Please select a rating', 'text-red-400');
@@ -67,7 +67,13 @@ async function submitFeedback() {
     document.getElementById('feedback-message').value = '';
     selectedRating = 0;
     updateStars();
-    document.getElementById('feedback-form-wrapper').classList.add('hidden');
+
+    // Close modal after a brief delay
+    setTimeout(() => {
+      document.getElementById('feedback-modal').classList.add('hidden');
+      document.body.style.overflow = '';
+    }, 1500);
+
     loadFeedback();
   } catch {
     showFeedbackStatus('Something went wrong. Please try again.', 'text-red-400');
@@ -79,7 +85,7 @@ async function submitFeedback() {
 function showFeedbackStatus(msg, colorClass) {
   const el = document.getElementById('feedback-status');
   el.textContent = msg;
-  el.className = 'mt-2 text-sm ' + colorClass;
+  el.className = 'mt-2 text-sm text-center ' + colorClass;
   el.classList.remove('hidden');
 }
 
@@ -90,29 +96,32 @@ async function loadFeedback() {
     const items = await res.json();
 
     const list = document.getElementById('feedback-list');
-    const empty = document.getElementById('feedback-empty');
+    if (!list) return;
 
     if (!items.length) {
-      empty.classList.remove('hidden');
+      list.innerHTML = '';
       return;
     }
 
-    empty.classList.add('hidden');
-    list.innerHTML = items.map(fb => `
-      <div class="border border-gray-200 dark:border-gray-800 rounded-xl p-5 bg-white/5 dark:bg-white/[0.02]">
-        <div class="flex items-center justify-between mb-3">
+    list.innerHTML = items.map(fb => {
+      const avatar = fb.avatar_url
+        ? `<img src="${escapeAttr(fb.avatar_url)}" class="w-9 h-9 rounded-full object-cover" alt="">`
+        : `<div class="w-9 h-9 bg-brand-600 rounded-full flex items-center justify-center text-sm font-bold text-white">${escapeHtml((fb.name || '?')[0].toUpperCase())}</div>`;
+
+      return `
+        <div class="testimonial-card relative">
+          <span class="absolute top-4 right-4 inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Verified user</span>
+          <div class="flex items-center gap-1 mb-3">${renderStars(fb.rating)}</div>
+          <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed mb-4">"${escapeHtml(fb.message)}"</p>
           <div class="flex items-center gap-3">
-            ${fb.avatar_url
-              ? `<img src="${escapeAttr(fb.avatar_url)}" class="w-8 h-8 rounded-full" alt="">`
-              : `<div class="w-8 h-8 bg-brand-600 rounded-full flex items-center justify-center text-xs font-bold text-white">${escapeHtml((fb.name || '?')[0].toUpperCase())}</div>`
-            }
-            <span class="text-sm font-medium">${escapeHtml(fb.name)}</span>
+            ${avatar}
+            <div>
+              <p class="text-sm font-medium">${escapeHtml(fb.name)}</p>
+              <p class="text-xs text-gray-500">SketchMyInfra user</p>
+            </div>
           </div>
-          <div class="flex gap-0.5">${renderStars(fb.rating)}</div>
-        </div>
-        <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">${escapeHtml(fb.message)}</p>
-      </div>
-    `).join('');
+        </div>`;
+    }).join('');
   } catch { /* silent */ }
 }
 
@@ -123,17 +132,17 @@ function renderStars(n) {
 }
 
 function escapeHtml(s) {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function escapeAttr(s) {
-  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 /** Called from auth.js when user state is known */
 function showFeedbackForm(isLoggedIn) {
-  const wrapper = document.getElementById('feedback-form-wrapper');
-  if (wrapper) wrapper.classList.toggle('hidden', !isLoggedIn);
+  const fab = document.getElementById('feedback-fab');
+  if (fab) fab.classList.toggle('hidden', !isLoggedIn);
 }
 
 document.addEventListener('DOMContentLoaded', initFeedback);
