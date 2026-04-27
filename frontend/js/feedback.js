@@ -145,4 +145,27 @@ function showFeedbackForm(isLoggedIn) {
   if (fab) fab.classList.toggle('hidden', !isLoggedIn);
 }
 
+/** Rich toast nudge — called from app.js after 3rd generation */
+function showFeedbackNudge() {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = 'border rounded-xl px-5 py-4 shadow-lg bg-brand-600/10 border-brand-500/30 text-sm max-w-sm';
+  toast.innerHTML = `
+    <p class="font-semibold text-brand-400 mb-1">Enjoying SketchMyInfra?</p>
+    <p class="text-gray-400 text-xs mb-3">You've generated 3 diagrams! We'd love your feedback — it takes 30 seconds.</p>
+    <div class="flex gap-2">
+      <button onclick="document.getElementById('feedback-modal').classList.remove('hidden');document.body.style.overflow='hidden';this.closest('.border').remove()"
+        class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white transition-colors">Share feedback</button>
+      <button onclick="this.closest('.border').remove()"
+        class="text-xs font-semibold px-3 py-1.5 rounded-lg text-gray-500 hover:text-gray-300 transition-colors">Later</button>
+    </div>
+  `;
+  container.appendChild(toast);
+
+  // Auto-dismiss after 15 seconds
+  setTimeout(() => { if (toast.parentNode) toast.remove(); }, 15000);
+}
+
 document.addEventListener('DOMContentLoaded', initFeedback);

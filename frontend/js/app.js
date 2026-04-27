@@ -195,6 +195,16 @@ async function handleGenerate() {
     showToast('Diagram generated successfully', 'success', 2000);
     $('#btn-retry')?.classList.remove('hidden');
 
+    // Nudge for feedback after 3rd generation (once only, logged-in users)
+    if (window.currentUser && !localStorage.getItem('smi_feedback_nudged')) {
+      const count = parseInt(localStorage.getItem('smi_gen_count') || '0') + 1;
+      localStorage.setItem('smi_gen_count', String(count));
+      if (count >= 3) {
+        localStorage.setItem('smi_feedback_nudged', '1');
+        setTimeout(() => showFeedbackNudge(), 2000);
+      }
+    }
+
     // Add to history
     historyAdd({
       prompt: currentPrompt,
