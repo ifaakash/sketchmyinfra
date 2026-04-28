@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     # JWT
     jwt_secret: str = "change-me-in-production"
     jwt_algorithm: str = "HS256"
-    jwt_expiry_days: int = 7
+    jwt_expiry_days: int = 1
 
     # Gemini
     gemini_api_key: str = ""
