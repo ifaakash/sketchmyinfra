@@ -101,7 +101,6 @@
       <!-- Nav Links -->
       <div class="hidden md:flex items-center gap-8">
         <a href="#features" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Features</a>
-        <a href="#how-it-works" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">How It Works</a>
         <a href="#testimonials" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Testimonials</a>
         <a href="#blog" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Blog</a>
         <a href="#gallery" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Gallery</a>
@@ -149,7 +148,6 @@
     <div id="mobile-menu" class="hidden md:hidden border-t border-gray-200 dark:border-gray-800 bg-white/95 dark:bg-gray-950/95 backdrop-blur-lg">
       <div class="px-6 py-4 space-y-3">
         <a href="#features" class="block text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">Features</a>
-        <a href="#how-it-works" class="block text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">How It Works</a>
         <a href="#testimonials" class="block text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">Testimonials</a>
         <a href="#blog" class="block text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">Blog</a>
         <a href="#gallery" class="block text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">Gallery</a>
@@ -183,10 +181,17 @@
         <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 dark:from-brand-400 to-emerald-500 dark:to-emerald-400">Diagram Generator</span>
       </h1>
 
-      <p class="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+      <p class="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-5 leading-relaxed">
         Turn plain English into production-ready architecture diagrams in seconds.
         Powered by AI and PlantUML — no drag-and-drop, no manual drawing, just describe and generate.
       </p>
+
+      <!-- New feature highlight -->
+      <a href="/draw/" target="_blank" class="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-5 py-2 mb-10 text-sm text-emerald-400 hover:bg-emerald-500/15 transition-colors group">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        New: Freehand whiteboard drawing — sketch diagrams your way, completely free
+        <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+      </a>
 
       <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
         <a href="#generator" class="w-full sm:w-auto bg-brand-600 hover:bg-brand-500 text-white font-semibold text-base px-8 py-3.5 rounded-xl transition-all hover:shadow-lg hover:shadow-brand-600/25">
@@ -700,6 +705,19 @@
     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg>
     Feedback
   </a>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-gray-200 dark:border-gray-800 py-10 px-6 text-center text-sm text-gray-500 dark:text-gray-500">
+    <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <span>&copy; 2026 SketchMyInfra</span>
+      <div class="flex items-center gap-6">
+        <a href="/about/" class="hover:text-gray-900 dark:hover:text-white transition-colors">About</a>
+        <a href="/draw/" target="_blank" class="hover:text-gray-900 dark:hover:text-white transition-colors">Draw</a>
+        <a href="/feedback/" class="hover:text-gray-900 dark:hover:text-white transition-colors">Feedback</a>
+        <a href="/releases/" class="hover:text-gray-900 dark:hover:text-white transition-colors">Releases</a>
+      </div>
+    </div>
+  </footer>
 
   <!-- Scripts — ?v= cache-buster, bump on each deploy -->
   <script src="js/mock.js?v=4"></script>
