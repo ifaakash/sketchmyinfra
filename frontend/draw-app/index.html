@@ -33,6 +33,11 @@
       border-bottom: 1px solid rgba(26, 52, 100, 0.5);
       position: relative;
       z-index: 100;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .navbar[data-theme="light"] {
+      background: rgba(255, 255, 255, 0.85);
+      border-bottom-color: rgba(229, 231, 235, 0.7);
     }
     .navbar a {
       text-decoration: none;
@@ -42,7 +47,10 @@
       transition: color 0.15s;
     }
     .navbar a:hover { color: #fff; }
+    .navbar[data-theme="light"] a { color: #6b7280; }
+    .navbar[data-theme="light"] a:hover { color: #111827; }
     .navbar .active { color: #818cf8; font-weight: 600; }
+    .navbar[data-theme="light"] .active { color: #4f46e5; }
     .nav-logo {
       display: flex;
       align-items: center;
@@ -50,7 +58,9 @@
       color: #f3f4f6;
       font-size: 1.125rem;
       font-weight: 700;
+      transition: color 0.3s;
     }
+    .navbar[data-theme="light"] .nav-logo { color: #111827; }
     .logo-box {
       width: 2rem;
       height: 2rem;
