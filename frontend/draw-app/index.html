@@ -21,6 +21,8 @@
       color: #e5e7eb;
       height: 100vh;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
     .navbar {
       height: 56px;
@@ -71,7 +73,7 @@
       justify-content: center;
     }
     .nav-links { display: flex; align-items: center; gap: 1.5rem; }
-    #excalidraw-root { height: calc(100vh - 56px); width: 100%; }
+    #excalidraw-root { flex: 1; width: 100%; overflow: hidden; }
   </style>
 </head>
 <body>
@@ -91,7 +93,7 @@
     <div class="nav-links">
       <a href="/">Home</a>
       <a href="/#gallery">Gallery</a>
-      <span class="active">Draw</span>
+      <a href="/draw/" class="active">Draw</a>
       <a href="/about/">About</a>
       <div id="theme-toggle-slot"></div>
     </div>

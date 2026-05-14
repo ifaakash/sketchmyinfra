@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import DateTime, Integer, String, Text, ForeignKey, Index
-from sqlalchemy.dialects.postgresql import UUID, INET
+from sqlalchemy.dialects.postgresql import UUID, INET, JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -55,6 +55,31 @@ class Generation(Base):
     __table_args__ = (
         Index("idx_generations_user_date", "user_id", "created_at", postgresql_where=(user_id.isnot(None))),
         Index("idx_generations_ip_date", "ip_address", "created_at", postgresql_where=(user_id.is_(None))),
+    )
+
+
+class Drawing(Base):
+    __tablename__ = "drawings"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    share_id: Mapped[str] = mapped_column(String(16), unique=True, nullable=False, index=True)
+    title: Mapped[str] = mapped_column(String(255), nullable=False, default="Untitled")
+    data: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    __table_args__ = (
+        Index("idx_drawings_user_updated", "user_id", "updated_at"),
     )
 
 
