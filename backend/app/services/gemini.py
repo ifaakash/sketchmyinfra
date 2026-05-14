@@ -1,6 +1,31 @@
+import re
+
 import httpx
 
 from app.config import settings
+
+def _sanitize_puml(text: str) -> str:
+    """Strip inline comments that PlantUML cannot parse.
+
+    Gemini sometimes appends // or ' comments on the same line as code
+    (e.g. after a `{`). PlantUML treats these as syntax errors.
+    Only full-line ' comments are valid in PlantUML.
+    """
+    lines = []
+    for line in text.split("\n"):
+        stripped = line.strip()
+        # Preserve full-line comments (line starts with ')
+        if stripped.startswith("'"):
+            lines.append(line)
+            continue
+        # Remove trailing // comments (not inside strings)
+        line = re.sub(r'\s*//\s.*$', '', line)
+        # Remove trailing ' comments after code — only when ' follows a { or }
+        # to avoid stripping legitimate apostrophes in labels
+        line = re.sub(r"([{}])\s+'[^']*$", r'\1', line)
+        lines.append(line)
+    return "\n".join(lines)
+
 
 GEMINI_URL = (
     f"https://generativelanguage.googleapis.com/v1beta/models/"
@@ -24,6 +49,7 @@ Rules:
    - ALWAYS declare every element before referencing it in any arrow or relationship
    - Use `note right of X` / `note left of X` / `note bottom of X` — NEVER `note on X` (that syntax does not exist)
    - `actor` and `user` elements MUST be declared OUTSIDE all group containers (AWSCloudGroup, VPCGroup, RegionGroup, etc.) — place them before or after the group block
+   - NEVER use inline comments — no `//` or `'` comments after code on the same line. PlantUML only supports full-line comments starting with `'`
 
 Cloud Provider Detection:
 - Infer the cloud provider from service names in the user's prompt
@@ -252,6 +278,8 @@ Fix the syntax error. Common mistakes to check:
 - `note on X` does not exist — use `note right of X`, `note left of X`, or `note bottom of X`
 - `actor` or `user` declared inside group containers (AWSCloudGroup, VPCGroup, etc.) — must be declared outside all groups
 - Elements referenced in arrows before being declared
+- Inline comments (`//` or `'` after code on the same line) — PlantUML only supports full-line `'` comments
+- `<<stereotype>>` combined with `#color` on package/rectangle declarations — use one or the other, or use a separate `skinparam` instead
 
 Output ONLY the corrected PlantUML code — no explanations, no markdown."""
 
@@ -308,6 +336,8 @@ async def generate_puml(prompt: str, context: str | None = None) -> str:
     # Replace non-breaking spaces (U+00A0) with regular spaces — PlantUML rejects them
     text = text.replace("\u00a0", " ")
 
+    text = _sanitize_puml(text)
+
     if "@startuml" not in text:
         raise GeminiError("Gemini did not produce valid PlantUML code")
 
@@ -346,6 +376,8 @@ async def fix_puml(puml: str, error: str) -> str:
         text = "\n".join(lines).strip()
 
     text = text.replace("\u00a0", " ")
+
+    text = _sanitize_puml(text)
 
     if "@startuml" not in text:
         raise GeminiError("Gemini did not produce valid PlantUML after fix attempt")
