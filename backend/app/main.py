@@ -1,8 +1,21 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.routers import auth, feedback, generate, history, render, test
+
+
+class _HealthCheckFilter(logging.Filter):
+    """Suppress noisy health-check access logs from probes."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        msg = record.getMessage()
+        return "/api/health" not in msg
+
+
+logging.getLogger("uvicorn.access").addFilter(_HealthCheckFilter())
 
 
 def create_app() -> FastAPI:
