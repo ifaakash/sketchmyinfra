@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Excalidraw } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
-import { drawingsAPI, checkAuth } from "../api";
+import { drawingsAPI } from "../api";
 import { localDrawings } from "../storage";
 
 const barStyle = {
@@ -26,17 +26,12 @@ const btnStyle = {
   transition: "background 0.15s",
 };
 
-export default function SharedView({ theme }) {
+export default function SharedView({ theme, user }) {
   const { shareId } = useParams();
   const navigate = useNavigate();
-  const [user, setUser] = useState(undefined);
   const [drawing, setDrawing] = useState(null);
   const [error, setError] = useState(null);
   const [forking, setForking] = useState(false);
-
-  useEffect(() => {
-    checkAuth().then((u) => setUser(u || null));
-  }, []);
 
   useEffect(() => {
     if (!shareId) return;

@@ -25,6 +25,7 @@ def upgrade() -> None:
         sa.Column("share_id", sa.String(16), unique=True, nullable=False),
         sa.Column("title", sa.String(255), nullable=False, server_default="Untitled"),
         sa.Column("data", JSONB, nullable=False),
+        sa.Column("thumbnail", sa.Text(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
     )

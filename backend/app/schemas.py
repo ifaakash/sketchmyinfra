@@ -41,11 +41,13 @@ class HistoryResponse(BaseModel):
 class DrawingCreate(BaseModel):
     title: str = Field(default="Untitled", max_length=255)
     data: dict = Field(..., description="Excalidraw scene JSON (elements, appState, files)")
+    thumbnail: str | None = Field(default=None, description="Base64 PNG data URL thumbnail")
 
 
 class DrawingUpdate(BaseModel):
     title: str | None = Field(default=None, max_length=255)
     data: dict | None = Field(default=None, description="Excalidraw scene JSON")
+    thumbnail: str | None = Field(default=None, description="Base64 PNG data URL thumbnail")
 
 
 class DrawingOut(BaseModel):
@@ -53,6 +55,7 @@ class DrawingOut(BaseModel):
     share_id: str
     title: str
     data: dict
+    thumbnail: str | None
     created_at: str
     updated_at: str
 
@@ -61,6 +64,7 @@ class DrawingListItem(BaseModel):
     id: str
     share_id: str
     title: str
+    thumbnail: str | None
     created_at: str
     updated_at: str
 

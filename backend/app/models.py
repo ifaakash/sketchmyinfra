@@ -68,6 +68,7 @@ class Drawing(Base):
     share_id: Mapped[str] = mapped_column(String(16), unique=True, nullable=False, index=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False, default="Untitled")
     data: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    thumbnail: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

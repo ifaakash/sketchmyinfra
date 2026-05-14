@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { drawingsAPI, checkAuth } from "../api";
+import { drawingsAPI } from "../api";
 import { localDrawings } from "../storage";
 
 function timeAgo(iso) {
@@ -12,28 +12,21 @@ function timeAgo(iso) {
   return new Date(iso).toLocaleDateString();
 }
 
-const styles = {
+const S = {
   wrapper: {
     height: "calc(100vh - 56px)",
     overflowY: "auto",
     background: "#070f20",
     padding: "2rem",
   },
-  container: {
-    maxWidth: 960,
-    margin: "0 auto",
-  },
+  container: { maxWidth: 960, margin: "0 auto" },
   header: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: "1.5rem",
   },
-  title: {
-    fontSize: "1.5rem",
-    fontWeight: 700,
-    color: "#f3f4f6",
-  },
+  title: { fontSize: "1.5rem", fontWeight: 700, color: "#f3f4f6" },
   newBtn: {
     display: "inline-flex",
     alignItems: "center",
@@ -57,12 +50,34 @@ const styles = {
     background: "#0f1729",
     border: "1px solid #1a3464",
     borderRadius: 12,
-    padding: "1.25rem",
+    overflow: "hidden",
     cursor: "pointer",
     transition: "border-color 0.15s, transform 0.1s",
     display: "flex",
     flexDirection: "column",
-    gap: 12,
+  },
+  thumb: {
+    width: "100%",
+    height: 150,
+    objectFit: "cover",
+    background: "#111827",
+    display: "block",
+  },
+  thumbPlaceholder: {
+    width: "100%",
+    height: 150,
+    background: "#111827",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#374151",
+  },
+  cardBody: {
+    padding: "1rem 1.25rem",
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+    flex: 1,
   },
   cardTitle: {
     fontSize: "1rem",
@@ -72,15 +87,8 @@ const styles = {
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
   },
-  cardMeta: {
-    fontSize: "0.75rem",
-    color: "#6b7280",
-  },
-  cardActions: {
-    display: "flex",
-    gap: 8,
-    marginTop: "auto",
-  },
+  cardMeta: { fontSize: "0.75rem", color: "#6b7280" },
+  cardActions: { display: "flex", gap: 8, marginTop: "auto" },
   smallBtn: {
     padding: "4px 10px",
     fontSize: "0.75rem",
@@ -117,11 +125,6 @@ const styles = {
     padding: "4rem 1rem",
     color: "#6b7280",
   },
-  emptyIcon: {
-    fontSize: "3rem",
-    marginBottom: "1rem",
-    opacity: 0.4,
-  },
   migrateBanner: {
     background: "#1e1b4b",
     border: "1px solid #3730a3",
@@ -144,17 +147,73 @@ const styles = {
     borderRadius: 6,
     cursor: "pointer",
   },
-  loading: {
-    textAlign: "center",
-    padding: "4rem",
-    color: "#6b7280",
-    fontSize: "0.9rem",
-  },
 };
 
-export default function Gallery() {
+const placeholderIcon = (
+  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#374151" strokeWidth="1.5">
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <path d="M8 12h8M12 8v8" />
+  </svg>
+);
+
+function DrawingCard({ drawing, isLocal, onDelete, onShare, copiedId }) {
   const navigate = useNavigate();
-  const [user, setUser] = useState(undefined); // undefined=loading, null=anon
+  const thumb = drawing.thumbnail;
+
+  return (
+    <div
+      style={S.card}
+      onClick={() =>
+        navigate(isLocal ? `/local/${drawing.id}` : `/edit/${drawing.share_id}`)
+      }
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = "#3b82f6";
+        e.currentTarget.style.transform = "translateY(-2px)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = "#1a3464";
+        e.currentTarget.style.transform = "none";
+      }}
+    >
+      {thumb ? (
+        <img src={thumb} alt="" style={S.thumb} />
+      ) : (
+        <div style={S.thumbPlaceholder}>{placeholderIcon}</div>
+      )}
+      <div style={S.cardBody}>
+        <div style={S.cardTitle}>{drawing.title}</div>
+        <div style={S.cardMeta}>
+          Updated {timeAgo(drawing.updated_at)}
+        </div>
+        <div style={S.cardActions}>
+          {!isLocal && onShare && (
+            <button
+              style={S.smallBtn}
+              onClick={(e) => {
+                e.stopPropagation();
+                onShare(drawing.share_id);
+              }}
+            >
+              {copiedId === drawing.share_id ? "Copied!" : "Share"}
+            </button>
+          )}
+          <button
+            style={S.deleteBtn}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(drawing, isLocal);
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function Gallery({ user }) {
+  const navigate = useNavigate();
   const [cloudDrawings, setCloudDrawings] = useState([]);
   const [localList, setLocalList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -162,13 +221,11 @@ export default function Gallery() {
   const [migrating, setMigrating] = useState(false);
 
   useEffect(() => {
+    if (user === undefined) return; // still resolving auth
     let cancelled = false;
-    (async () => {
-      const u = await checkAuth();
-      if (cancelled) return;
-      setUser(u || null);
 
-      if (u) {
+    (async () => {
+      if (user) {
         try {
           const res = await drawingsAPI.list();
           if (!cancelled) setCloudDrawings(res.items);
@@ -181,26 +238,22 @@ export default function Gallery() {
         setLoading(false);
       }
     })();
+
     return () => { cancelled = true; };
+  }, [user]);
+
+  const handleDelete = useCallback(async (drawing, isLocal) => {
+    if (!confirm(`Delete "${drawing.title}"?`)) return;
+    if (isLocal) {
+      localDrawings.delete(drawing.id);
+      setLocalList(localDrawings.list());
+    } else {
+      await drawingsAPI.delete(drawing.id);
+      setCloudDrawings((prev) => prev.filter((d) => d.id !== drawing.id));
+    }
   }, []);
 
-  const handleDelete = useCallback(
-    async (e, drawing, isLocal) => {
-      e.stopPropagation();
-      if (!confirm(`Delete "${drawing.title}"?`)) return;
-      if (isLocal) {
-        localDrawings.delete(drawing.id);
-        setLocalList(localDrawings.list());
-      } else {
-        await drawingsAPI.delete(drawing.id);
-        setCloudDrawings((prev) => prev.filter((d) => d.id !== drawing.id));
-      }
-    },
-    []
-  );
-
-  const handleShare = useCallback((e, shareId) => {
-    e.stopPropagation();
+  const handleShare = useCallback((shareId) => {
     const url = `${window.location.origin}/draw/s/${shareId}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopiedId(shareId);
@@ -210,10 +263,9 @@ export default function Gallery() {
 
   const handleMigrateAll = useCallback(async () => {
     setMigrating(true);
-    const locals = localDrawings.list();
-    for (const d of locals) {
+    for (const d of localDrawings.list()) {
       try {
-        await drawingsAPI.create({ title: d.title, data: d.data });
+        await drawingsAPI.create({ title: d.title, data: d.data, thumbnail: d.thumbnail });
       } catch (err) {
         console.error("Migration failed for:", d.title, err);
       }
@@ -225,19 +277,12 @@ export default function Gallery() {
     setMigrating(false);
   }, []);
 
-  const openDrawing = useCallback(
-    (drawing, isLocal) => {
-      if (isLocal) {
-        navigate(`/local/${drawing.id}`);
-      } else {
-        navigate(`/edit/${drawing.share_id}`);
-      }
-    },
-    [navigate]
-  );
-
-  if (loading) {
-    return <div style={styles.loading}>Loading drawings...</div>;
+  if (loading || user === undefined) {
+    return (
+      <div style={{ ...S.wrapper, display: "flex", alignItems: "center", justifyContent: "center", color: "#6b7280" }}>
+        Loading drawings...
+      </div>
+    );
   }
 
   const hasCloud = cloudDrawings.length > 0;
@@ -245,12 +290,12 @@ export default function Gallery() {
   const isEmpty = !hasCloud && !hasLocal;
 
   return (
-    <div style={styles.wrapper}>
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <h1 style={styles.title}>My Drawings</h1>
+    <div style={S.wrapper}>
+      <div style={S.container}>
+        <div style={S.header}>
+          <h1 style={S.title}>My Drawings</h1>
           <button
-            style={styles.newBtn}
+            style={S.newBtn}
             onClick={() => navigate("/new")}
             onMouseEnter={(e) => (e.target.style.background = "#4338ca")}
             onMouseLeave={(e) => (e.target.style.background = "#4f46e5")}
@@ -264,8 +309,8 @@ export default function Gallery() {
         </div>
 
         {isEmpty && (
-          <div style={styles.empty}>
-            <div style={styles.emptyIcon}>
+          <div style={S.empty}>
+            <div style={{ marginBottom: "1rem", opacity: 0.4 }}>
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4b5563" strokeWidth="1.5">
                 <rect x="3" y="3" width="18" height="18" rx="2" />
                 <path d="M8 12h8M12 8v8" />
@@ -283,39 +328,17 @@ export default function Gallery() {
         {/* Cloud drawings */}
         {user && hasCloud && (
           <>
-            <div style={styles.sectionLabel}>Cloud Drawings</div>
-            <div style={styles.grid}>
+            <div style={S.sectionLabel}>Cloud Drawings</div>
+            <div style={S.grid}>
               {cloudDrawings.map((d) => (
-                <div
+                <DrawingCard
                   key={d.id}
-                  style={styles.card}
-                  onClick={() => openDrawing(d, false)}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "#3b82f6";
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "#1a3464";
-                    e.currentTarget.style.transform = "none";
-                  }}
-                >
-                  <div style={styles.cardTitle}>{d.title}</div>
-                  <div style={styles.cardMeta}>Updated {timeAgo(d.updated_at)}</div>
-                  <div style={styles.cardActions}>
-                    <button
-                      style={styles.smallBtn}
-                      onClick={(e) => handleShare(e, d.share_id)}
-                    >
-                      {copiedId === d.share_id ? "Copied!" : "Share"}
-                    </button>
-                    <button
-                      style={styles.deleteBtn}
-                      onClick={(e) => handleDelete(e, d, false)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
+                  drawing={d}
+                  isLocal={false}
+                  onDelete={handleDelete}
+                  onShare={handleShare}
+                  copiedId={copiedId}
+                />
               ))}
             </div>
           </>
@@ -324,17 +347,13 @@ export default function Gallery() {
         {/* Migration banner */}
         {user && hasLocal && (
           <>
-            <div style={styles.sectionLabel}>Local Drawings</div>
-            <div style={styles.migrateBanner}>
+            <div style={S.sectionLabel}>Local Drawings</div>
+            <div style={S.migrateBanner}>
               <span>
                 {localList.length} drawing{localList.length > 1 ? "s" : ""} saved
                 locally. Save to cloud for sharing and cross-device access.
               </span>
-              <button
-                style={styles.migrateBtn}
-                onClick={handleMigrateAll}
-                disabled={migrating}
-              >
+              <button style={S.migrateBtn} onClick={handleMigrateAll} disabled={migrating}>
                 {migrating ? "Migrating..." : "Save All to Cloud"}
               </button>
             </div>
@@ -344,38 +363,21 @@ export default function Gallery() {
         {/* Local drawings */}
         {hasLocal && (
           <>
-            {!user && <div style={styles.sectionLabel}>Saved Locally</div>}
+            {!user && <div style={S.sectionLabel}>Saved Locally</div>}
             {!user && (
               <p style={{ fontSize: "0.8rem", color: "#6b7280", marginBottom: "1rem", marginTop: "-0.5rem" }}>
                 Sign in to save drawings to the cloud and share them.
               </p>
             )}
-            <div style={styles.grid}>
+            <div style={S.grid}>
               {localList.map((d) => (
-                <div
+                <DrawingCard
                   key={d.id}
-                  style={styles.card}
-                  onClick={() => openDrawing(d, true)}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "#3b82f6";
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "#1a3464";
-                    e.currentTarget.style.transform = "none";
-                  }}
-                >
-                  <div style={styles.cardTitle}>{d.title}</div>
-                  <div style={styles.cardMeta}>Updated {timeAgo(d.updated_at)}</div>
-                  <div style={styles.cardActions}>
-                    <button
-                      style={styles.deleteBtn}
-                      onClick={(e) => handleDelete(e, d, true)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
+                  drawing={d}
+                  isLocal={true}
+                  onDelete={handleDelete}
+                  copiedId={copiedId}
+                />
               ))}
             </div>
           </>

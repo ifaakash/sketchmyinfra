@@ -33,6 +33,7 @@ def _drawing_to_out(d: Drawing) -> DrawingOut:
         share_id=d.share_id,
         title=d.title,
         data=d.data,
+        thumbnail=d.thumbnail,
         created_at=d.created_at.isoformat(),
         updated_at=d.updated_at.isoformat(),
     )
@@ -43,6 +44,7 @@ def _drawing_to_list_item(d: Drawing) -> DrawingListItem:
         id=str(d.id),
         share_id=d.share_id,
         title=d.title,
+        thumbnail=d.thumbnail,
         created_at=d.created_at.isoformat(),
         updated_at=d.updated_at.isoformat(),
     )
@@ -68,6 +70,7 @@ async def create_drawing(
         share_id=_generate_share_id(),
         title=body.title,
         data=body.data,
+        thumbnail=body.thumbnail,
     )
     db.add(drawing)
     await db.commit()
@@ -135,6 +138,8 @@ async def update_drawing(
         drawing.title = body.title
     if body.data is not None:
         drawing.data = body.data
+    if body.thumbnail is not None:
+        drawing.thumbnail = body.thumbnail
 
     await db.commit()
     await db.refresh(drawing)

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Excalidraw } from "@excalidraw/excalidraw";
+import { Excalidraw, exportToBlob } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
-import { drawingsAPI, checkAuth } from "../api";
+import { drawingsAPI } from "../api";
 import { localDrawings } from "../storage";
 
 const AUTOSAVE_DELAY = 3000;
@@ -79,25 +79,45 @@ function SaveStatus({ status }) {
   return (
     <span style={{ ...statusStyle, color: config.color, background: config.bg }}>
       {config.dot && (
-        <span
-          style={{
-            width: 6,
-            height: 6,
-            borderRadius: "50%",
-            background: config.color,
-          }}
-        />
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: config.color }} />
       )}
       {config.label}
     </span>
   );
 }
 
-export default function Editor({ theme }) {
+async function generateThumbnail(elements, files) {
+  try {
+    const visibleElements = elements.filter((el) => !el.isDeleted);
+    if (visibleElements.length === 0) return null;
+
+    const blob = await exportToBlob({
+      elements: visibleElements,
+      appState: { exportBackground: true, viewBackgroundColor: "#ffffff" },
+      files: files || {},
+      getDimensions: (w, h) => {
+        const maxDim = 400;
+        const scale = Math.min(maxDim / w, maxDim / h, 1);
+        return { width: Math.round(w * scale), height: Math.round(h * scale), scale };
+      },
+    });
+
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch (err) {
+    console.warn("Thumbnail generation failed:", err);
+    return null;
+  }
+}
+
+export default function Editor({ theme, user }) {
   const { shareId, localId } = useParams();
   const navigate = useNavigate();
 
-  const [user, setUser] = useState(undefined);
   const [title, setTitle] = useState("Untitled");
   const [initialData, setInitialData] = useState(null);
   const [drawingMeta, setDrawingMeta] = useState(null); // { id, share_id }
@@ -109,11 +129,6 @@ export default function Editor({ theme }) {
   const sceneRef = useRef({ elements: [], files: {} });
   const saveTimerRef = useRef(null);
   const isNew = !shareId && !localId;
-
-  // Check auth
-  useEffect(() => {
-    checkAuth().then((u) => setUser(u || null));
-  }, []);
 
   // Load drawing data
   useEffect(() => {
@@ -138,7 +153,6 @@ export default function Editor({ theme }) {
     }
 
     if (shareId) {
-      // Load via shared endpoint (works for owner too)
       drawingsAPI
         .getShared(shareId)
         .then((d) => {
@@ -152,25 +166,27 @@ export default function Editor({ theme }) {
 
   const doSave = useCallback(async () => {
     const { elements, files } = sceneRef.current;
-    if (!elements.length && isNew) return; // don't save empty new drawings
+    if (!elements.length && isNew) return;
 
     const data = { elements, files: files || {} };
     setSaveStatus("saving");
 
+    const thumbnail = await generateThumbnail(elements, files);
+
     try {
       if (user) {
         if (drawingMeta) {
-          await drawingsAPI.update(drawingMeta.id, { title, data });
+          await drawingsAPI.update(drawingMeta.id, { title, data, thumbnail });
         } else {
-          const result = await drawingsAPI.create({ title, data });
+          const result = await drawingsAPI.create({ title, data, thumbnail });
           setDrawingMeta({ id: result.id, share_id: result.share_id });
           window.history.replaceState(null, "", `/draw/edit/${result.share_id}`);
         }
       } else {
         if (currentLocalId) {
-          localDrawings.update(currentLocalId, { title, data });
+          localDrawings.update(currentLocalId, { title, data, thumbnail });
         } else {
-          const result = localDrawings.create({ title, data });
+          const result = localDrawings.create({ title, data, thumbnail });
           setCurrentLocalId(result.id);
           window.history.replaceState(null, "", `/draw/local/${result.id}`);
         }
@@ -182,7 +198,6 @@ export default function Editor({ theme }) {
     }
   }, [user, drawingMeta, currentLocalId, title, isNew]);
 
-  // Save title changes
   const handleTitleBlur = useCallback(() => {
     if (drawingMeta || currentLocalId) {
       doSave();
@@ -192,7 +207,6 @@ export default function Editor({ theme }) {
   const onChange = useCallback(
     (elements, appState, files) => {
       sceneRef.current = { elements: [...elements], files: { ...files } };
-
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       setSaveStatus("unsaved");
       saveTimerRef.current = setTimeout(() => doSave(), AUTOSAVE_DELAY);
@@ -200,7 +214,6 @@ export default function Editor({ theme }) {
     [doSave]
   );
 
-  // Cleanup timer on unmount
   useEffect(() => {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -231,17 +244,14 @@ export default function Editor({ theme }) {
         }}
       >
         <p style={{ fontSize: "1.1rem" }}>{loadError}</p>
-        <button
-          style={{ ...shareBtn, background: "#374151" }}
-          onClick={() => navigate("/")}
-        >
+        <button style={{ ...shareBtn, background: "#374151" }} onClick={() => navigate("/")}>
           Back to Gallery
         </button>
       </div>
     );
   }
 
-  if (!initialData) {
+  if (!initialData || user === undefined) {
     return (
       <div
         style={{
@@ -260,7 +270,6 @@ export default function Editor({ theme }) {
 
   return (
     <div style={{ height: "calc(100vh - 56px)", display: "flex", flexDirection: "column" }}>
-      {/* Toolbar */}
       <div style={toolbarStyle}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <button
@@ -302,7 +311,6 @@ export default function Editor({ theme }) {
         </div>
       </div>
 
-      {/* Excalidraw canvas */}
       <div style={{ flex: 1 }}>
         <Excalidraw
           theme={theme}

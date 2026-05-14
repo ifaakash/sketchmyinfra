@@ -27,6 +27,7 @@ export const localDrawings = {
       id: crypto.randomUUID(),
       title: drawing.title || "Untitled",
       data: drawing.data,
+      thumbnail: drawing.thumbnail || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -41,6 +42,7 @@ export const localDrawings = {
     if (idx === -1) return null;
     if (updates.title !== undefined) all[idx].title = updates.title;
     if (updates.data !== undefined) all[idx].data = updates.data;
+    if (updates.thumbnail !== undefined) all[idx].thumbnail = updates.thumbnail;
     all[idx].updated_at = new Date().toISOString();
     saveAll(all);
     return all[idx];

@@ -1,9 +1,11 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Routes, Route } from "react-router-dom";
 import Gallery from "./pages/Gallery";
 import Editor from "./pages/Editor";
 import SharedView from "./pages/SharedView";
+import AuthButton from "./components/AuthButton";
+import { checkAuth } from "./api";
 
 const sunIcon = (
   <svg width="16" height="16" fill="none" stroke="#fbbf24" strokeWidth="2" viewBox="0 0 24 24">
@@ -20,6 +22,11 @@ const moonIcon = (
 
 export default function App() {
   const [theme, setTheme] = useState("dark");
+  const [user, setUser] = useState(undefined); // undefined=loading, null=anon, object=logged in
+
+  useEffect(() => {
+    checkAuth().then((u) => setUser(u || null));
+  }, []);
 
   const toggle = useCallback(() => {
     const next = theme === "dark" ? "light" : "dark";
@@ -33,6 +40,12 @@ export default function App() {
 
   return (
     <>
+      {/* Auth controls in navbar */}
+      {user !== undefined && (
+        <AuthButton user={user} onAuthChange={setUser} />
+      )}
+
+      {/* Theme toggle in navbar */}
       {toggleSlot &&
         createPortal(
           <button
@@ -63,11 +76,11 @@ export default function App() {
         )}
 
       <Routes>
-        <Route path="/" element={<Gallery />} />
-        <Route path="/new" element={<Editor theme={theme} />} />
-        <Route path="/edit/:shareId" element={<Editor theme={theme} />} />
-        <Route path="/local/:localId" element={<Editor theme={theme} />} />
-        <Route path="/s/:shareId" element={<SharedView theme={theme} />} />
+        <Route path="/" element={<Gallery user={user} />} />
+        <Route path="/new" element={<Editor theme={theme} user={user} />} />
+        <Route path="/edit/:shareId" element={<Editor theme={theme} user={user} />} />
+        <Route path="/local/:localId" element={<Editor theme={theme} user={user} />} />
+        <Route path="/s/:shareId" element={<SharedView theme={theme} user={user} />} />
       </Routes>
     </>
   );
