@@ -34,3 +34,36 @@ class HistoryItem(BaseModel):
 
 class HistoryResponse(BaseModel):
     items: list[HistoryItem]
+
+
+# --- Drawings ---
+
+class DrawingCreate(BaseModel):
+    title: str = Field(default="Untitled", max_length=255)
+    data: dict = Field(..., description="Excalidraw scene JSON (elements, appState, files)")
+
+
+class DrawingUpdate(BaseModel):
+    title: str | None = Field(default=None, max_length=255)
+    data: dict | None = Field(default=None, description="Excalidraw scene JSON")
+
+
+class DrawingOut(BaseModel):
+    id: str
+    share_id: str
+    title: str
+    data: dict
+    created_at: str
+    updated_at: str
+
+
+class DrawingListItem(BaseModel):
+    id: str
+    share_id: str
+    title: str
+    created_at: str
+    updated_at: str
+
+
+class DrawingListResponse(BaseModel):
+    items: list[DrawingListItem]
