@@ -19,7 +19,7 @@ const S = {
     background: "#070f20",
     padding: "2rem",
   },
-  container: { maxWidth: 960, margin: "0 auto" },
+  container: { maxWidth: 1100, margin: "0 auto" },
   header: {
     display: "flex",
     justifyContent: "space-between",
@@ -43,29 +43,56 @@ const S = {
   },
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-    gap: "1rem",
+    gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+    gap: "1.25rem",
   },
   card: {
     background: "#0f1729",
     border: "1px solid #1a3464",
-    borderRadius: 12,
+    borderRadius: 14,
     overflow: "hidden",
     cursor: "pointer",
-    transition: "border-color 0.15s, transform 0.1s",
+    transition: "border-color 0.2s, transform 0.15s, box-shadow 0.2s",
     display: "flex",
     flexDirection: "column",
   },
-  thumb: {
+  thumbWrap: {
+    position: "relative",
     width: "100%",
-    height: 150,
-    objectFit: "cover",
+    height: 200,
     background: "#111827",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  thumb: {
+    maxWidth: "100%",
+    maxHeight: "100%",
+    objectFit: "contain",
+    padding: 12,
     display: "block",
+  },
+  zoomHint: {
+    position: "absolute",
+    inset: 0,
+    display: "none",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "rgba(0,0,0,0.35)",
+    transition: "opacity 0.15s",
+  },
+  zoomBadge: {
+    background: "rgba(0,0,0,0.7)",
+    color: "#fff",
+    fontSize: "0.7rem",
+    fontWeight: 500,
+    padding: "4px 10px",
+    borderRadius: 6,
   },
   thumbPlaceholder: {
     width: "100%",
-    height: 150,
+    height: 200,
     background: "#111827",
     display: "flex",
     alignItems: "center",
@@ -78,9 +105,10 @@ const S = {
     flexDirection: "column",
     gap: 8,
     flex: 1,
+    borderTop: "1px solid #1a2744",
   },
   cardTitle: {
-    fontSize: "1rem",
+    fontSize: "0.95rem",
     fontWeight: 600,
     color: "#e5e7eb",
     overflow: "hidden",
@@ -147,6 +175,52 @@ const S = {
     borderRadius: 6,
     cursor: "pointer",
   },
+  // Lightbox
+  lightbox: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 200,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "rgba(0,0,0,0.85)",
+    padding: "2rem",
+    cursor: "zoom-out",
+  },
+  lightboxInner: {
+    position: "relative",
+    maxWidth: "90vw",
+    maxHeight: "85vh",
+    cursor: "default",
+  },
+  lightboxImg: {
+    maxWidth: "90vw",
+    maxHeight: "80vh",
+    objectFit: "contain",
+    borderRadius: 12,
+    background: "#fff",
+    padding: 16,
+  },
+  lightboxCaption: {
+    textAlign: "center",
+    marginTop: 12,
+    fontSize: "0.85rem",
+    color: "#d1d5db",
+    fontWeight: 500,
+  },
+  lightboxClose: {
+    position: "absolute",
+    top: -36,
+    right: 0,
+    background: "none",
+    border: "none",
+    color: "rgba(255,255,255,0.7)",
+    fontSize: "0.85rem",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: 4,
+  },
 };
 
 const placeholderIcon = (
@@ -156,7 +230,7 @@ const placeholderIcon = (
   </svg>
 );
 
-function DrawingCard({ drawing, isLocal, onDelete, onShare, copiedId }) {
+function DrawingCard({ drawing, isLocal, onDelete, onShare, copiedId, onPreview }) {
   const navigate = useNavigate();
   const thumb = drawing.thumbnail;
 
@@ -169,14 +243,32 @@ function DrawingCard({ drawing, isLocal, onDelete, onShare, copiedId }) {
       onMouseEnter={(e) => {
         e.currentTarget.style.borderColor = "#3b82f6";
         e.currentTarget.style.transform = "translateY(-2px)";
+        e.currentTarget.style.boxShadow = "0 8px 24px rgba(59,130,246,0.15)";
+        const hint = e.currentTarget.querySelector("[data-zoom-hint]");
+        if (hint) hint.style.display = "flex";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.borderColor = "#1a3464";
         e.currentTarget.style.transform = "none";
+        e.currentTarget.style.boxShadow = "none";
+        const hint = e.currentTarget.querySelector("[data-zoom-hint]");
+        if (hint) hint.style.display = "none";
       }}
     >
       {thumb ? (
-        <img src={thumb} alt="" style={S.thumb} />
+        <div style={S.thumbWrap}>
+          <img src={thumb} alt="" style={S.thumb} />
+          <div
+            data-zoom-hint
+            style={S.zoomHint}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPreview(thumb, drawing.title);
+            }}
+          >
+            <span style={S.zoomBadge}>Click to zoom</span>
+          </div>
+        </div>
       ) : (
         <div style={S.thumbPlaceholder}>{placeholderIcon}</div>
       )}
@@ -212,6 +304,24 @@ function DrawingCard({ drawing, isLocal, onDelete, onShare, copiedId }) {
   );
 }
 
+function Lightbox({ src, caption, onClose }) {
+  if (!src) return null;
+  return (
+    <div style={S.lightbox} onClick={onClose}>
+      <div style={S.lightboxInner} onClick={(e) => e.stopPropagation()}>
+        <button style={S.lightboxClose} onClick={onClose}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+          Close
+        </button>
+        <img src={src} alt={caption} style={S.lightboxImg} />
+        {caption && <div style={S.lightboxCaption}>{caption}</div>}
+      </div>
+    </div>
+  );
+}
+
 export default function Gallery({ user }) {
   const navigate = useNavigate();
   const [cloudDrawings, setCloudDrawings] = useState([]);
@@ -219,9 +329,10 @@ export default function Gallery({ user }) {
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState(null);
   const [migrating, setMigrating] = useState(false);
+  const [lightbox, setLightbox] = useState({ src: null, caption: null });
 
   useEffect(() => {
-    if (user === undefined) return; // still resolving auth
+    if (user === undefined) return;
     let cancelled = false;
 
     (async () => {
@@ -260,6 +371,23 @@ export default function Gallery({ user }) {
       setTimeout(() => setCopiedId(null), 2000);
     });
   }, []);
+
+  const handlePreview = useCallback((src, caption) => {
+    setLightbox({ src, caption });
+  }, []);
+
+  const closeLightbox = useCallback(() => {
+    setLightbox({ src: null, caption: null });
+  }, []);
+
+  // Close lightbox on Escape
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === "Escape") closeLightbox();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [closeLightbox]);
 
   const handleMigrateAll = useCallback(async () => {
     setMigrating(true);
@@ -337,6 +465,7 @@ export default function Gallery({ user }) {
                   isLocal={false}
                   onDelete={handleDelete}
                   onShare={handleShare}
+                  onPreview={handlePreview}
                   copiedId={copiedId}
                 />
               ))}
@@ -376,6 +505,7 @@ export default function Gallery({ user }) {
                   drawing={d}
                   isLocal={true}
                   onDelete={handleDelete}
+                  onPreview={handlePreview}
                   copiedId={copiedId}
                 />
               ))}
@@ -383,6 +513,9 @@ export default function Gallery({ user }) {
           </>
         )}
       </div>
+
+      {/* Lightbox */}
+      <Lightbox src={lightbox.src} caption={lightbox.caption} onClose={closeLightbox} />
     </div>
   );
 }
