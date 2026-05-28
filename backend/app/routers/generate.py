@@ -10,7 +10,13 @@ from app.config import settings
 from app.database import get_db
 from app.middleware.auth import get_current_user_optional
 from app.models import Generation, User
-from app.schemas import GenerateRequest, GenerateResponse
+from app.schemas import (
+    GenerateRequest,
+    GenerateResponse,
+    GenerationStatsItem,
+    GenerationStatsResponse,
+    GenerationStatusCounts,
+)
 from app.services.gemini import generate_puml, fix_puml, GeminiError
 from app.services.plantuml import render_puml, PlantUMLError
 
@@ -108,8 +114,24 @@ async def generate(
     try:
         puml = await generate_puml(req.prompt, req.context)
     except GeminiError as e:
+        db.add(Generation(
+            user_id=user.id if user else None,
+            prompt=req.prompt,
+            status="gemini_error",
+            error_message=str(e),
+            ip_address=ip,
+        ))
+        await db.commit()
         raise HTTPException(status_code=502, detail=str(e))
-    except Exception:
+    except Exception as e:
+        db.add(Generation(
+            user_id=user.id if user else None,
+            prompt=req.prompt,
+            status="gemini_error",
+            error_message=str(e),
+            ip_address=ip,
+        ))
+        await db.commit()
         raise HTTPException(status_code=500, detail="Failed to generate diagram")
 
     # Validate by rendering server-side. If invalid, ask Gemini to fix it once.
@@ -123,20 +145,82 @@ async def generate(
             logger.info("Auto-fix succeeded")
         except (PlantUMLError, GeminiError) as fix_err:
             logger.error("Auto-fix failed: %s", fix_err)
+            db.add(Generation(
+                user_id=user.id if user else None,
+                prompt=req.prompt,
+                puml_code=puml,
+                status="autofix_failed",
+                error_message=str(fix_err),
+                ip_address=ip,
+            ))
+            await db.commit()
             raise HTTPException(
                 status_code=502,
                 detail="We couldn't generate a valid diagram for this architecture. Try simplifying your prompt or being more specific about the components.",
             )
 
-    # Only record successful generations.
     db.add(
         Generation(
             user_id=user.id if user else None,
             prompt=req.prompt,
             puml_code=puml,
+            status="success",
             ip_address=ip,
         )
     )
     await db.commit()
 
     return GenerateResponse(puml=puml, prompt_used=req.prompt)
+
+
+@router.get("/generations/stats", response_model=GenerationStatsResponse)
+async def generation_stats(
+    hours: int = 24,
+    limit: int = 20,
+    user: User = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return generation status counts and recent attempts.
+
+    Authenticated users see their own stats; anonymous users get nothing.
+    """
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    since = datetime.now(timezone.utc) - timedelta(hours=hours)
+
+    # Status counts
+    count_stmt = (
+        select(Generation.status, func.count())
+        .where(Generation.user_id == user.id, Generation.created_at >= since)
+        .group_by(Generation.status)
+    )
+    count_result = await db.execute(count_stmt)
+    raw_counts = {row[0]: row[1] for row in count_result.all()}
+    counts = GenerationStatusCounts(
+        success=raw_counts.get("success", 0),
+        gemini_error=raw_counts.get("gemini_error", 0),
+        autofix_failed=raw_counts.get("autofix_failed", 0),
+        total=sum(raw_counts.values()),
+    )
+
+    # Recent generations
+    recent_stmt = (
+        select(Generation)
+        .where(Generation.user_id == user.id, Generation.created_at >= since)
+        .order_by(Generation.created_at.desc())
+        .limit(limit)
+    )
+    recent_result = await db.execute(recent_stmt)
+    recent = [
+        GenerationStatsItem(
+            id=str(g.id),
+            prompt=g.prompt,
+            status=g.status,
+            error_message=g.error_message,
+            created_at=g.created_at.isoformat(),
+        )
+        for g in recent_result.scalars().all()
+    ]
+
+    return GenerationStatsResponse(counts=counts, recent=recent)

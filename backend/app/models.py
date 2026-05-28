@@ -46,6 +46,8 @@ class Generation(Base):
     )
     prompt: Mapped[str] = mapped_column(Text, nullable=False)
     puml_code: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="success")
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     ip_address: Mapped[str] = mapped_column(INET, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

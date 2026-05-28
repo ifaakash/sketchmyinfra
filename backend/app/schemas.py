@@ -71,3 +71,25 @@ class DrawingListItem(BaseModel):
 
 class DrawingListResponse(BaseModel):
     items: list[DrawingListItem]
+
+
+# --- Generation Stats ---
+
+class GenerationStatsItem(BaseModel):
+    id: str
+    prompt: str
+    status: str
+    error_message: str | None
+    created_at: str
+
+
+class GenerationStatusCounts(BaseModel):
+    success: int = 0
+    gemini_error: int = 0
+    autofix_failed: int = 0
+    total: int = 0
+
+
+class GenerationStatsResponse(BaseModel):
+    counts: GenerationStatusCounts
+    recent: list[GenerationStatsItem]
