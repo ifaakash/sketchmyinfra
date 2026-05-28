@@ -93,3 +93,17 @@ class GenerationStatusCounts(BaseModel):
 class GenerationStatsResponse(BaseModel):
     counts: GenerationStatusCounts
     recent: list[GenerationStatsItem]
+
+
+# --- Admin Stats ---
+
+class AdminStatsResponse(BaseModel):
+    total_users: int
+    total_generations: int
+    generations_24h: int
+    generations_7d: int
+    success_count: int
+    gemini_error_count: int
+    autofix_failed_count: int
+    failure_rate: float
+    recent_failures: list[GenerationStatsItem]

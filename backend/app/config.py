@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     rate_limit_anonymous: int = 3
     rate_limit_free: int = 5
 
+    # Admin
+    admin_api_key: str = ""
+
     model_config = {"env_file": ".env", "extra": "ignore"}
 
 
