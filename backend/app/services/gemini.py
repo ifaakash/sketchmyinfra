@@ -23,6 +23,9 @@ def _sanitize_puml(text: str) -> str:
         # Remove trailing ' comments after code — only when ' follows a { or }
         # to avoid stripping legitimate apostrophes in labels
         line = re.sub(r"([{}])\s+'[^']*$", r'\1', line)
+        # Replace & inside quoted strings with "and" — PlantUML treats & as
+        # a parallel execution operator and chokes on it in labels.
+        line = re.sub(r'"([^"]*)"', lambda m: '"' + m.group(1).replace('&', 'and') + '"', line)
         lines.append(line)
     return "\n".join(lines)
 
@@ -50,6 +53,7 @@ Rules:
    - Use `note right of X` / `note left of X` / `note bottom of X` — NEVER `note on X` (that syntax does not exist)
    - `actor` and `user` elements MUST be declared OUTSIDE all group containers (AWSCloudGroup, VPCGroup, RegionGroup, etc.) — place them before or after the group block
    - NEVER use inline comments — no `//` or `'` comments after code on the same line. PlantUML only supports full-line comments starting with `'`
+   - NEVER use `&` in labels — PlantUML treats `&` as a parallel operator. Use "and" instead (e.g. "Output and Error Reporting")
 
 Cloud Provider Detection:
 - Infer the cloud provider from service names in the user's prompt
@@ -280,6 +284,7 @@ Fix the syntax error. Common mistakes to check:
 - Elements referenced in arrows before being declared
 - Inline comments (`//` or `'` after code on the same line) — PlantUML only supports full-line `'` comments
 - `<<stereotype>>` combined with `#color` on package/rectangle declarations — use one or the other, or use a separate `skinparam` instead
+- `&` in labels — PlantUML treats `&` as a parallel operator; use "and" instead
 
 Output ONLY the corrected PlantUML code — no explanations, no markdown."""
 
