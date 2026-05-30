@@ -87,8 +87,62 @@
   <section class="pb-20 px-6">
     <div class="max-w-3xl mx-auto">
 
-      <!-- Release: Drawing Persistence & Sharing -->
+      <!-- Release: PlantUML Rendering Resilience -->
       <article class="relative pl-8 pb-12 border-l-2 border-brand-600/30">
+        <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand-600 border-2 border-surface"></div>
+        <div class="flex flex-wrap items-center gap-3 mb-4">
+          <time class="text-sm font-mono text-gray-500 dark:text-gray-400">May 31, 2026</time>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">Bug Fix</span>
+        </div>
+        <h2 class="text-2xl font-bold mb-3">Hardened PlantUML Rendering Pipeline</h2>
+        <p class="text-gray-500 dark:text-gray-400 leading-relaxed mb-4">
+          Fixed a class of diagram rendering failures caused by special characters in labels. The AI sometimes generated characters like <code class="text-xs bg-gray-800 px-1.5 py-0.5 rounded">&amp;</code>, <code class="text-xs bg-gray-800 px-1.5 py-0.5 rounded">~</code>, or smart quotes that PlantUML interprets as syntax operators. Added a comprehensive pre-processing layer that automatically sanitizes these before rendering.
+        </p>
+        <ul class="space-y-2 text-sm text-gray-500 dark:text-gray-400">
+          <li class="flex items-start gap-2">
+            <svg class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Auto-sanitizes <code class="text-xs bg-gray-800 px-1.5 py-0.5 rounded">&amp;</code> <code class="text-xs bg-gray-800 px-1.5 py-0.5 rounded">~</code> <code class="text-xs bg-gray-800 px-1.5 py-0.5 rounded">|</code> and HTML entities inside diagram labels
+          </li>
+          <li class="flex items-start gap-2">
+            <svg class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Strips trailing semicolons, smart quotes, zero-width characters, and BOM markers
+          </li>
+          <li class="flex items-start gap-2">
+            <svg class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Updated AI system prompt to prevent generating problematic characters
+          </li>
+        </ul>
+      </article>
+
+      <!-- Release: Admin Dashboard & Generation Analytics -->
+      <article class="relative pl-8 pb-12 border-l-2 border-gray-200 dark:border-gray-800">
+        <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand-600 border-2 border-surface"></div>
+        <div class="flex flex-wrap items-center gap-3 mb-4">
+          <time class="text-sm font-mono text-gray-500 dark:text-gray-400">May 29, 2026</time>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">New Feature</span>
+        </div>
+        <h2 class="text-2xl font-bold mb-3">Admin Dashboard &amp; Generation Analytics</h2>
+        <p class="text-gray-500 dark:text-gray-400 leading-relaxed mb-4">
+          Track diagram generation health with a new admin panel showing global statistics, failure rates, and recent error details. Per-user stats are also available for authenticated users.
+        </p>
+        <ul class="space-y-2 text-sm text-gray-500 dark:text-gray-400">
+          <li class="flex items-start gap-2">
+            <svg class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Generation status tracking — success, failed, and pending states
+          </li>
+          <li class="flex items-start gap-2">
+            <svg class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Admin dashboard with global analytics and recent failure details
+          </li>
+          <li class="flex items-start gap-2">
+            <svg class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Per-user stats API for authenticated users
+          </li>
+        </ul>
+      </article>
+
+      <!-- Release: Drawing Persistence & Sharing -->
+      <article class="relative pl-8 pb-12 border-l-2 border-gray-200 dark:border-gray-800">
         <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand-600 border-2 border-surface"></div>
         <div class="flex flex-wrap items-center gap-3 mb-4">
           <time class="text-sm font-mono text-gray-500 dark:text-gray-400">May 15, 2026</time>

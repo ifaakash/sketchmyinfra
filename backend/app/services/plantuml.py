@@ -22,12 +22,26 @@ MIME_TYPES = {
 
 
 def _extract_error(response_text: str) -> str | None:
-    """Extract error message from PlantUML's error SVG."""
-    texts = re.findall(r">([^<]+)</text>", response_text)
-    for t in reversed(texts):
-        t = t.strip().replace("&#160;", " ").replace("&amp;", "&")
-        if "not found" in t.lower() or "error" in t.lower() or "syntax" in t.lower():
-            return t
+    """Extract error message from PlantUML's error SVG.
+
+    PlantUML error SVGs contain a red (#CC0000) text element with the actual
+    error message. We look for that specific pattern to avoid false positives
+    from user labels that happen to contain words like 'error' or 'syntax'.
+    """
+    # Primary: look for red-colored error text (PlantUML's error styling)
+    red_texts = re.findall(r'fill="(?:#CC0000|#[Rr][Ee][Dd]|red)"[^>]*>([^<]+)</text>', response_text)
+    if red_texts:
+        return red_texts[0].strip().replace("&#160;", " ").replace("&amp;", "&")
+
+    # Fallback: look for PlantUML's "[From string (line N)]" marker which only
+    # appears in error output, then grab the preceding error description
+    if "[From string (line" in response_text:
+        texts = re.findall(r">([^<]+)</text>", response_text)
+        for t in reversed(texts):
+            t = t.strip().replace("&#160;", " ").replace("&amp;", "&")
+            if "not found" in t.lower() or "syntax error" in t.lower():
+                return t
+
     return None
 
 

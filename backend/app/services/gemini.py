@@ -4,12 +4,59 @@ import httpx
 
 from app.config import settings
 
-def _sanitize_puml(text: str) -> str:
-    """Strip inline comments that PlantUML cannot parse.
+def _normalize_gemini_text(text: str) -> str:
+    """Normalize Unicode and whitespace issues in raw Gemini output.
 
-    Gemini sometimes appends // or ' comments on the same line as code
-    (e.g. after a `{`). PlantUML treats these as syntax errors.
-    Only full-line ' comments are valid in PlantUML.
+    Applied before line-level sanitization to fix characters that affect
+    PlantUML parsing at the structural level (outside labels).
+    """
+    # Non-breaking spaces → regular spaces
+    text = text.replace("\u00a0", " ")
+    # Smart/curly quotes used as string delimiters → straight quotes
+    # (must happen before _sanitize_puml so label regex can match them)
+    text = text.replace("\u201c", '"').replace("\u201d", '"')  # "" → ""
+    text = text.replace("\u2018", "'").replace("\u2019", "'")  # '' → ''
+    # Zero-width chars that occasionally appear in LLM output
+    text = text.replace("\u200b", "")  # zero-width space
+    text = text.replace("\u200c", "")  # zero-width non-joiner
+    text = text.replace("\u200d", "")  # zero-width joiner
+    text = text.replace("\ufeff", "")  # BOM
+    # Normalize line endings
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    return text
+
+
+def _sanitize_label(label: str) -> str:
+    """Sanitize text inside a quoted PlantUML label.
+
+    PlantUML interprets several characters as syntax even inside quotes.
+    This fixes them to prevent rendering failures.
+    """
+    # HTML entities Gemini sometimes outputs — decode before handling &
+    label = label.replace("&amp;", "&")
+    label = label.replace("&lt;", "<")
+    label = label.replace("&gt;", ">")
+    label = label.replace("&quot;", "'")
+    label = label.replace("&#39;", "'")
+    # & → "and" — PlantUML parallel execution operator (after HTML decode)
+    label = label.replace("&", "and")
+    # ~ is a creole escape character — replace with -
+    label = label.replace("~", "-")
+    # | is a swimlane separator in activity diagrams — replace with /
+    label = label.replace("|", "/")
+    # En/em dashes → regular hyphen
+    label = label.replace("\u2013", "-").replace("\u2014", "-")
+    return label
+
+
+def _sanitize_puml(text: str) -> str:
+    """Pre-process PlantUML code to fix common Gemini output issues.
+
+    Catches syntax problems that would cause PlantUML rendering failures:
+    - Inline comments (// or ' after code)
+    - Special characters inside labels
+    - Trailing semicolons
+    - Stray Unicode characters
     """
     lines = []
     for line in text.split("\n"):
@@ -23,9 +70,11 @@ def _sanitize_puml(text: str) -> str:
         # Remove trailing ' comments after code — only when ' follows a { or }
         # to avoid stripping legitimate apostrophes in labels
         line = re.sub(r"([{}])\s+'[^']*$", r'\1', line)
-        # Replace & inside quoted strings with "and" — PlantUML treats & as
-        # a parallel execution operator and chokes on it in labels.
-        line = re.sub(r'"([^"]*)"', lambda m: '"' + m.group(1).replace('&', 'and') + '"', line)
+        # Remove trailing semicolons — not valid PlantUML syntax,
+        # Gemini sometimes adds them treating PUML like a programming language
+        line = re.sub(r';\s*$', '', line)
+        # Sanitize all quoted labels for PlantUML-reserved characters
+        line = re.sub(r'"([^"]*)"', lambda m: '"' + _sanitize_label(m.group(1)) + '"', line)
         lines.append(line)
     return "\n".join(lines)
 
@@ -338,9 +387,7 @@ async def generate_puml(prompt: str, context: str | None = None) -> str:
         lines = [l for l in lines if not l.strip().startswith("```")]
         text = "\n".join(lines).strip()
 
-    # Replace non-breaking spaces (U+00A0) with regular spaces — PlantUML rejects them
-    text = text.replace("\u00a0", " ")
-
+    text = _normalize_gemini_text(text)
     text = _sanitize_puml(text)
 
     if "@startuml" not in text:
@@ -380,8 +427,7 @@ async def fix_puml(puml: str, error: str) -> str:
         lines = [l for l in lines if not l.strip().startswith("```")]
         text = "\n".join(lines).strip()
 
-    text = text.replace("\u00a0", " ")
-
+    text = _normalize_gemini_text(text)
     text = _sanitize_puml(text)
 
     if "@startuml" not in text:
