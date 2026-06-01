@@ -226,7 +226,7 @@ MERMAID RULES (when renderer=mermaid):
    - ALWAYS use an ID for subgraphs: `subgraph my_id["Display Name"]` — NEVER `subgraph "Display Name"` without an ID
    - The `style` directive requires a node/subgraph ID, NOT a quoted string: `style my_id fill:#eee` — NEVER `style "Display Name" fill:#eee`
    - Use snake_case IDs for subgraphs (e.g. `school_grounds`, `main_building`)
-4. Use meaningful labels on arrows with |text| syntax or -->|label|
+4. Arrow labels MUST use pipe syntax: `A -->|label| B` — NEVER use colon syntax `A --> B : label` (that is PlantUML, not Mermaid)
 5. Apply modern styling with %%{init: {'theme': 'base', 'themeVariables': ...}}%% at the top
 6. Recommended theme config for clean look:
    %%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#dbeafe', 'primaryTextColor': '#1e40af', 'primaryBorderColor': '#3b82f6', 'lineColor': '#64748b', 'secondaryColor': '#f0fdf4', 'tertiaryColor': '#fef3c7', 'fontFamily': 'Inter, system-ui, sans-serif'}}}%%
@@ -642,6 +642,14 @@ def _sanitize_mermaid(text: str) -> str:
         # Match [...] label patterns: ["..."], ("..."), {{"..."}}, etc.
         line = re.sub(r'(\[")(.*?)("\])', _fix_label_quotes, line)
         line = re.sub(r'(\(")(.*?)("\))', _fix_label_quotes, line)
+
+        # Fix: PlantUML-style arrow labels "A --> B : label" → Mermaid "A -->|label| B"
+        # Matches arrows like -->, --->, -.-, -.-> etc. followed by : label
+        line = re.sub(
+            r'(\S+\s*)(-->|---->|-.->|-\.->|---|-\.-)(\s*)(\S+)\s*:\s*(.+)$',
+            r'\1\2|\5|\3\4',
+            line,
+        )
 
         lines.append(line)
     return "\n".join(lines)

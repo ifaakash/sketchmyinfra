@@ -211,6 +211,29 @@ class TestSanitizeMermaid:
         result = _sanitize_mermaid(code)
         assert result == code
 
+    def test_colon_arrow_label_to_pipe_syntax(self):
+        """Jun 2 2026: Gemini used PlantUML colon syntax for arrow labels."""
+        code = "erp --> collect_layer : 采集数据"
+        result = _sanitize_mermaid(code)
+        assert ":" not in result or "&quot;" in result
+        assert "-->|采集数据|" in result
+
+    def test_colon_arrow_label_english(self):
+        code = "A --> B : sends data"
+        result = _sanitize_mermaid(code)
+        assert "-->|sends data|" in result
+        assert ": sends data" not in result
+
+    def test_dotted_arrow_colon_label(self):
+        code = "A -.-> B : async"
+        result = _sanitize_mermaid(code)
+        assert "-.->|async|" in result
+
+    def test_pipe_label_unchanged(self):
+        code = "A -->|already correct| B"
+        result = _sanitize_mermaid(code)
+        assert result == code
+
 
 class TestPostProcessMermaid:
     """Mermaid post-processing."""
