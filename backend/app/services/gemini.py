@@ -94,19 +94,77 @@ def _fix_nested_skinparam(text: str) -> str:
     return "\n".join(result)
 
 
+def _resolve_variables(text: str) -> str:
+    """Resolve !$variable definitions and inline their values.
+
+    Gemini generates PlantUML preprocessor variables like:
+        !$pvc_fill = "#D3D3D3" ' Light Gray
+        rectangle "Foo" as foo #$pvc_fill
+    But variable interpolation in #color positions is unreliable.
+    This inlines the values directly for reliable rendering.
+    """
+    # Collect variable definitions: !$name = "value" (with optional trailing comment)
+    var_defs = re.findall(r'!\$(\w+)\s*=\s*"([^"]*)"', text)
+    if not var_defs:
+        return text
+    variables = dict(var_defs)
+
+    # Remove the definition lines
+    text = re.sub(r'^\s*!\$\w+\s*=\s*"[^"]*".*$', '', text, flags=re.MULTILINE)
+
+    # Replace all $variable references with their values
+    for name, value in variables.items():
+        text = text.replace(f"${name}", value)
+
+    return text
+
+
+def _remove_invalid_skinparams(text: str) -> str:
+    """Remove skinparam blocks for targets that don't exist in PlantUML.
+
+    Known invalid targets: line, arrow (as block), etc.
+    """
+    result = []
+    lines = text.split("\n")
+    i = 0
+    invalid_targets = {"line", "arrow"}
+    while i < len(lines):
+        stripped = lines[i].strip()
+        match = re.match(r'^skinparam\s+(\w+)\s*\{', stripped)
+        if match and match.group(1).lower() in invalid_targets:
+            # Skip the entire block
+            depth = 1
+            i += 1
+            while i < len(lines) and depth > 0:
+                if lines[i].strip() == "}":
+                    depth -= 1
+                elif lines[i].strip().endswith("{"):
+                    depth += 1
+                i += 1
+        else:
+            result.append(lines[i])
+            i += 1
+    return "\n".join(result)
+
+
 def _sanitize_puml(text: str) -> str:
     """Pre-process PlantUML code to fix common Gemini output issues.
 
     Catches syntax problems that would cause PlantUML rendering failures:
+    - Preprocessor variable interpolation issues
+    - Invalid skinparam targets (line, arrow)
     - Nested skinparam blocks
     - Inline comments (// or ' after code)
     - Special characters inside labels
     - Trailing semicolons
     - Invalid ArrowColor in element skinparams
     """
-    # Fix nested skinparam before line-level processing
+    # Structural fixes (operate on full text)
+    text = _resolve_variables(text)
     text = _fix_nested_skinparam(text)
+    text = _remove_invalid_skinparams(text)
 
+    # Line-level fixes
     lines = []
     inside_skinparam = False
     for line in text.split("\n"):
@@ -125,6 +183,9 @@ def _sanitize_puml(text: str) -> str:
             elif re.match(r'^\s*ArrowColor\s', stripped):
                 lines.append("")
                 continue
+        # Strip inline comments on preprocessor directives (!$var = "val" ' comment)
+        if stripped.startswith("!"):
+            line = re.sub(r"'\s+.*$", '', line)
         # Remove trailing // comments (not inside strings)
         line = re.sub(r'\s*//\s.*$', '', line)
         # Remove trailing ' comments after code — only when ' follows a { or }
@@ -166,6 +227,8 @@ Rules:
    - NEVER nest skinparam blocks — `skinparam { rectangle { ... } }` is INVALID. Use flat blocks: `skinparam shadowing false` then `skinparam rectangle { ... }` as separate top-level declarations
    - NEVER use `ArrowColor` inside `skinparam rectangle` or `skinparam component` — `ArrowColor` is a global-only parameter. Use `skinparam ArrowColor #333` at top level
    - NEVER use multi-line body syntax `[...]` on rectangle or component elements — that syntax is only for class diagram fields. Use `\n` in labels for multi-line text (e.g. `rectangle "Line 1\nLine 2" as x`)
+   - NEVER use `!$variable` preprocessor variables for colors — they don't interpolate reliably in `#color` positions. Use literal hex colors directly (e.g. `#D3D3D3`)
+   - NEVER use `skinparam line { }` — `line` is not a valid skinparam target. Use `skinparam ArrowThickness 2` and `skinparam ArrowColor #333` instead
 
 Cloud Provider Detection:
 - Infer the cloud provider from service names in the user's prompt
@@ -393,6 +456,8 @@ Fix the syntax error. Common mistakes to check:
 - `ArrowColor` inside `skinparam rectangle` or `skinparam component` — INVALID. Use `skinparam ArrowColor #color` at top level
 - Multi-line body `[...]` on rectangle/component elements — that syntax is only for class fields. Use `\\n` in labels instead
 - `skinparam element.stereotype` (e.g. `skinparam rectangle.pvc`) — INVALID. Use `<<stereotype>>` on individual elements and define styles with `skinparam` separately
+- `!$variable` preprocessor variables for colors — unreliable in `#color` positions. Use literal hex colors directly
+- `skinparam line { }` — `line` is not a valid skinparam target. Use `skinparam ArrowThickness` and `skinparam ArrowColor` instead
 
 Output ONLY the corrected PlantUML code — no explanations, no markdown."""
 

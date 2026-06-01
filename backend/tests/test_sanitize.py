@@ -14,6 +14,8 @@ from app.services.gemini import (
     _build_iteration_prompt,
     _fix_nested_skinparam,
     _normalize_gemini_text,
+    _remove_invalid_skinparams,
+    _resolve_variables,
     _sanitize_label,
     _sanitize_puml,
 )
@@ -160,6 +162,80 @@ class TestFixNestedSkinparam:
     def test_no_skinparam_unchanged(self):
         text = "rectangle \"Foo\" as foo\nfoo --> bar"
         assert _fix_nested_skinparam(text) == text
+
+
+# ---------------------------------------------------------------------------
+# _resolve_variables: inline !$var definitions
+# ---------------------------------------------------------------------------
+
+
+class TestResolveVariables:
+    """Preprocessor variables that don't interpolate in #color positions."""
+
+    def test_basic_variable_resolution(self):
+        text = '!$color = "#D3D3D3"\nrectangle "Foo" as foo #$color'
+        result = _resolve_variables(text)
+        assert "#D3D3D3" in result
+        assert "$color" not in result
+        assert "!$color" not in result
+
+    def test_multiple_variables(self):
+        text = (
+            '!$pvc = "#D3D3D3"\n'
+            '!$wood = "#DEB887"\n'
+            'rectangle "Pipe" as p #$pvc\n'
+            'rectangle "Base" as b #$wood'
+        )
+        result = _resolve_variables(text)
+        assert "#D3D3D3" in result
+        assert "#DEB887" in result
+        assert "$pvc" not in result
+        assert "$wood" not in result
+
+    def test_variable_with_trailing_comment(self):
+        text = '!$fill = "#D3D3D3" \' Light Gray\nrectangle "X" as x #$fill'
+        result = _resolve_variables(text)
+        assert "#D3D3D3" in result
+
+    def test_no_variables_unchanged(self):
+        text = 'rectangle "Foo" as foo #D3D3D3'
+        assert _resolve_variables(text) == text
+
+
+# ---------------------------------------------------------------------------
+# _remove_invalid_skinparams: strip unsupported skinparam targets
+# ---------------------------------------------------------------------------
+
+
+class TestRemoveInvalidSkinparams:
+    """skinparam targets like 'line' that PlantUML doesn't recognize."""
+
+    def test_skinparam_line_removed(self):
+        text = (
+            "skinparam line {\n"
+            "  Thickness 2\n"
+            "  Color black\n"
+            "}\n"
+            'rectangle "Foo" as foo'
+        )
+        result = _remove_invalid_skinparams(text)
+        assert "skinparam line" not in result
+        assert "Thickness" not in result
+        assert "Foo" in result
+
+    def test_valid_skinparam_preserved(self):
+        text = (
+            "skinparam rectangle {\n"
+            "  BackgroundColor #fff\n"
+            "}\n"
+        )
+        result = _remove_invalid_skinparams(text)
+        assert "skinparam rectangle" in result
+        assert "BackgroundColor" in result
+
+    def test_no_skinparam_unchanged(self):
+        text = 'rectangle "Foo" as foo'
+        assert _remove_invalid_skinparams(text) == text
 
 
 # ---------------------------------------------------------------------------
@@ -345,3 +421,31 @@ class TestProductionRegressions:
         result = _build_iteration_prompt(context)
         assert "rectangle" in result
         assert "{" in result
+
+    def test_variable_colors_and_skinparam_line(self):
+        """Jun 1 2026: !$variable colors + skinparam line caused 400."""
+        puml = (
+            "@startuml\n"
+            "skinparam shadowing false\n"
+            "skinparam line {\n"
+            "  Thickness 2\n"
+            "  Color black\n"
+            "}\n"
+            "!$pvc_fill = \"#D3D3D3\" ' Light Gray\n"
+            "!$wood_fill = \"#DEB887\"\n"
+            "rectangle \"Wood Base\" as wb #$wood_fill {\n"
+            "  rectangle \"Air Chamber\" as ac #$pvc_fill\n"
+            "}\n"
+            "@enduml"
+        )
+        result = _sanitize_puml(puml)
+        # Variables should be inlined
+        assert "#D3D3D3" in result
+        assert "#DEB887" in result
+        assert "$pvc_fill" not in result
+        assert "$wood_fill" not in result
+        # Invalid skinparam line should be removed
+        assert "skinparam line" not in result
+        # Valid content preserved
+        assert "Wood Base" in result
+        assert "Air Chamber" in result
