@@ -222,7 +222,10 @@ MERMAID RULES (when renderer=mermaid):
    - stateDiagram-v2 for state machines
    - erDiagram for ER diagrams
    - gantt for timelines
-3. Use subgraph blocks to group related components
+3. Subgraph rules (CRITICAL — violations cause parse errors):
+   - ALWAYS use an ID for subgraphs: `subgraph my_id["Display Name"]` — NEVER `subgraph "Display Name"` without an ID
+   - The `style` directive requires a node/subgraph ID, NOT a quoted string: `style my_id fill:#eee` — NEVER `style "Display Name" fill:#eee`
+   - Use snake_case IDs for subgraphs (e.g. `school_grounds`, `main_building`)
 4. Use meaningful labels on arrows with |text| syntax or -->|label|
 5. Apply modern styling with %%{init: {'theme': 'base', 'themeVariables': ...}}%% at the top
 6. Recommended theme config for clean look:
@@ -233,9 +236,13 @@ MERMAID RULES (when renderer=mermaid):
    - ((Text)) for circles (users/external)
    - {Text} for diamonds (decisions)
    - ([Text]) for stadiums (queues/buffers)
-8. Use color classes via :::className or style directives for visual grouping
+8. Style rules:
+   - Use `classDef` and `:::className` for reusable styles
+   - In `style` values, use NO spaces after colons in CSS-like properties: `fill:#eee,stroke:#333` (NOT `fill: #eee`)
+   - NEVER use `stroke-dasharray: X X` (with space after colon) — use `stroke-dasharray:5 5` (no space after colon)
 9. NEVER use & in labels — use "and" instead
-10. Keep diagrams clean — avoid overlapping labels
+10. NEVER put `<br>` outside of node labels — only use `<br>` or `<br/>` INSIDE square brackets like `Node["Line 1<br/>Line 2"]`
+11. Keep diagrams clean — avoid overlapping labels
 
 PLANTUML RULES (when renderer=plantuml):
 1. Always wrap output in @startuml and @enduml
@@ -587,12 +594,52 @@ def _post_process_puml(text: str) -> str:
     return text
 
 
+def _sanitize_mermaid(text: str) -> str:
+    """Fix common Mermaid syntax issues from Gemini output."""
+    lines = []
+    # Track subgraph name→id mappings for style fixup
+    subgraph_ids = {}
+    for line in text.split("\n"):
+        stripped = line.strip()
+
+        # Fix: subgraph "Name" without ID → subgraph auto_id["Name"]
+        match = re.match(r'^(\s*)subgraph\s+"([^"]+)"\s*$', line)
+        if match:
+            indent, name = match.groups()
+            auto_id = re.sub(r'[^a-zA-Z0-9]', '_', name).strip('_').lower()
+            subgraph_ids[name] = auto_id
+            lines.append(f'{indent}subgraph {auto_id}["{name}"]')
+            continue
+
+        # Fix: style "Quoted Name" ... → style auto_id ...
+        style_match = re.match(r'^(\s*)style\s+"([^"]+)"(.*)$', line)
+        if style_match:
+            indent, name, rest = style_match.groups()
+            sid = subgraph_ids.get(name, re.sub(r'[^a-zA-Z0-9]', '_', name).strip('_').lower())
+            lines.append(f'{indent}style {sid}{rest}')
+            continue
+
+        # Fix: stray <br> outside node labels (at end of line, not inside [...])
+        if stripped == '<br>' or stripped == '<br/>':
+            continue
+        line = re.sub(r'<br>\s*$', '', line)
+        line = re.sub(r'<br/>\s*$', '', line)
+
+        # Fix: spaces after colons in style values (stroke-dasharray: 5 5 → stroke-dasharray:5 5)
+        if 'style ' in stripped or 'fill:' in stripped or 'stroke' in stripped:
+            line = re.sub(r'(\w):\s+([#\d])', r'\1:\2', line)
+
+        lines.append(line)
+    return "\n".join(lines)
+
+
 def _post_process_mermaid(text: str) -> str:
     """Apply Mermaid-specific cleanup."""
     text = _normalize_gemini_text(text)
     # Strip any accidental @startuml/@enduml if Gemini got confused
     text = re.sub(r'@startuml\s*\n?', '', text)
     text = re.sub(r'@enduml\s*\n?', '', text)
+    text = _sanitize_mermaid(text)
     if not text.strip():
         raise GeminiError("Gemini did not produce valid Mermaid code")
     return text
