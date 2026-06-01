@@ -49,22 +49,82 @@ def _sanitize_label(label: str) -> str:
     return label
 
 
+def _fix_nested_skinparam(text: str) -> str:
+    """Flatten nested skinparam blocks into valid PlantUML syntax.
+
+    Gemini sometimes generates:
+        skinparam {
+          shadowing false
+          rectangle { BackgroundColor #fff }
+        }
+    Which is invalid. This flattens it to:
+        skinparam shadowing false
+        skinparam rectangle { BackgroundColor #fff }
+    """
+    result = []
+    lines = text.split("\n")
+    i = 0
+    while i < len(lines):
+        stripped = lines[i].strip()
+        # Detect bare "skinparam {" (global wrapper — invalid)
+        if stripped == "skinparam {":
+            i += 1
+            # Collect everything inside until the matching closing brace
+            depth = 1
+            while i < len(lines) and depth > 0:
+                inner = lines[i].strip()
+                if inner == "}":
+                    depth -= 1
+                    if depth == 0:
+                        i += 1
+                        break
+                elif inner.endswith("{"):
+                    # Nested block like "rectangle {" → "skinparam rectangle {"
+                    result.append(f"skinparam {inner}")
+                    depth += 1
+                elif depth == 1 and inner and not inner.startswith("}"):
+                    # Top-level property like "shadowing false"
+                    result.append(f"skinparam {inner}")
+                else:
+                    result.append(lines[i])
+                i += 1
+        else:
+            result.append(lines[i])
+            i += 1
+    return "\n".join(result)
+
+
 def _sanitize_puml(text: str) -> str:
     """Pre-process PlantUML code to fix common Gemini output issues.
 
     Catches syntax problems that would cause PlantUML rendering failures:
+    - Nested skinparam blocks
     - Inline comments (// or ' after code)
     - Special characters inside labels
     - Trailing semicolons
-    - Stray Unicode characters
+    - Invalid ArrowColor in element skinparams
     """
+    # Fix nested skinparam before line-level processing
+    text = _fix_nested_skinparam(text)
+
     lines = []
+    inside_skinparam = False
     for line in text.split("\n"):
         stripped = line.strip()
         # Preserve full-line comments (line starts with ')
         if stripped.startswith("'"):
             lines.append(line)
             continue
+        # Track if we're inside a skinparam block
+        if re.match(r'^skinparam\s+\w+\s*\{', stripped):
+            inside_skinparam = True
+        if inside_skinparam:
+            if stripped == "}":
+                inside_skinparam = False
+            # Strip ArrowColor inside element skinparam (only valid globally)
+            elif re.match(r'^\s*ArrowColor\s', stripped):
+                lines.append("")
+                continue
         # Remove trailing // comments (not inside strings)
         line = re.sub(r'\s*//\s.*$', '', line)
         # Remove trailing ' comments after code — only when ' follows a { or }
@@ -103,6 +163,9 @@ Rules:
    - `actor` and `user` elements MUST be declared OUTSIDE all group containers (AWSCloudGroup, VPCGroup, RegionGroup, etc.) — place them before or after the group block
    - NEVER use inline comments — no `//` or `'` comments after code on the same line. PlantUML only supports full-line comments starting with `'`
    - NEVER use `&` in labels — PlantUML treats `&` as a parallel operator. Use "and" instead (e.g. "Output and Error Reporting")
+   - NEVER nest skinparam blocks — `skinparam { rectangle { ... } }` is INVALID. Use flat blocks: `skinparam shadowing false` then `skinparam rectangle { ... }` as separate top-level declarations
+   - NEVER use `ArrowColor` inside `skinparam rectangle` or `skinparam component` — `ArrowColor` is a global-only parameter. Use `skinparam ArrowColor #333` at top level
+   - NEVER use multi-line body syntax `[...]` on rectangle or component elements — that syntax is only for class diagram fields. Use `\n` in labels for multi-line text (e.g. `rectangle "Line 1\nLine 2" as x`)
 
 Cloud Provider Detection:
 - Infer the cloud provider from service names in the user's prompt
@@ -334,6 +397,9 @@ Fix the syntax error. Common mistakes to check:
 - Inline comments (`//` or `'` after code on the same line) — PlantUML only supports full-line `'` comments
 - `<<stereotype>>` combined with `#color` on package/rectangle declarations — use one or the other, or use a separate `skinparam` instead
 - `&` in labels — PlantUML treats `&` as a parallel operator; use "and" instead
+- Nested `skinparam { rectangle { ... } }` — INVALID. Flatten to `skinparam shadowing false` and `skinparam rectangle { ... }` as separate blocks
+- `ArrowColor` inside `skinparam rectangle` or `skinparam component` — INVALID. Use `skinparam ArrowColor #color` at top level
+- Multi-line body `[...]` on rectangle/component elements — that syntax is only for class fields. Use `\n` in labels instead
 
 Output ONLY the corrected PlantUML code — no explanations, no markdown."""
 
