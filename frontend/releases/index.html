@@ -87,8 +87,35 @@
   <section class="pb-20 px-6">
     <div class="max-w-3xl mx-auto">
 
-      <!-- Release: PlantUML Rendering Resilience -->
+      <!-- Release: International Language Support -->
       <article class="relative pl-8 pb-12 border-l-2 border-brand-600/30">
+        <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand-600 border-2 border-surface"></div>
+        <div class="flex flex-wrap items-center gap-3 mb-4">
+          <time class="text-sm font-mono text-gray-500 dark:text-gray-400">Jun 1, 2026</time>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">Bug Fix</span>
+        </div>
+        <h2 class="text-2xl font-bold mb-3">International Language Support (CJK Fix)</h2>
+        <p class="text-gray-500 dark:text-gray-400 leading-relaxed mb-4">
+          Fixed rendering failures for diagrams with Chinese, Japanese, Korean, and other non-Latin labels. Two issues were at play: the PlantUML server wasn't told the request body was UTF-8, so multi-byte characters were garbled into syntax errors. Additionally, CJK characters consume 2&ndash;3x more tokens than English text, causing the AI to hit output limits and return truncated diagrams mid-line.
+        </p>
+        <ul class="space-y-2 text-sm text-gray-500 dark:text-gray-400">
+          <li class="flex items-start gap-2">
+            <svg class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Added <code class="text-xs bg-gray-800 px-1.5 py-0.5 rounded">charset=utf-8</code> to PlantUML server requests — CJK, Hindi, Arabic, Cyrillic labels now render correctly
+          </li>
+          <li class="flex items-start gap-2">
+            <svg class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Doubled AI output token limit (4K &rarr; 8K) to handle token-heavy non-Latin scripts
+          </li>
+          <li class="flex items-start gap-2">
+            <svg class="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            Truncation detection — clear error message instead of cryptic PlantUML failures when output is cut off
+          </li>
+        </ul>
+      </article>
+
+      <!-- Release: PlantUML Rendering Resilience -->
+      <article class="relative pl-8 pb-12 border-l-2 border-gray-200 dark:border-gray-800">
         <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand-600 border-2 border-surface"></div>
         <div class="flex flex-wrap items-center gap-3 mb-4">
           <time class="text-sm font-mono text-gray-500 dark:text-gray-400">May 31, 2026</time>
