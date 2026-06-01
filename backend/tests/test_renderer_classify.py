@@ -188,6 +188,29 @@ class TestSanitizeMermaid:
         assert 'style outer fill:#eee' in result
         assert 'style inner fill:#ddd' in result
 
+    def test_escaped_quotes_in_square_labels(self):
+        """Jun 2 2026: 2\" PVC broke Mermaid parser — \" not supported inside ["..."]."""
+        code = r'A["Air Chamber<br/>(2\" PVC, 12\")"]:::pvc_style'
+        result = _sanitize_mermaid(code)
+        assert '\\"' not in result
+        assert '&quot;' in result
+        assert 'pvc_style' in result
+
+    def test_raw_quotes_in_square_labels(self):
+        code = 'A["2" PVC Pipe"]'
+        result = _sanitize_mermaid(code)
+        assert '&quot;' in result
+
+    def test_quotes_in_round_labels(self):
+        code = 'A("2\\" inch pipe")'
+        result = _sanitize_mermaid(code)
+        assert '\\"' not in result
+
+    def test_no_quotes_label_unchanged(self):
+        code = 'A["Normal Label"]'
+        result = _sanitize_mermaid(code)
+        assert result == code
+
 
 class TestPostProcessMermaid:
     """Mermaid post-processing."""

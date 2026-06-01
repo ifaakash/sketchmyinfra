@@ -242,7 +242,8 @@ MERMAID RULES (when renderer=mermaid):
    - NEVER use `stroke-dasharray: X X` (with space after colon) — use `stroke-dasharray:5 5` (no space after colon)
 9. NEVER use & in labels — use "and" instead
 10. NEVER put `<br>` outside of node labels — only use `<br>` or `<br/>` INSIDE square brackets like `Node["Line 1<br/>Line 2"]`
-11. Keep diagrams clean — avoid overlapping labels
+11. NEVER use escaped quotes `\"` or raw `"` inside node labels — Mermaid cannot parse them. Use `&quot;` or just omit the quotes. Example: `A["2-inch PVC Pipe"]` NOT `A["2\" PVC Pipe"]`. For inch marks use `in` (e.g. `12 in`) or the prime symbol `′`
+12. Keep diagrams clean — avoid overlapping labels
 
 PLANTUML RULES (when renderer=plantuml):
 1. Always wrap output in @startuml and @enduml
@@ -628,6 +629,19 @@ def _sanitize_mermaid(text: str) -> str:
         # Fix: spaces after colons in style values (stroke-dasharray: 5 5 → stroke-dasharray:5 5)
         if 'style ' in stripped or 'fill:' in stripped or 'stroke' in stripped:
             line = re.sub(r'(\w):\s+([#\d])', r'\1:\2', line)
+
+        # Fix: escaped quotes inside bracket labels — Mermaid doesn't support \"
+        # Replace \" inside [...] labels with &quot; (HTML entity Mermaid renders)
+        def _fix_label_quotes(m):
+            """Replace backslash-escaped quotes inside a bracket label."""
+            prefix, content, suffix = m.group(1), m.group(2), m.group(3)
+            content = content.replace('\\"', '&quot;')
+            content = content.replace('"', '&quot;')
+            return prefix + content + suffix
+
+        # Match [...] label patterns: ["..."], ("..."), {{"..."}}, etc.
+        line = re.sub(r'(\[")(.*?)("\])', _fix_label_quotes, line)
+        line = re.sub(r'(\(")(.*?)("\))', _fix_label_quotes, line)
 
         lines.append(line)
     return "\n".join(lines)
