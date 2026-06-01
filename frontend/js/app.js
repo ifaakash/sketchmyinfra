@@ -5,6 +5,8 @@
 
 // Current state
 let currentPuml = '';
+let currentCode = '';
+let currentRenderer = 'plantuml';
 let currentImageUri = '';
 let currentPrompt = '';
 let isGenerating = false;

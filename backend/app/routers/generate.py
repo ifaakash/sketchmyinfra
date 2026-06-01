@@ -17,7 +17,7 @@ from app.schemas import (
     GenerationStatsResponse,
     GenerationStatusCounts,
 )
-from app.services.gemini import generate_puml, fix_puml, GeminiError
+from app.services.gemini import generate_diagram, generate_puml, fix_puml, fix_mermaid, GeminiError
 from app.services.plantuml import render_puml, PlantUMLError
 
 logger = logging.getLogger(__name__)
@@ -111,8 +111,11 @@ async def generate(
     # Enforce rate limit before calling Gemini (don't waste an API call).
     await _check_rate_limit(user, ip, db)
 
+    # Phase 1: Generate diagram (Gemini classifies renderer automatically)
     try:
-        puml = await generate_puml(req.prompt, req.context)
+        renderer, code = await generate_diagram(
+            req.prompt, req.context, req.context_renderer
+        )
     except GeminiError as e:
         db.add(Generation(
             user_id=user.id if user else None,
@@ -134,43 +137,52 @@ async def generate(
         await db.commit()
         raise HTTPException(status_code=500, detail="Failed to generate diagram")
 
-    # Validate by rendering server-side. If invalid, ask Gemini to fix it once.
-    try:
-        await render_puml(puml, "svg")
-    except PlantUMLError as render_err:
-        logger.warning("PlantUML validation failed, attempting auto-fix: %s", render_err)
+    # Phase 2: Validate (PlantUML only — Mermaid validates client-side)
+    if renderer == "plantuml":
         try:
-            puml = await fix_puml(puml, str(render_err))
-            await render_puml(puml, "svg")
-            logger.info("Auto-fix succeeded")
-        except (PlantUMLError, GeminiError) as fix_err:
-            logger.error("Auto-fix failed: %s", fix_err)
-            db.add(Generation(
-                user_id=user.id if user else None,
-                prompt=req.prompt,
-                puml_code=puml,
-                status="autofix_failed",
-                error_message=str(fix_err),
-                ip_address=ip,
-            ))
-            await db.commit()
-            raise HTTPException(
-                status_code=502,
-                detail="We couldn't generate a valid diagram for this architecture. Try simplifying your prompt or being more specific about the components.",
-            )
+            await render_puml(code, "svg")
+        except PlantUMLError as render_err:
+            logger.warning("PlantUML validation failed, attempting auto-fix: %s", render_err)
+            try:
+                code = await fix_puml(code, str(render_err))
+                await render_puml(code, "svg")
+                logger.info("Auto-fix succeeded")
+            except (PlantUMLError, GeminiError) as fix_err:
+                logger.error("Auto-fix failed: %s", fix_err)
+                db.add(Generation(
+                    user_id=user.id if user else None,
+                    prompt=req.prompt,
+                    puml_code=code,
+                    renderer=renderer,
+                    status="autofix_failed",
+                    error_message=str(fix_err),
+                    ip_address=ip,
+                ))
+                await db.commit()
+                raise HTTPException(
+                    status_code=502,
+                    detail="We couldn't generate a valid diagram for this architecture. Try simplifying your prompt or being more specific about the components.",
+                )
 
+    # Phase 3: Record success
     db.add(
         Generation(
             user_id=user.id if user else None,
             prompt=req.prompt,
-            puml_code=puml,
+            puml_code=code,
+            renderer=renderer,
             status="success",
             ip_address=ip,
         )
     )
     await db.commit()
 
-    return GenerateResponse(puml=puml, prompt_used=req.prompt)
+    return GenerateResponse(
+        renderer=renderer,
+        code=code,
+        prompt_used=req.prompt,
+        puml=code if renderer == "plantuml" else None,
+    )
 
 
 @router.get("/generations/stats", response_model=GenerationStatsResponse)

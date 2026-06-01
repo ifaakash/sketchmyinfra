@@ -35,12 +35,13 @@ async function handleResponse(response) {
 }
 
 /**
- * Generate PUML code from a natural language prompt.
+ * Generate diagram code from a natural language prompt.
  * @param {string} prompt - User's architecture description
- * @param {string|null} context - Previous PUML code for iteration
- * @returns {Promise<{puml: string, prompt_used: string}>}
+ * @param {string|null} context - Previous diagram code for iteration
+ * @param {string|null} contextRenderer - Renderer of the context diagram
+ * @returns {Promise<{renderer: string, code: string, prompt_used: string, puml: string|null}>}
  */
-async function apiGenerate(prompt, context = null) {
+async function apiGenerate(prompt, context = null, contextRenderer = null) {
   if (USE_MOCKS) {
     return mockGenerate(prompt, context);
   }
@@ -49,10 +50,13 @@ async function apiGenerate(prompt, context = null) {
   const timeout = setTimeout(() => controller.abort(), 30000);
 
   try {
+    const body = { prompt, context };
+    if (contextRenderer) body.context_renderer = contextRenderer;
+
     const response = await fetch(`${API_BASE}/api/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, context }),
+      body: JSON.stringify(body),
       credentials: 'include',
       signal: controller.signal
     });
