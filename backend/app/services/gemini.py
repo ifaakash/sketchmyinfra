@@ -246,6 +246,7 @@ MERMAID RULES (when renderer=mermaid):
    - NEVER start node IDs with a digit — use a letter prefix: `n_1` not `1`, `step_2` not `2`
    - Use snake_case for all IDs: `air_chamber` not `air-chamber`
    - NEVER use Mermaid keywords as IDs: `end`, `graph`, `subgraph`, `click`, `style`, `classDef`
+   - ALWAYS quote label content that contains parentheses: `node["Text (detail)"]` NOT `node[Text (detail)]` — unquoted `(` triggers shape parsing
 10. NEVER use `&` in labels — use "and" instead
 11. NEVER put `<br>` outside of node labels — only INSIDE brackets: `Node["Line 1<br/>Line 2"]`
 12. NEVER use escaped quotes `\"` or raw `"` inside node labels — use `&quot;` or reword. For inches use `in` (e.g. `12 in`)
@@ -666,6 +667,24 @@ def _sanitize_mermaid(text: str) -> str:
             line = re.sub(r',\s*$', '', line)
             # Remove trailing semicolons after style values
             line = re.sub(r';\s*$', '', line)
+
+        # --- Unquoted square bracket labels with special chars ---
+        # [Air Chamber<br/>(2in PVC)] → ["Air Chamber<br/>(2in PVC)"]
+        # Mermaid parses ( inside [...] as a shape delimiter — must quote the content
+        def _quote_unquoted_label(m):
+            content = m.group(1)
+            # Already quoted — leave alone
+            if content.startswith('"') and content.endswith('"'):
+                return '[' + content + ']'
+            # Contains chars that trigger Mermaid shape parsing — wrap in quotes
+            if any(c in content for c in '(){}'):
+                # Escape any existing quotes in the content
+                content = content.replace('"', '&quot;')
+                return '["' + content + '"]'
+            return '[' + content + ']'
+
+        # Match node[...] patterns but not node["..."] (already quoted)
+        line = re.sub(r'\[([^\]]+)\]', _quote_unquoted_label, line)
 
         # --- Escaped quotes inside bracket labels ---
         line = re.sub(r'(\[")(.*?)("\])', _fix_mermaid_label_quotes, line)

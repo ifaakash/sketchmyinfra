@@ -296,6 +296,44 @@ class TestSanitizeMermaid:
         assert "n_1_air" in result
         assert "n_2_barrel" in result
 
+    def test_unquoted_parens_in_square_label(self):
+        """Jun 2 2026: [Air Chamber<br/>(2in PVC)] parsed ( as shape start."""
+        code = 'air_chamber[Air Chamber<br/>(2in PVC, 12in)]:::pvc_pipe'
+        result = _sanitize_mermaid(code)
+        # Should be quoted now
+        assert '["Air Chamber<br/>(2in PVC, 12in)"]' in result
+
+    def test_unquoted_parens_multiple_nodes(self):
+        code = (
+            'barrel[Barrel<br/>(1.25in PVC, 24in)]:::pvc\n'
+            'trigger[Trigger Lever<br/>(Wood)]:::mech'
+        )
+        result = _sanitize_mermaid(code)
+        assert '["Barrel<br/>(1.25in PVC, 24in)"]' in result
+        assert '["Trigger Lever<br/>(Wood)"]' in result
+
+    def test_already_quoted_label_unchanged(self):
+        code = 'node["Already Quoted (with parens)"]'
+        result = _sanitize_mermaid(code)
+        assert '["Already Quoted (with parens)"]' in result
+
+    def test_simple_label_no_parens_unchanged(self):
+        code = 'node[Simple Label]'
+        result = _sanitize_mermaid(code)
+        assert '[Simple Label]' in result
+
+    def test_curly_brace_in_label_quoted(self):
+        code = 'node[Config {key: val}]'
+        result = _sanitize_mermaid(code)
+        assert '["Config {key: val}"]' in result
+
+    def test_linkstyle_dasharray_space(self):
+        """linkStyle with stroke-dasharray should not break."""
+        code = "linkStyle 6 stroke-dasharray: 5 5"
+        result = _sanitize_mermaid(code)
+        # linkStyle is valid Mermaid — should pass through
+        assert "linkStyle" in result
+
 
 class TestPostProcessMermaid:
     """Mermaid post-processing."""
