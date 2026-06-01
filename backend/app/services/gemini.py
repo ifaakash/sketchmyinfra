@@ -361,7 +361,7 @@ async def generate_puml(prompt: str, context: str | None = None) -> str:
         "contents": [{"parts": parts}],
         "generationConfig": {
             "temperature": 0.7,
-            "maxOutputTokens": 4096,
+            "maxOutputTokens": 8192,
         },
     }
 
@@ -393,6 +393,9 @@ async def generate_puml(prompt: str, context: str | None = None) -> str:
     if "@startuml" not in text:
         raise GeminiError("Gemini did not produce valid PlantUML code")
 
+    if "@enduml" not in text:
+        raise GeminiError("Diagram generation was truncated — try simplifying your prompt")
+
     return text
 
 
@@ -403,7 +406,7 @@ async def fix_puml(puml: str, error: str) -> str:
         "contents": [{"parts": [{"text": FIX_PROMPT.format(puml=puml, error=error)}]}],
         "generationConfig": {
             "temperature": 0.2,
-            "maxOutputTokens": 4096,
+            "maxOutputTokens": 8192,
         },
     }
 
@@ -432,6 +435,9 @@ async def fix_puml(puml: str, error: str) -> str:
 
     if "@startuml" not in text:
         raise GeminiError("Gemini did not produce valid PlantUML after fix attempt")
+
+    if "@enduml" not in text:
+        raise GeminiError("Diagram fix was truncated — try simplifying your prompt")
 
     return text
 
