@@ -54,7 +54,7 @@ async def render_puml(puml: str, fmt: str = "svg") -> str:
         response = await client.post(
             f"{PLANTUML_URL}{path}",
             content=puml.encode("utf-8"),
-            headers={"Content-Type": "text/plain"},
+            headers={"Content-Type": "text/plain; charset=utf-8"},
         )
 
     if response.status_code != 200:
