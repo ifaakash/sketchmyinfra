@@ -205,30 +205,60 @@ GEMINI_URL = (
     f"{settings.gemini_model}:generateContent"
 )
 
-SYSTEM_PROMPT = """You are an expert infrastructure and software architect. Your job is to convert natural language descriptions into valid PlantUML code.
+SYSTEM_PROMPT = """You are an expert infrastructure and software architect. Your job is to convert natural language descriptions into architecture diagrams.
 
-Rules:
+RENDERER SELECTION (CRITICAL — output this FIRST):
+- Your VERY FIRST line of output MUST be a renderer tag: :::renderer=plantuml::: OR :::renderer=mermaid:::
+- Use "plantuml" ONLY when the diagram involves cloud provider services (AWS, GCP, Azure) that benefit from official icon libraries
+- Use "mermaid" for ALL other diagrams: flowcharts, sequence diagrams, class diagrams, ER diagrams, state machines, mind maps, general system designs, non-cloud architectures
+- After the renderer tag, output the diagram code (no explanations, no markdown, no code fences)
+
+MERMAID RULES (when renderer=mermaid):
+1. Output valid Mermaid syntax — do NOT wrap in @startuml/@enduml
+2. Use appropriate diagram types:
+   - graph TD/LR for flowcharts and architectures
+   - sequenceDiagram for request flows
+   - classDiagram for class/entity relationships
+   - stateDiagram-v2 for state machines
+   - erDiagram for ER diagrams
+   - gantt for timelines
+3. Use subgraph blocks to group related components
+4. Use meaningful labels on arrows with |text| syntax or -->|label|
+5. Apply modern styling with %%{init: {'theme': 'base', 'themeVariables': ...}}%% at the top
+6. Recommended theme config for clean look:
+   %%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#dbeafe', 'primaryTextColor': '#1e40af', 'primaryBorderColor': '#3b82f6', 'lineColor': '#64748b', 'secondaryColor': '#f0fdf4', 'tertiaryColor': '#fef3c7', 'fontFamily': 'Inter, system-ui, sans-serif'}}}%%
+7. Use different node shapes for different component types:
+   - [Text] for rectangles (services)
+   - [(Text)] for cylinders (databases)
+   - ((Text)) for circles (users/external)
+   - {Text} for diamonds (decisions)
+   - ([Text]) for stadiums (queues/buffers)
+8. Use color classes via :::className or style directives for visual grouping
+9. NEVER use & in labels — use "and" instead
+10. Keep diagrams clean — avoid overlapping labels
+
+PLANTUML RULES (when renderer=plantuml):
 1. Always wrap output in @startuml and @enduml
-2. Output ONLY the PlantUML code — no explanations, no markdown, no code fences
+2. Output ONLY the PlantUML code after the renderer tag
 3. Use appropriate diagram types:
-   - Component/deployment diagrams for architectures
+   - Component/deployment diagrams for cloud architectures
    - Sequence diagrams for request flows or auth flows
    - Activity diagrams for CI/CD pipelines or workflows
 4. Keep diagrams readable — avoid cluttering with too many elements
 5. Use meaningful labels and arrows with descriptions
-6. When using `actor` elements (for users, external systems, etc.), always add `skinparam actorStyle awesome` to render them as a person silhouette instead of a plain stick figure
+6. When using `actor` elements, always add `skinparam actorStyle awesome`
 7. Element declaration rules (CRITICAL — violations cause render failures):
-   - NEVER define elements inline inside arrows or relationship lines (e.g., `A --> Component(b, ...)` is INVALID — declare `Component(b, ...)` first, then write `A --> b`)
-   - ALWAYS declare every element before referencing it in any arrow or relationship
-   - Use `note right of X` / `note left of X` / `note bottom of X` — NEVER `note on X` (that syntax does not exist)
-   - `actor` and `user` elements MUST be declared OUTSIDE all group containers (AWSCloudGroup, VPCGroup, RegionGroup, etc.) — place them before or after the group block
-   - NEVER use inline comments — no `//` or `'` comments after code on the same line. PlantUML only supports full-line comments starting with `'`
-   - NEVER use `&` in labels — PlantUML treats `&` as a parallel operator. Use "and" instead (e.g. "Output and Error Reporting")
-   - NEVER nest skinparam blocks — `skinparam { rectangle { ... } }` is INVALID. Use flat blocks: `skinparam shadowing false` then `skinparam rectangle { ... }` as separate top-level declarations
-   - NEVER use `ArrowColor` inside `skinparam rectangle` or `skinparam component` — `ArrowColor` is a global-only parameter. Use `skinparam ArrowColor #333` at top level
-   - NEVER use multi-line body syntax `[...]` on rectangle or component elements — that syntax is only for class diagram fields. Use `\n` in labels for multi-line text (e.g. `rectangle "Line 1\nLine 2" as x`)
-   - NEVER use `!$variable` preprocessor variables for colors — they don't interpolate reliably in `#color` positions. Use literal hex colors directly (e.g. `#D3D3D3`)
-   - NEVER use `skinparam line { }` — `line` is not a valid skinparam target. Use `skinparam ArrowThickness 2` and `skinparam ArrowColor #333` instead
+   - NEVER define elements inline inside arrows or relationship lines
+   - ALWAYS declare every element before referencing it in any arrow
+   - Use `note right of X` / `note left of X` / `note bottom of X` — NEVER `note on X`
+   - `actor` and `user` elements MUST be declared OUTSIDE all group containers
+   - NEVER use inline comments — no `//` or `'` comments after code on the same line
+   - NEVER use `&` in labels — use "and" instead
+   - NEVER nest skinparam blocks — use flat blocks
+   - NEVER use `ArrowColor` inside `skinparam rectangle` or `skinparam component` — global only
+   - NEVER use multi-line body syntax `[...]` on rectangle/component — use `\n` in labels
+   - NEVER use `!$variable` preprocessor variables for colors — use literal hex
+   - NEVER use `skinparam line { }` — not a valid target
 
 Cloud Provider Detection:
 - Infer the cloud provider from service names in the user's prompt
@@ -472,21 +502,115 @@ def _build_fix_prompt(puml: str, error: str) -> str:
     )
 
 
-def _build_iteration_prompt(context: str) -> str:
-    """Build the iteration prompt safely — avoids str.format() on PUML content."""
+def _build_iteration_prompt(context: str, renderer: str = "plantuml") -> str:
+    """Build the iteration prompt safely — avoids str.format() on diagram content."""
+    fmt = "PlantUML" if renderer == "plantuml" else "Mermaid"
     return (
-        "The user wants to modify an existing diagram. Here is the current PlantUML code:\n\n"
+        f"The user wants to modify an existing diagram. Here is the current {fmt} code:\n\n"
         f"```\n{context}\n```\n\n"
-        "Apply the user's requested changes below. Output ONLY the updated PlantUML code — no explanations."
+        f"Apply the user's requested changes below. Output the renderer tag on the first line "
+        f"(:::renderer={renderer}:::) followed by ONLY the updated {fmt} code — no explanations."
     )
 
 
-async def generate_puml(prompt: str, context: str | None = None) -> str:
-    """Call Gemini API to generate PlantUML code from a natural language prompt."""
+CLOUD_KEYWORDS = {
+    "aws", "ec2", "ecs", "s3", "rds", "lambda", "vpc", "alb", "route53",
+    "cloudfront", "sqs", "sns", "dynamodb", "fargate", "ecr", "cloudwatch",
+    "iam", "elastic beanstalk", "api gateway", "step functions", "kinesis",
+    "gcp", "cloud run", "gke", "bigquery", "cloud sql", "pub/sub",
+    "cloud functions", "cloud storage", "compute engine", "cloud cdn",
+    "cloud armor", "artifact registry", "cloud spanner",
+    "azure", "aks", "azure sql", "cosmos db", "azure functions",
+    "blob storage", "app service", "front door", "azure devops",
+    "container registry", "azure monitor", "azure vm",
+}
+
+
+def classify_prompt(prompt: str) -> str:
+    """Classify a user prompt as needing plantuml or mermaid rendering."""
+    lower = prompt.lower()
+    if any(kw in lower for kw in CLOUD_KEYWORDS):
+        return "plantuml"
+    return "mermaid"
+
+
+def _parse_renderer_tag(text: str) -> tuple[str, str]:
+    """Parse the :::renderer=X::: tag from Gemini output.
+
+    Returns (renderer, code) tuple. Falls back to content-based detection
+    if the tag is missing.
+    """
+    # Look for the renderer tag on the first non-empty line
+    lines = text.split("\n")
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        match = re.match(r'^:::renderer=(plantuml|mermaid):::\s*$', stripped)
+        if match:
+            renderer = match.group(1)
+            code = "\n".join(lines[i + 1:]).strip()
+            return renderer, code
+        # Stop looking after first non-empty, non-tag line
+        if stripped:
+            break
+
+    # Fallback: detect from content
+    if "@startuml" in text:
+        return "plantuml", text
+    # Mermaid diagram types
+    if any(kw in text for kw in ["graph ", "flowchart ", "sequenceDiagram", "classDiagram",
+                                   "stateDiagram", "erDiagram", "gantt", "%%{"]):
+        return "mermaid", text
+
+    # Default to mermaid for non-cloud content
+    return "mermaid", text
+
+
+def _strip_fences(text: str) -> str:
+    """Strip markdown code fences if Gemini wraps the output."""
+    text = text.strip()
+    if text.startswith("```"):
+        lines = text.split("\n")
+        lines = [l for l in lines if not l.strip().startswith("```")]
+        text = "\n".join(lines).strip()
+    return text
+
+
+def _post_process_puml(text: str) -> str:
+    """Apply all PlantUML-specific sanitization and validation."""
+    text = _normalize_gemini_text(text)
+    text = _sanitize_puml(text)
+
+    if "@startuml" not in text:
+        raise GeminiError("Gemini did not produce valid PlantUML code")
+    if "@enduml" not in text:
+        raise GeminiError("Diagram generation was truncated — try simplifying your prompt")
+    return text
+
+
+def _post_process_mermaid(text: str) -> str:
+    """Apply Mermaid-specific cleanup."""
+    text = _normalize_gemini_text(text)
+    # Strip any accidental @startuml/@enduml if Gemini got confused
+    text = re.sub(r'@startuml\s*\n?', '', text)
+    text = re.sub(r'@enduml\s*\n?', '', text)
+    if not text.strip():
+        raise GeminiError("Gemini did not produce valid Mermaid code")
+    return text
+
+
+async def generate_diagram(prompt: str, context: str | None = None,
+                           context_renderer: str | None = None) -> tuple[str, str]:
+    """Generate a diagram — returns (renderer, code) tuple.
+
+    Gemini classifies the prompt and outputs the appropriate format
+    (PlantUML or Mermaid). Falls back to keyword-based classification
+    if Gemini's renderer tag is missing.
+    """
     parts = []
 
     if context:
-        parts.append({"text": _build_iteration_prompt(context)})
+        renderer_hint = context_renderer or "plantuml"
+        parts.append({"text": _build_iteration_prompt(context, renderer_hint)})
 
     parts.append({"text": prompt})
 
@@ -512,25 +636,28 @@ async def generate_puml(prompt: str, context: str | None = None) -> str:
 
     data = response.json()
     text = data["candidates"][0]["content"]["parts"][0]["text"]
+    text = _strip_fences(text)
 
-    # Strip markdown code fences if Gemini wraps the output
-    text = text.strip()
-    if text.startswith("```"):
-        lines = text.split("\n")
-        # Remove first line (```plantuml or ```) and last line (```)
-        lines = [l for l in lines if not l.strip().startswith("```")]
-        text = "\n".join(lines).strip()
+    renderer, code = _parse_renderer_tag(text)
 
-    text = _normalize_gemini_text(text)
-    text = _sanitize_puml(text)
+    # Safety net: if Gemini said mermaid but content has cloud keywords, override
+    if renderer == "mermaid" and classify_prompt(prompt) == "plantuml":
+        # Re-check — if code actually has @startuml, trust Gemini
+        if "@startuml" not in code:
+            renderer = "plantuml"
 
-    if "@startuml" not in text:
-        raise GeminiError("Gemini did not produce valid PlantUML code")
+    if renderer == "plantuml":
+        code = _post_process_puml(code)
+    else:
+        code = _post_process_mermaid(code)
 
-    if "@enduml" not in text:
-        raise GeminiError("Diagram generation was truncated — try simplifying your prompt")
+    return renderer, code
 
-    return text
+
+async def generate_puml(prompt: str, context: str | None = None) -> str:
+    """Legacy wrapper — generates PlantUML only. Kept for backward compat."""
+    _, code = await generate_diagram(prompt, context, context_renderer="plantuml")
+    return code
 
 
 async def fix_puml(puml: str, error: str) -> str:
@@ -574,6 +701,46 @@ async def fix_puml(puml: str, error: str) -> str:
         raise GeminiError("Diagram fix was truncated — try simplifying your prompt")
 
     return text
+
+
+async def fix_mermaid(code: str, error: str) -> str:
+    """Ask Gemini to fix a Mermaid syntax error and return corrected code."""
+    fix_prompt = (
+        "The following Mermaid diagram code failed to render with this error:\n\n"
+        f"Error: {error}\n\n"
+        f"Broken code:\n```\n{code}\n```\n\n"
+        "Fix the syntax error. Output :::renderer=mermaid::: on the first line, "
+        "then ONLY the corrected Mermaid code — no explanations, no markdown."
+    )
+
+    payload = {
+        "system_instruction": {"parts": [{"text": SYSTEM_PROMPT}]},
+        "contents": [{"parts": [{"text": fix_prompt}]}],
+        "generationConfig": {
+            "temperature": 0.2,
+            "maxOutputTokens": 8192,
+        },
+    }
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.post(
+            GEMINI_URL,
+            params={"key": settings.gemini_api_key},
+            json=payload,
+        )
+
+    if response.status_code != 200:
+        err_msg = response.json().get("error", {}).get("message", "Unknown error")
+        raise GeminiError(f"Gemini fix error: {err_msg}")
+
+    data = response.json()
+    text = data["candidates"][0]["content"]["parts"][0]["text"]
+    text = _strip_fences(text)
+
+    _, fixed_code = _parse_renderer_tag(text)
+    fixed_code = _post_process_mermaid(fixed_code)
+
+    return fixed_code
 
 
 class GeminiError(Exception):

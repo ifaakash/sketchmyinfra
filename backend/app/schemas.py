@@ -13,12 +13,15 @@ class RenderResponse(BaseModel):
 
 class GenerateRequest(BaseModel):
     prompt: str = Field(..., min_length=1, max_length=2000)
-    context: str | None = Field(default=None, description="Previous PUML code for iteration")
+    context: str | None = Field(default=None, description="Previous diagram code for iteration")
+    context_renderer: str | None = Field(default=None, description="Renderer of the context diagram")
 
 
 class GenerateResponse(BaseModel):
-    puml: str
+    renderer: str = Field(default="plantuml", description="Renderer used: plantuml or mermaid")
+    code: str = Field(..., description="Diagram source code (PlantUML or Mermaid)")
     prompt_used: str
+    puml: str | None = Field(default=None, description="PlantUML code (backward compat, only when renderer=plantuml)")
 
 
 class ErrorResponse(BaseModel):

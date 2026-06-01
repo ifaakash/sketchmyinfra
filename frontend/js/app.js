@@ -5,6 +5,8 @@
 
 // Current state
 let currentPuml = '';
+let currentCode = '';
+let currentRenderer = 'plantuml';
 let currentImageUri = '';
 let currentPrompt = '';
 let isGenerating = false;
@@ -176,18 +178,35 @@ async function handleGenerate() {
   }, 8000);
 
   try {
-    // Phase 1: Generate PUML
+    // Phase 1: Generate diagram (backend classifies renderer)
     setGenerateLoading(true);
     showPanel('loading');
-    setLoadingText('Generating PlantUML code...');
+    setLoadingText('Generating diagram...');
 
-    const genResult = await apiGenerate(prompt, currentPuml || null);
-    currentPuml = genResult.puml;
-    showPumlCode(currentPuml);
+    const genResult = await apiGenerate(
+      prompt,
+      currentCode || currentPuml || null,
+      currentRenderer || null
+    );
+    currentRenderer = genResult.renderer || 'plantuml';
+    currentCode = genResult.code || genResult.puml;
+    currentPuml = genResult.puml || currentCode; // backward compat
+    showPumlCode(currentCode);
+
+    // Update code panel label
+    const codeLabel = $('#puml-label');
+    if (codeLabel) {
+      codeLabel.textContent = currentRenderer === 'mermaid' ? 'Mermaid Code' : 'PlantUML Code';
+    }
 
     // Phase 2: Render diagram
     setLoadingText('Rendering diagram...');
-    const renderResult = await apiRender(currentPuml, 'svg');
+    let renderResult;
+    if (currentRenderer === 'mermaid') {
+      renderResult = await renderMermaid(currentCode);
+    } else {
+      renderResult = await apiRender(currentCode, 'svg');
+    }
     currentImageUri = renderResult.image;
 
     // Show result
@@ -208,7 +227,8 @@ async function handleGenerate() {
     // Add to history
     historyAdd({
       prompt: currentPrompt,
-      puml: currentPuml,
+      puml: currentCode,
+      renderer: currentRenderer,
       imageDataUri: currentImageUri,
     });
 
@@ -238,9 +258,9 @@ async function handleGenerate() {
  * Re-render with edited PUML code (skips AI).
  */
 async function handleReRender() {
-  const puml = getPumlCode();
-  if (!puml.trim()) {
-    showToast('No PlantUML code to render', 'error', 3000);
+  const code = getPumlCode();
+  if (!code.trim()) {
+    showToast('No diagram code to render', 'error', 3000);
     return;
   }
 
@@ -251,16 +271,23 @@ async function handleReRender() {
     showPanel('loading');
     setLoadingText('Rendering diagram...');
 
-    const result = await apiRender(puml, 'svg');
-    currentPuml = puml;
+    let result;
+    if (currentRenderer === 'mermaid') {
+      result = await renderMermaid(code);
+    } else {
+      result = await apiRender(code, 'svg');
+    }
+    currentCode = code;
+    currentPuml = code;
     currentImageUri = result.image;
 
     showDiagram(currentImageUri);
     showToast('Diagram re-rendered', 'success', 2000);
 
     historyAdd({
-      prompt: currentPrompt || 'Manual PUML edit',
-      puml: currentPuml,
+      prompt: currentPrompt || 'Manual edit',
+      puml: currentCode,
+      renderer: currentRenderer,
       imageDataUri: currentImageUri,
     });
 
@@ -293,6 +320,8 @@ function handleNew() {
   const input = $('#prompt-input');
   if (input) input.value = '';
   currentPuml = '';
+  currentCode = '';
+  currentRenderer = 'plantuml';
   currentImageUri = '';
   currentPrompt = '';
   hidePumlCode();
@@ -306,7 +335,7 @@ function handleNew() {
  * PNG: request a fresh PNG render from the backend (currentImageUri is always SVG).
  */
 async function handleDownload(format) {
-  if (!currentImageUri || !currentPuml) {
+  if (!currentImageUri || !currentCode) {
     showToast('No diagram to download', 'error', 2000);
     return;
   }
@@ -317,8 +346,15 @@ async function handleDownload(format) {
   if (format === 'png') {
     showToast('Preparing PNG…', 'info', 2000);
     try {
-      const result = await apiRender(currentPuml, 'png');
-      downloadDataUri(result.image, filename);
+      let pngUri;
+      if (currentRenderer === 'mermaid') {
+        // Convert SVG to PNG client-side for Mermaid diagrams
+        pngUri = await svgToPngDataUri(currentImageUri);
+      } else {
+        const result = await apiRender(currentCode, 'png');
+        pngUri = result.image;
+      }
+      downloadDataUri(pngUri, filename);
       showToast(`Downloaded ${filename}`, 'success', 2000);
     } catch (err) {
       showToast('PNG export failed — try SVG instead', 'error', 3000);
