@@ -234,6 +234,68 @@ class TestSanitizeMermaid:
         result = _sanitize_mermaid(code)
         assert result == code
 
+    def test_trailing_semicolons_stripped(self):
+        code = 'classDef blue fill:#dbeafe,stroke:#3b82f6;'
+        result = _sanitize_mermaid(code)
+        assert not result.rstrip().endswith(';')
+
+    def test_trailing_comma_in_style(self):
+        code = 'style mynode fill:#eee,stroke:#333,'
+        result = _sanitize_mermaid(code)
+        assert not result.rstrip().endswith(',')
+
+    def test_node_id_starting_with_digit(self):
+        code = '1_node["First Node"]'
+        result = _sanitize_mermaid(code)
+        assert result.strip().startswith('n_1_node')
+
+    def test_digit_node_in_arrow_source(self):
+        code = "123 --> 456"
+        result = _sanitize_mermaid(code)
+        assert "n_123" in result
+        assert "n_456" in result
+        assert result.strip().startswith("n_")
+
+    def test_digit_node_in_dotted_arrow(self):
+        code = "1a -.-> 2b"
+        result = _sanitize_mermaid(code)
+        assert "n_1a" in result
+        assert "n_2b" in result
+
+    def test_non_digit_node_unchanged(self):
+        code = "nodeA --> nodeB"
+        result = _sanitize_mermaid(code)
+        assert result == code
+
+    def test_subgraph_name_starting_with_digit(self):
+        code = 'subgraph "1st Floor"\n  A-->B\nend'
+        result = _sanitize_mermaid(code)
+        assert 'subgraph s_1st_floor["1st Floor"]' in result
+
+    def test_classdef_space_after_colon(self):
+        code = "classDef myclass fill: #dbeafe,stroke: #3b82f6,stroke-width: 2px"
+        result = _sanitize_mermaid(code)
+        assert "fill:#dbeafe" in result
+        assert "stroke:#3b82f6" in result
+        assert "stroke-width:2px" in result
+
+    def test_full_production_regression(self):
+        """Jun 2 2026: stroke-width:2px followed by classDef caused parse error."""
+        code = (
+            "graph TD\n"
+            "    classDef pvc fill:#bfdffb,stroke:#000,stroke-width:2px;\n"
+            "    classDef valve fill:#a0a0a0,stroke:#000,stroke-width:2px;\n"
+            "    1_air[\"Air Chamber\"]:::pvc\n"
+            "    1_air --> 2_barrel\n"
+            "    2_barrel[\"Barrel\"]:::pvc\n"
+        )
+        result = _sanitize_mermaid(code)
+        # Semicolons stripped
+        assert "2px;" not in result
+        # Digit node IDs prefixed
+        assert "n_1_air" in result
+        assert "n_2_barrel" in result
+
 
 class TestPostProcessMermaid:
     """Mermaid post-processing."""

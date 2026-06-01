@@ -236,14 +236,20 @@ MERMAID RULES (when renderer=mermaid):
    - ((Text)) for circles (users/external)
    - {Text} for diamonds (decisions)
    - ([Text]) for stadiums (queues/buffers)
-8. Style rules:
-   - Use `classDef` and `:::className` for reusable styles
-   - In `style` values, use NO spaces after colons in CSS-like properties: `fill:#eee,stroke:#333` (NOT `fill: #eee`)
-   - NEVER use `stroke-dasharray: X X` (with space after colon) — use `stroke-dasharray:5 5` (no space after colon)
-9. NEVER use & in labels — use "and" instead
-10. NEVER put `<br>` outside of node labels — only use `<br>` or `<br/>` INSIDE square brackets like `Node["Line 1<br/>Line 2"]`
-11. NEVER use escaped quotes `\"` or raw `"` inside node labels — Mermaid cannot parse them. Use `&quot;` or just omit the quotes. Example: `A["2-inch PVC Pipe"]` NOT `A["2\" PVC Pipe"]`. For inch marks use `in` (e.g. `12 in`) or the prime symbol `′`
-12. Keep diagrams clean — avoid overlapping labels
+8. Style rules (CRITICAL — malformed styles break the entire diagram):
+   - Use `classDef` and `:::className` for reusable styles — define classDef at the TOP of the diagram, OUTSIDE subgraphs
+   - In `style` and `classDef` values, use NO spaces after colons: `fill:#eee,stroke:#333` NOT `fill: #eee`
+   - NO semicolons anywhere — Mermaid does not use semicolons
+   - NO trailing commas in style values
+   - Example: `classDef blue fill:#dbeafe,stroke:#3b82f6,stroke-width:2px`
+9. Node ID rules:
+   - NEVER start node IDs with a digit — use a letter prefix: `n_1` not `1`, `step_2` not `2`
+   - Use snake_case for all IDs: `air_chamber` not `air-chamber`
+   - NEVER use Mermaid keywords as IDs: `end`, `graph`, `subgraph`, `click`, `style`, `classDef`
+10. NEVER use `&` in labels — use "and" instead
+11. NEVER put `<br>` outside of node labels — only INSIDE brackets: `Node["Line 1<br/>Line 2"]`
+12. NEVER use escaped quotes `\"` or raw `"` inside node labels — use `&quot;` or reword. For inches use `in` (e.g. `12 in`)
+13. Keep diagrams clean — avoid overlapping labels
 
 PLANTUML RULES (when renderer=plantuml):
 1. Always wrap output in @startuml and @enduml
@@ -595,24 +601,51 @@ def _post_process_puml(text: str) -> str:
     return text
 
 
+def _fix_mermaid_label_quotes(m):
+    """Replace backslash-escaped quotes inside a bracket label."""
+    prefix, content, suffix = m.group(1), m.group(2), m.group(3)
+    content = content.replace('\\"', '&quot;')
+    content = content.replace('"', '&quot;')
+    return prefix + content + suffix
+
+
 def _sanitize_mermaid(text: str) -> str:
-    """Fix common Mermaid syntax issues from Gemini output."""
+    """Fix common Mermaid syntax issues from Gemini output.
+
+    Comprehensive sanitizer covering all known Gemini → Mermaid failure patterns:
+    - Subgraph IDs, style references, arrow labels
+    - Stray HTML, semicolons, escaped quotes
+    - Node IDs starting with digits
+    - classDef/style placement and syntax
+    """
     lines = []
-    # Track subgraph name→id mappings for style fixup
     subgraph_ids = {}
+
     for line in text.split("\n"):
         stripped = line.strip()
 
-        # Fix: subgraph "Name" without ID → subgraph auto_id["Name"]
+        # --- Skip empty lines ---
+        if not stripped:
+            lines.append(line)
+            continue
+
+        # --- Trailing semicolons (not valid Mermaid) ---
+        line = re.sub(r';\s*$', '', line)
+        stripped = line.strip()
+
+        # --- Subgraph without ID → add auto-generated ID ---
         match = re.match(r'^(\s*)subgraph\s+"([^"]+)"\s*$', line)
         if match:
             indent, name = match.groups()
             auto_id = re.sub(r'[^a-zA-Z0-9]', '_', name).strip('_').lower()
+            # Ensure ID doesn't start with a digit
+            if auto_id and auto_id[0].isdigit():
+                auto_id = 's_' + auto_id
             subgraph_ids[name] = auto_id
             lines.append(f'{indent}subgraph {auto_id}["{name}"]')
             continue
 
-        # Fix: style "Quoted Name" ... → style auto_id ...
+        # --- style "Quoted Name" → style auto_id ---
         style_match = re.match(r'^(\s*)style\s+"([^"]+)"(.*)$', line)
         if style_match:
             indent, name, rest = style_match.groups()
@@ -620,38 +653,53 @@ def _sanitize_mermaid(text: str) -> str:
             lines.append(f'{indent}style {sid}{rest}')
             continue
 
-        # Fix: stray <br> outside node labels (at end of line, not inside [...])
-        if stripped == '<br>' or stripped == '<br/>':
+        # --- Stray <br> / <br/> outside node labels ---
+        if stripped in ('<br>', '<br/>'):
             continue
-        line = re.sub(r'<br>\s*$', '', line)
-        line = re.sub(r'<br/>\s*$', '', line)
+        line = re.sub(r'<br/?>\s*$', '', line)
 
-        # Fix: spaces after colons in style values (stroke-dasharray: 5 5 → stroke-dasharray:5 5)
-        if 'style ' in stripped or 'fill:' in stripped or 'stroke' in stripped:
+        # --- Style value fixes ---
+        if re.match(r'^\s*(style|classDef)\s', stripped):
+            # Remove spaces after colons in CSS values
             line = re.sub(r'(\w):\s+([#\d])', r'\1:\2', line)
+            # Remove trailing commas in style values
+            line = re.sub(r',\s*$', '', line)
+            # Remove trailing semicolons after style values
+            line = re.sub(r';\s*$', '', line)
 
-        # Fix: escaped quotes inside bracket labels — Mermaid doesn't support \"
-        # Replace \" inside [...] labels with &quot; (HTML entity Mermaid renders)
-        def _fix_label_quotes(m):
-            """Replace backslash-escaped quotes inside a bracket label."""
-            prefix, content, suffix = m.group(1), m.group(2), m.group(3)
-            content = content.replace('\\"', '&quot;')
-            content = content.replace('"', '&quot;')
-            return prefix + content + suffix
+        # --- Escaped quotes inside bracket labels ---
+        line = re.sub(r'(\[")(.*?)("\])', _fix_mermaid_label_quotes, line)
+        line = re.sub(r'(\(")(.*?)("\))', _fix_mermaid_label_quotes, line)
 
-        # Match [...] label patterns: ["..."], ("..."), {{"..."}}, etc.
-        line = re.sub(r'(\[")(.*?)("\])', _fix_label_quotes, line)
-        line = re.sub(r'(\(")(.*?)("\))', _fix_label_quotes, line)
-
-        # Fix: PlantUML-style arrow labels "A --> B : label" → Mermaid "A -->|label| B"
-        # Matches arrows like -->, --->, -.-, -.-> etc. followed by : label
+        # --- PlantUML-style "A --> B : label" → Mermaid "A -->|label| B" ---
         line = re.sub(
             r'(\S+\s*)(-->|---->|-.->|-\.->|---|-\.-)(\s*)(\S+)\s*:\s*(.+)$',
             r'\1\2|\5|\3\4',
             line,
         )
 
+        # --- Node IDs starting with digit → prefix with n_ ---
+        # Matches lines like: 1_node["Label"] or 123-->456
+        node_match = re.match(r'^(\s*)(\d+\w*)([\[\(\{<])', line)
+        if node_match:
+            indent, node_id, bracket = node_match.groups()
+            line = f'{indent}n_{node_id}{bracket}' + line[node_match.end():]
+
+        # --- Fix bare nodes starting with digit in arrows ---
+        # e.g., "123 --> 456" → "n_123 --> n_456"
+        line = re.sub(
+            r'(?<!\w)(\d+\w*)(\s*)(-->|---|-\.->|-.->)',
+            lambda m: f'n_{m.group(1)}{m.group(2)}{m.group(3)}',
+            line,
+        )
+        line = re.sub(
+            r'(-->|---|-\.->|-.->)(\s*)(\d+\w*)(?!\w)',
+            lambda m: f'{m.group(1)}{m.group(2)}n_{m.group(3)}',
+            line,
+        )
+
         lines.append(line)
+
     return "\n".join(lines)
 
 
