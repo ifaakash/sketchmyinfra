@@ -255,7 +255,19 @@ async function handleGenerate() {
 }
 
 /**
- * Re-render with edited PUML code (skips AI).
+ * Detect renderer from code content (fallback when currentRenderer may be stale).
+ */
+function detectRenderer(code) {
+  const trimmed = code.trim();
+  if (trimmed.startsWith('@startuml')) return 'plantuml';
+  const mermaidStarts = ['graph ', 'flowchart ', 'sequenceDiagram', 'classDiagram',
+    'stateDiagram', 'erDiagram', 'gantt', '%%{'];
+  if (mermaidStarts.some(m => trimmed.startsWith(m))) return 'mermaid';
+  return currentRenderer || 'plantuml';
+}
+
+/**
+ * Re-render with edited diagram code (skips AI).
  */
 async function handleReRender() {
   const code = getPumlCode();
@@ -270,6 +282,9 @@ async function handleReRender() {
   try {
     showPanel('loading');
     setLoadingText('Rendering diagram...');
+
+    // Auto-detect renderer from code content (handles stale state / manual edits)
+    currentRenderer = detectRenderer(code);
 
     let result;
     if (currentRenderer === 'mermaid') {
