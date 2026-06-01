@@ -380,15 +380,7 @@ app --> db : Queries
 @enduml
 """
 
-FIX_PROMPT = """The following PlantUML code failed to render with this error:
-
-Error: {error}
-
-Broken code:
-```
-{puml}
-```
-
+_FIX_PROMPT_HINTS = """\
 Fix the syntax error. Common mistakes to check:
 - Elements defined inline inside arrows — INVALID: `A --> Component(b, "label", "")` — VALID: declare Component(b, ...) first, then write `A --> b`
 - `note on X` does not exist — use `note right of X`, `note left of X`, or `note bottom of X`
@@ -399,18 +391,29 @@ Fix the syntax error. Common mistakes to check:
 - `&` in labels — PlantUML treats `&` as a parallel operator; use "and" instead
 - Nested `skinparam { rectangle { ... } }` — INVALID. Flatten to `skinparam shadowing false` and `skinparam rectangle { ... }` as separate blocks
 - `ArrowColor` inside `skinparam rectangle` or `skinparam component` — INVALID. Use `skinparam ArrowColor #color` at top level
-- Multi-line body `[...]` on rectangle/component elements — that syntax is only for class fields. Use `\n` in labels instead
+- Multi-line body `[...]` on rectangle/component elements — that syntax is only for class fields. Use `\\n` in labels instead
+- `skinparam element.stereotype` (e.g. `skinparam rectangle.pvc`) — INVALID. Use `<<stereotype>>` on individual elements and define styles with `skinparam` separately
 
 Output ONLY the corrected PlantUML code — no explanations, no markdown."""
 
 
-ITERATION_PROMPT = """The user wants to modify an existing diagram. Here is the current PlantUML code:
+def _build_fix_prompt(puml: str, error: str) -> str:
+    """Build the fix prompt safely — avoids str.format() which chokes on { } in PUML."""
+    return (
+        "The following PlantUML code failed to render with this error:\n\n"
+        f"Error: {error}\n\n"
+        f"Broken code:\n```\n{puml}\n```\n\n"
+        + _FIX_PROMPT_HINTS
+    )
 
-```
-{context}
-```
 
-Apply the user's requested changes below. Output ONLY the updated PlantUML code — no explanations."""
+def _build_iteration_prompt(context: str) -> str:
+    """Build the iteration prompt safely — avoids str.format() on PUML content."""
+    return (
+        "The user wants to modify an existing diagram. Here is the current PlantUML code:\n\n"
+        f"```\n{context}\n```\n\n"
+        "Apply the user's requested changes below. Output ONLY the updated PlantUML code — no explanations."
+    )
 
 
 async def generate_puml(prompt: str, context: str | None = None) -> str:
@@ -418,7 +421,7 @@ async def generate_puml(prompt: str, context: str | None = None) -> str:
     parts = []
 
     if context:
-        parts.append({"text": ITERATION_PROMPT.format(context=context)})
+        parts.append({"text": _build_iteration_prompt(context)})
 
     parts.append({"text": prompt})
 
@@ -469,7 +472,7 @@ async def fix_puml(puml: str, error: str) -> str:
     """Ask Gemini to fix a PlantUML syntax error and return corrected code."""
     payload = {
         "system_instruction": {"parts": [{"text": SYSTEM_PROMPT}]},
-        "contents": [{"parts": [{"text": FIX_PROMPT.format(puml=puml, error=error)}]}],
+        "contents": [{"parts": [{"text": _build_fix_prompt(puml, error)}]}],
         "generationConfig": {
             "temperature": 0.2,
             "maxOutputTokens": 8192,
