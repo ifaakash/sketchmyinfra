@@ -52,7 +52,8 @@ async def admin_stats(
     success = status_counts.get("success", 0)
     gemini_err = status_counts.get("gemini_error", 0)
     autofix_err = status_counts.get("autofix_failed", 0)
-    failure_rate = ((gemini_err + autofix_err) / total_gen * 100) if total_gen > 0 else 0.0
+    mermaid_err = status_counts.get("mermaid_error", 0)
+    failure_rate = ((gemini_err + autofix_err + mermaid_err) / total_gen * 100) if total_gen > 0 else 0.0
 
     # Recent 50 failures
     fail_stmt = (
@@ -81,6 +82,7 @@ async def admin_stats(
         success_count=success,
         gemini_error_count=gemini_err,
         autofix_failed_count=autofix_err,
+        mermaid_error_count=mermaid_err,
         failure_rate=round(failure_rate, 2),
         recent_failures=recent_failures,
     )

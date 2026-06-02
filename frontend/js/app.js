@@ -245,6 +245,10 @@ async function handleGenerate() {
         err.message || 'Try simplifying your prompt or breaking the architecture into smaller parts.',
         currentImageUri || null
       );
+      // Report client-side render errors (Mermaid) to backend for tracking
+      if (currentRenderer && currentRenderer !== 'plantuml') {
+        reportRenderError(prompt, currentRenderer, err.message);
+      }
     }
     showToast(err.message || 'Generation failed', 'error', 4000);
   } finally {

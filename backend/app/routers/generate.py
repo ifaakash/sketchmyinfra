@@ -16,6 +16,7 @@ from app.schemas import (
     GenerationStatsItem,
     GenerationStatsResponse,
     GenerationStatusCounts,
+    RenderErrorReport,
 )
 from app.services.gemini import generate_diagram, generate_puml, fix_puml, fix_mermaid, GeminiError
 from app.services.plantuml import render_puml, PlantUMLError
@@ -185,6 +186,32 @@ async def generate(
     )
 
 
+@router.post("/generations/render-error")
+async def report_render_error(
+    req: RenderErrorReport,
+    request: Request,
+    user: User | None = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """Report a client-side render failure (Mermaid).
+
+    The frontend calls this when Mermaid rendering fails in the browser,
+    so we can track failure rates for Mermaid diagrams the same way we
+    track PlantUML failures server-side.
+    """
+    ip = _get_client_ip(request)
+    db.add(Generation(
+        user_id=user.id if user else None,
+        prompt=req.prompt,
+        renderer=req.renderer,
+        status="mermaid_error",
+        error_message=req.error_message[:500],
+        ip_address=ip,
+    ))
+    await db.commit()
+    return {"status": "recorded"}
+
+
 @router.get("/generations/stats", response_model=GenerationStatsResponse)
 async def generation_stats(
     hours: int = 24,
@@ -213,6 +240,7 @@ async def generation_stats(
         success=raw_counts.get("success", 0),
         gemini_error=raw_counts.get("gemini_error", 0),
         autofix_failed=raw_counts.get("autofix_failed", 0),
+        mermaid_error=raw_counts.get("mermaid_error", 0),
         total=sum(raw_counts.values()),
     )
 

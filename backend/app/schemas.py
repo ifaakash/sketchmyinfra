@@ -86,10 +86,17 @@ class GenerationStatsItem(BaseModel):
     created_at: str
 
 
+class RenderErrorReport(BaseModel):
+    prompt: str = Field(..., min_length=1, max_length=2000)
+    renderer: str = Field(..., pattern="^(plantuml|mermaid)$")
+    error_message: str = Field(..., max_length=1000)
+
+
 class GenerationStatusCounts(BaseModel):
     success: int = 0
     gemini_error: int = 0
     autofix_failed: int = 0
+    mermaid_error: int = 0
     total: int = 0
 
 
@@ -108,5 +115,6 @@ class AdminStatsResponse(BaseModel):
     success_count: int
     gemini_error_count: int
     autofix_failed_count: int
+    mermaid_error_count: int = 0
     failure_rate: float
     recent_failures: list[GenerationStatsItem]

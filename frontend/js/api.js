@@ -93,3 +93,17 @@ async function apiRender(puml, format = 'png') {
     clearTimeout(timeout);
   }
 }
+
+/**
+ * Report a client-side render error (Mermaid) to the backend for tracking.
+ * Fire-and-forget — errors here are silently ignored.
+ */
+function reportRenderError(prompt, renderer, errorMessage) {
+  if (USE_MOCKS) return;
+  fetch(`${API_BASE}/api/generations/render-error`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt, renderer, error_message: (errorMessage || '').slice(0, 1000) }),
+    credentials: 'include',
+  }).catch(() => {}); // silent
+}
