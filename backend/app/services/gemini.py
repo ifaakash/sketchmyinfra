@@ -278,6 +278,7 @@ PLANTUML RULES (when renderer=plantuml):
    - NEVER use multi-line body syntax `[...]` on rectangle/component — use `\n` in labels
    - NEVER use `!$variable` preprocessor variables for colors — use literal hex
    - NEVER use `skinparam line { }` — not a valid target
+   - NEVER use CSS-like color syntax `#line:color;fill:color` — PlantUML only supports `#backgroundColor` (e.g. `#aaffaa`). For border colors use skinparam: `skinparam rectangle { BorderColor green }`
 
 Cloud Provider Detection:
 - Infer the cloud provider from service names in the user's prompt
@@ -621,6 +622,25 @@ def _post_process_puml(text: str) -> str:
     # Fix double-hash colors (##hex → #hex) — Gemini sometimes outputs ##
     text = re.sub(r'##([0-9a-fA-F]{3,8})', r'#\1', text)
     text = re.sub(r'##(\w+)', r'#\1', text)  # named colors like ##lightgray
+
+    # Fix CSS-like color syntax (#line:X;fill:Y → #Y)
+    # PlantUML doesn't support #line:color;fill:color — only #backgroundColor
+    # Extract fill color if present, otherwise extract line color
+    def _fix_css_color(m):
+        full = m.group(0)
+        fill_match = re.search(r'fill:\s*([#\w]+)', full)
+        line_match = re.search(r'line:\s*([#\w]+)', full)
+        if fill_match:
+            return fill_match.group(1)
+        if line_match:
+            return line_match.group(1)
+        return full
+
+    text = re.sub(r'#line:[^;\s]+;fill:[#\w]+', _fix_css_color, text)
+    text = re.sub(r'#fill:[^;\s]+;line:[#\w]+', _fix_css_color, text)
+    # Also handle standalone #line:color or #fill:color
+    text = re.sub(r'#fill:([#\w]+)', r'\1', text)
+    text = re.sub(r'#line:([#\w]+)', r'\1', text)
 
     text = _sanitize_puml(text)
 

@@ -14,6 +14,7 @@ from app.services.gemini import (
     _build_iteration_prompt,
     _fix_nested_skinparam,
     _normalize_gemini_text,
+    _post_process_puml,
     _remove_invalid_skinparams,
     _resolve_variables,
     _sanitize_label,
@@ -449,3 +450,35 @@ class TestProductionRegressions:
         # Valid content preserved
         assert "Wood Base" in result
         assert "Air Chamber" in result
+
+    def test_css_color_syntax_line_fill(self):
+        """Jun 2 2026: #line:green;fill:#aaffaa is invalid PlantUML."""
+        puml = '@startuml\nframe "School" as sg #line:green;fill:#aaffaa {\n}\n@enduml'
+        result = _post_process_puml(puml)
+        assert "#line:" not in result
+        assert "fill:" not in result
+        assert "#aaffaa" in result
+
+    def test_css_color_syntax_fill_only(self):
+        puml = '@startuml\nrectangle "Box" as b #fill:#e0c0e0\n@enduml'
+        result = _post_process_puml(puml)
+        assert "#fill:" not in result
+        assert "#e0c0e0" in result
+
+    def test_css_color_syntax_line_only(self):
+        puml = '@startuml\nrectangle "Box" as b #line:purple\n@enduml'
+        result = _post_process_puml(puml)
+        assert "#line:" not in result
+        assert "purple" in result
+
+    def test_double_hash_color(self):
+        puml = '@startuml\nrectangle "Box" as b ##deb887\n@enduml'
+        result = _post_process_puml(puml)
+        assert "##" not in result
+        assert "#deb887" in result
+
+    def test_renderer_tag_stripped(self):
+        puml = ':::renderer=plantuml:::\n@startuml\nrectangle "Foo"\n@enduml'
+        result = _post_process_puml(puml)
+        assert ":::renderer" not in result
+        assert "@startuml" in result
