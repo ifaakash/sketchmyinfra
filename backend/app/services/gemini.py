@@ -804,6 +804,27 @@ def _sanitize_mermaid(text: str) -> str:
         line = re.sub(r'(\[")(.*?)("\])', _fix_mermaid_label_quotes, line)
         line = re.sub(r'(\(")(.*?)("\))', _fix_mermaid_label_quotes, line)
 
+        # --- "A -- text --> B" inline label syntax → "A -->|text| B" ---
+        # This fragile syntax mixes line (--) with arrow (-->) and often breaks.
+        # Convert: node1 -- Label Text --> node2  →  node1 -->|Label Text| node2
+        line = re.sub(
+            r'(\S+)\s+--\s+(.+?)\s+-->\s+(\S+)',
+            r'\1 -->|\2| \3',
+            line,
+        )
+        # Also handle: node1 -- Label Text --- node2  →  node1 ---|Label Text| node2
+        line = re.sub(
+            r'(\S+)\s+--\s+(.+?)\s+---\s+(\S+)',
+            r'\1 ---|\2| \3',
+            line,
+        )
+        # Also handle: node1 -. Label Text .-> node2  →  node1 -.->|Label Text| node2
+        line = re.sub(
+            r'(\S+)\s+-\.\s+(.+?)\s+\.->\s+(\S+)',
+            r'\1 -.->|\2| \3',
+            line,
+        )
+
         # --- PlantUML-style "A --> B : label" → Mermaid "A -->|label| B" ---
         line = re.sub(
             r'(\S+\s*)(-->|---->|-.->|-\.->|---|-\.-)(\s*)(\S+)\s*:\s*(.+)$',

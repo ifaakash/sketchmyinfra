@@ -436,6 +436,44 @@ class TestSanitizeMermaid:
         result = _sanitize_mermaid(code)
         assert "#" not in result.split("|")[1]
 
+    # --- Inline label arrow syntax: -- text --> ---
+
+    def test_double_dash_text_arrow(self):
+        """A -- Connects --> B should become A -->|Connects| B."""
+        code = "air_chamber -- Connects --> reducer"
+        result = _sanitize_mermaid(code)
+        assert "-->|Connects|" in result
+        assert "-- Connects -->" not in result
+
+    def test_double_dash_text_line(self):
+        """A -- Label --- B should become A ---|Label| B."""
+        code = "A -- My Label --- B"
+        result = _sanitize_mermaid(code)
+        assert "---|My Label|" in result
+
+    def test_double_dash_text_with_parens(self):
+        """Parens in inline label get stripped by pipe sanitizer."""
+        code = "ball_valve -- Rubber Band (return) --> trigger"
+        result = _sanitize_mermaid(code)
+        assert "-->|" in result
+        # Parens stripped by pipe label sanitizer
+        assert "(" not in result.split("|")[1] if "|" in result else True
+
+    def test_double_dash_text_multiple_words(self):
+        code = "barrel -- Taped to muzzle --> lighter"
+        result = _sanitize_mermaid(code)
+        assert "-->|Taped to muzzle|" in result
+
+    def test_normal_arrow_unchanged(self):
+        code = "A --> B"
+        result = _sanitize_mermaid(code)
+        assert result.strip() == "A --> B"
+
+    def test_pipe_label_arrow_unchanged(self):
+        code = "A -->|correct| B"
+        result = _sanitize_mermaid(code)
+        assert "-->|correct|" in result
+
 
 class TestPostProcessMermaid:
     """Mermaid post-processing."""
