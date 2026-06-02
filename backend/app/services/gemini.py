@@ -697,6 +697,16 @@ def _sanitize_mermaid(text: str) -> str:
             line,
         )
 
+        # --- Sanitize pipe arrow labels |...| ---
+        # Strip ( ) that trigger shape parsing, and & that is a Mermaid operator
+        def _sanitize_pipe_label(m):
+            content = m.group(1)
+            content = content.replace('(', '').replace(')', '')
+            content = content.replace('&', 'and')
+            return '|' + content + '|'
+
+        line = re.sub(r'\|([^|]+)\|', _sanitize_pipe_label, line)
+
         # --- Node IDs starting with digit → prefix with n_ ---
         # Matches lines like: 1_node["Label"] or 123-->456
         node_match = re.match(r'^(\s*)(\d+\w*)([\[\(\{<])', line)

@@ -331,8 +331,26 @@ class TestSanitizeMermaid:
         """linkStyle with stroke-dasharray should not break."""
         code = "linkStyle 6 stroke-dasharray: 5 5"
         result = _sanitize_mermaid(code)
-        # linkStyle is valid Mermaid — should pass through
         assert "linkStyle" in result
+
+    def test_parens_in_pipe_arrow_label(self):
+        """Jun 2 2026: (Zip tie & rubber band) in |...| broke parser."""
+        code = 'trigger -.->|Pull to rotate<br/>(Zip tie & rubber band)| ball_valve'
+        result = _sanitize_mermaid(code)
+        assert "(" not in result.split("|")[1]
+        assert ")" not in result.split("|")[1]
+        assert "&" not in result.split("|")[1]
+        assert "and" in result
+
+    def test_ampersand_in_pipe_label(self):
+        code = "A -->|save & load| B"
+        result = _sanitize_mermaid(code)
+        assert "-->|save and load|" in result
+
+    def test_clean_pipe_label_unchanged(self):
+        code = "A -->|sends data| B"
+        result = _sanitize_mermaid(code)
+        assert "-->|sends data|" in result
 
 
 class TestPostProcessMermaid:
