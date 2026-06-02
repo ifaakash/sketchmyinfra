@@ -602,6 +602,10 @@ def _post_process_puml(text: str) -> str:
     return text
 
 
+# Characters that trigger Mermaid shape/syntax parsing inside labels
+_MERMAID_DANGER_CHARS = set('(){}|')
+
+
 def _fix_mermaid_label_quotes(m):
     """Replace backslash-escaped quotes inside a bracket label."""
     prefix, content, suffix = m.group(1), m.group(2), m.group(3)
@@ -610,17 +614,41 @@ def _fix_mermaid_label_quotes(m):
     return prefix + content + suffix
 
 
+def _mermaid_make_safe_id(name: str, prefix: str = '') -> str:
+    """Generate a safe Mermaid ID from a display name."""
+    auto_id = re.sub(r'[^a-zA-Z0-9]', '_', name).strip('_').lower()
+    if not auto_id:
+        auto_id = 'node'
+    if auto_id[0].isdigit():
+        auto_id = (prefix or 'n') + '_' + auto_id
+    return auto_id
+
+
 def _sanitize_mermaid(text: str) -> str:
     """Fix common Mermaid syntax issues from Gemini output.
 
-    Comprehensive sanitizer covering all known Gemini → Mermaid failure patterns:
-    - Subgraph IDs, style references, arrow labels
-    - Stray HTML, semicolons, escaped quotes
+    Comprehensive sanitizer covering ALL known failure patterns:
+
+    Structural:
+    - Subgraph IDs, style references
+    - Trailing semicolons, commas
+    - Stray <br> outside labels
     - Node IDs starting with digits
-    - classDef/style placement and syntax
+    - `direction` keyword outside subgraphs
+    - Style value spacing
+
+    Labels (all contexts):
+    - [...] square labels with ( ) { } | -- → auto-quote
+    - (...) round/stadium labels with nested parens → quote inner
+    - {...} diamond labels with nested parens → quote inner
+    - ((...)) double-circle labels with nested parens
+    - |...| pipe arrow labels — strip parens, replace &
+    - Escaped quotes in quoted labels
+    - PlantUML colon arrow syntax → pipe syntax
     """
     lines = []
     subgraph_ids = {}
+    subgraph_depth = 0
 
     for line in text.split("\n"):
         stripped = line.strip()
@@ -634,14 +662,22 @@ def _sanitize_mermaid(text: str) -> str:
         line = re.sub(r';\s*$', '', line)
         stripped = line.strip()
 
+        # --- Track subgraph depth ---
+        if re.match(r'^(\s*)subgraph\s', stripped):
+            subgraph_depth += 1
+        if stripped == 'end' and subgraph_depth > 0:
+            subgraph_depth -= 1
+
+        # --- `direction` at top level (only valid inside subgraph) ---
+        if re.match(r'^\s*direction\s+(TB|BT|LR|RL|TD)\s*$', stripped) and subgraph_depth == 0:
+            # Skip — direction outside subgraph causes parse errors
+            continue
+
         # --- Subgraph without ID → add auto-generated ID ---
         match = re.match(r'^(\s*)subgraph\s+"([^"]+)"\s*$', line)
         if match:
             indent, name = match.groups()
-            auto_id = re.sub(r'[^a-zA-Z0-9]', '_', name).strip('_').lower()
-            # Ensure ID doesn't start with a digit
-            if auto_id and auto_id[0].isdigit():
-                auto_id = 's_' + auto_id
+            auto_id = _mermaid_make_safe_id(name, 's')
             subgraph_ids[name] = auto_id
             lines.append(f'{indent}subgraph {auto_id}["{name}"]')
             continue
@@ -650,7 +686,7 @@ def _sanitize_mermaid(text: str) -> str:
         style_match = re.match(r'^(\s*)style\s+"([^"]+)"(.*)$', line)
         if style_match:
             indent, name, rest = style_match.groups()
-            sid = subgraph_ids.get(name, re.sub(r'[^a-zA-Z0-9]', '_', name).strip('_').lower())
+            sid = subgraph_ids.get(name, _mermaid_make_safe_id(name))
             lines.append(f'{indent}style {sid}{rest}')
             continue
 
@@ -659,34 +695,112 @@ def _sanitize_mermaid(text: str) -> str:
             continue
         line = re.sub(r'<br/?>\s*$', '', line)
 
-        # --- Style value fixes ---
-        if re.match(r'^\s*(style|classDef)\s', stripped):
+        # --- Style/classDef value fixes ---
+        if re.match(r'^\s*(style|classDef|linkStyle)\s', stripped):
             # Remove spaces after colons in CSS values
             line = re.sub(r'(\w):\s+([#\d])', r'\1:\2', line)
-            # Remove trailing commas in style values
+            # Remove trailing commas
             line = re.sub(r',\s*$', '', line)
-            # Remove trailing semicolons after style values
-            line = re.sub(r';\s*$', '', line)
 
-        # --- Unquoted square bracket labels with special chars ---
-        # [Air Chamber<br/>(2in PVC)] → ["Air Chamber<br/>(2in PVC)"]
-        # Mermaid parses ( inside [...] as a shape delimiter — must quote the content
-        def _quote_unquoted_label(m):
+        # --- Square bracket labels [...] with dangerous chars → quote ---
+        def _quote_square_label(m):
             content = m.group(1)
-            # Already quoted — leave alone
             if content.startswith('"') and content.endswith('"'):
                 return '[' + content + ']'
-            # Contains chars that trigger Mermaid shape parsing — wrap in quotes
-            if any(c in content for c in '(){}'):
-                # Escape any existing quotes in the content
+            # Dangerous: ( ) { } | or -- inside unquoted label
+            if _MERMAID_DANGER_CHARS.intersection(content) or '--' in content:
                 content = content.replace('"', '&quot;')
                 return '["' + content + '"]'
             return '[' + content + ']'
 
-        # Match node[...] patterns but not node["..."] (already quoted)
-        line = re.sub(r'\[([^\]]+)\]', _quote_unquoted_label, line)
+        line = re.sub(r'\[([^\]]+)\]', _quote_square_label, line)
 
-        # --- Escaped quotes inside bracket labels ---
+        # --- Round labels (...) with nested parens → convert to ["..."] ---
+        # Match: node_id(Text (detail)) but NOT node_id("already quoted")
+        # Also skip (( )) double-circle — handled separately
+        def _fix_round_label(m):
+            node_id = m.group(1)
+            content = m.group(2)
+            if content.startswith('"') and content.endswith('"'):
+                return f'{node_id}({content})'
+            # If content has nested parens, switch to square-quoted
+            if '(' in content or ')' in content:
+                content = content.replace('"', '&quot;')
+                return f'{node_id}["{content}"]'
+            return f'{node_id}({content})'
+
+        # Match id(content) where content may have nested parens
+        # Skip id((...)) double-circle and style/classDef/graph lines
+        if not re.match(r'^\s*(style|classDef|linkStyle|graph|flowchart|subgraph)\s', stripped):
+            # Use a simple approach: find id( then balance parens to find matching )
+            def _fix_round_labels_in_line(line):
+                result = []
+                i = 0
+                while i < len(line):
+                    # Look for pattern: word_chars(  but NOT word_chars((
+                    match = re.match(r'(\w+)\((?!\()', line[i:])
+                    if match:
+                        node_id = match.group(1)
+                        start = i + len(match.group(0))
+                        # Find the matching closing paren
+                        depth = 1
+                        j = start
+                        while j < len(line) and depth > 0:
+                            if line[j] == '(':
+                                depth += 1
+                            elif line[j] == ')':
+                                depth -= 1
+                            j += 1
+                        if depth == 0:
+                            content = line[start:j - 1]
+                            fixed = _fix_round_label_content(node_id, content)
+                            result.append(fixed)
+                            i = j
+                            continue
+                    result.append(line[i])
+                    i += 1
+                return ''.join(result)
+
+            def _fix_round_label_content(node_id, content):
+                if content.startswith('"') and content.endswith('"'):
+                    return f'{node_id}({content})'
+                if '(' in content or ')' in content:
+                    content = content.replace('"', '&quot;')
+                    return f'{node_id}["{content}"]'
+                return f'{node_id}({content})'
+
+            line = _fix_round_labels_in_line(line)
+
+        # --- Double-circle labels ((...)) with nested parens ---
+        def _fix_double_circle(m):
+            node_id = m.group(1)
+            content = m.group(2)
+            if '(' in content or ')' in content:
+                content = content.replace('(', '').replace(')', '')
+            return f'{node_id}(({content}))'
+
+        line = re.sub(r'(\w+)\(\(([^)]+)\)\)', _fix_double_circle, line)
+
+        # --- Diamond labels {...} with nested parens ---
+        def _fix_diamond_label(m):
+            full = m.group(0)
+            # Skip classDef/style blocks (which use { } for grouping)
+            if re.match(r'^\s*(classDef|style|linkStyle)', stripped):
+                return full
+            node_id = m.group(1)
+            content = m.group(2)
+            if content.startswith('"') and content.endswith('"'):
+                return full
+            if '(' in content or ')' in content or '|' in content:
+                content = content.replace('(', '').replace(')', '')
+                content = content.replace('|', '/')
+                content = content.replace('"', '&quot;')
+                return f'{node_id}{{"{content}"}}'
+            return full
+
+        line = re.sub(r'(\w+)\{([^}]+)\}', _fix_diamond_label, line)
+
+        # --- Escaped quotes inside quoted labels ---
         line = re.sub(r'(\[")(.*?)("\])', _fix_mermaid_label_quotes, line)
         line = re.sub(r'(\(")(.*?)("\))', _fix_mermaid_label_quotes, line)
 
@@ -698,24 +812,23 @@ def _sanitize_mermaid(text: str) -> str:
         )
 
         # --- Sanitize pipe arrow labels |...| ---
-        # Strip ( ) that trigger shape parsing, and & that is a Mermaid operator
         def _sanitize_pipe_label(m):
             content = m.group(1)
             content = content.replace('(', '').replace(')', '')
             content = content.replace('&', 'and')
+            content = content.replace('|', '/')
+            content = content.replace('#', '')
             return '|' + content + '|'
 
         line = re.sub(r'\|([^|]+)\|', _sanitize_pipe_label, line)
 
         # --- Node IDs starting with digit → prefix with n_ ---
-        # Matches lines like: 1_node["Label"] or 123-->456
         node_match = re.match(r'^(\s*)(\d+\w*)([\[\(\{<])', line)
         if node_match:
             indent, node_id, bracket = node_match.groups()
             line = f'{indent}n_{node_id}{bracket}' + line[node_match.end():]
 
-        # --- Fix bare nodes starting with digit in arrows ---
-        # e.g., "123 --> 456" → "n_123 --> n_456"
+        # --- Digit nodes in arrows ---
         line = re.sub(
             r'(?<!\w)(\d+\w*)(\s*)(-->|---|-\.->|-.->)',
             lambda m: f'n_{m.group(1)}{m.group(2)}{m.group(3)}',

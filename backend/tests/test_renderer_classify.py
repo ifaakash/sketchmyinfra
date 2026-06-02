@@ -352,6 +352,90 @@ class TestSanitizeMermaid:
         result = _sanitize_mermaid(code)
         assert "-->|sends data|" in result
 
+    def test_pipe_in_pipe_label(self):
+        code = "A -->|input | output| B"
+        result = _sanitize_mermaid(code)
+        assert "|" not in result.split("-->")[1].split("|")[1] or "/" in result
+
+    # --- Round label (stadium) with nested parens ---
+
+    def test_round_label_with_nested_parens(self):
+        """(Server (main)) → ["Server (main)"] to avoid shape conflict."""
+        code = 'my_node(Server (main))'
+        result = _sanitize_mermaid(code)
+        assert '["Server (main)"]' in result
+        assert "my_node" in result
+
+    def test_round_label_no_parens_unchanged(self):
+        code = 'my_node(Simple Text)'
+        result = _sanitize_mermaid(code)
+        assert 'my_node(Simple Text)' in result
+
+    def test_round_quoted_label_unchanged(self):
+        code = 'my_node("Already Quoted (parens)")'
+        result = _sanitize_mermaid(code)
+        assert '("Already Quoted (parens)")' in result
+
+    # --- Double-circle labels ((...)) ---
+
+    def test_double_circle_with_nested_parens(self):
+        code = 'hub((Hub (v2)))'
+        result = _sanitize_mermaid(code)
+        assert "((" in result
+        assert "))" in result
+        # Inner parens stripped
+        assert "Hub v2" in result
+
+    def test_double_circle_clean_unchanged(self):
+        code = 'hub((Simple Hub))'
+        result = _sanitize_mermaid(code)
+        assert 'hub((Simple Hub))' in result
+
+    # --- Diamond labels {...} ---
+
+    def test_diamond_with_nested_parens(self):
+        code = 'decision{Decision (yes/no)}'
+        result = _sanitize_mermaid(code)
+        assert "(" not in result.split("{")[1]
+
+    def test_diamond_with_pipe(self):
+        code = 'decision{A | B}'
+        result = _sanitize_mermaid(code)
+        assert "|" not in result.split("{")[1].split("}")[0] or "/" in result
+
+    def test_diamond_clean_unchanged(self):
+        code = 'decision{Is Valid}'
+        result = _sanitize_mermaid(code)
+        assert 'decision{Is Valid}' in result
+
+    # --- Square labels with -- (arrow-like) ---
+
+    def test_square_label_with_dashes(self):
+        """[CI--CD] looks like an arrow to Mermaid."""
+        code = 'pipeline[CI--CD Pipeline]'
+        result = _sanitize_mermaid(code)
+        assert '["CI--CD Pipeline"]' in result
+
+    # --- direction outside subgraph ---
+
+    def test_direction_outside_subgraph_stripped(self):
+        code = 'graph TD\n  direction LR\n  A-->B'
+        result = _sanitize_mermaid(code)
+        assert 'direction LR' not in result
+        assert 'A-->B' in result
+
+    def test_direction_inside_subgraph_kept(self):
+        code = 'graph TD\n  subgraph sg["Group"]\n    direction LR\n    A-->B\n  end'
+        result = _sanitize_mermaid(code)
+        assert 'direction LR' in result
+
+    # --- Hash in pipe label ---
+
+    def test_hash_in_pipe_label_stripped(self):
+        code = 'A -->|Step #1| B'
+        result = _sanitize_mermaid(code)
+        assert "#" not in result.split("|")[1]
+
 
 class TestPostProcessMermaid:
     """Mermaid post-processing."""
