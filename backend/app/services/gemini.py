@@ -614,6 +614,14 @@ def _strip_fences(text: str) -> str:
 def _post_process_puml(text: str) -> str:
     """Apply all PlantUML-specific sanitization and validation."""
     text = _normalize_gemini_text(text)
+
+    # Safety: strip any leftover :::renderer=...::: tag that wasn't caught earlier
+    text = re.sub(r'^\s*:::renderer=\w+:::\s*\n?', '', text)
+
+    # Fix double-hash colors (##hex → #hex) — Gemini sometimes outputs ##
+    text = re.sub(r'##([0-9a-fA-F]{3,8})', r'#\1', text)
+    text = re.sub(r'##(\w+)', r'#\1', text)  # named colors like ##lightgray
+
     text = _sanitize_puml(text)
 
     if "@startuml" not in text:
@@ -989,20 +997,10 @@ async def fix_puml(puml: str, error: str) -> str:
     data = response.json()
     text = data["candidates"][0]["content"]["parts"][0]["text"]
 
-    text = text.strip()
-    if text.startswith("```"):
-        lines = text.split("\n")
-        lines = [l for l in lines if not l.strip().startswith("```")]
-        text = "\n".join(lines).strip()
-
-    text = _normalize_gemini_text(text)
-    text = _sanitize_puml(text)
-
-    if "@startuml" not in text:
-        raise GeminiError("Gemini did not produce valid PlantUML after fix attempt")
-
-    if "@enduml" not in text:
-        raise GeminiError("Diagram fix was truncated — try simplifying your prompt")
+    text = _strip_fences(text)
+    # Strip renderer tag if Gemini re-added it
+    _, text = _parse_renderer_tag(text)
+    text = _post_process_puml(text)
 
     return text
 
