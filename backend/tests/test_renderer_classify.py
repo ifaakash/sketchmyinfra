@@ -12,7 +12,9 @@ from app.services.gemini import (
 
 
 class TestClassifyPrompt:
-    """Keyword-based fallback classifier."""
+    """Keyword-based fallback classifier. PlantUML is the default."""
+
+    # --- PlantUML (default for most things) ---
 
     def test_aws_keywords(self):
         assert classify_prompt("Deploy a Lambda function with S3 trigger") == "plantuml"
@@ -23,32 +25,52 @@ class TestClassifyPrompt:
     def test_azure_keywords(self):
         assert classify_prompt("Azure Functions with Cosmos DB") == "plantuml"
 
-    def test_generic_flowchart(self):
-        assert classify_prompt("User authentication flowchart") == "mermaid"
+    def test_generic_flowchart_defaults_plantuml(self):
+        assert classify_prompt("User authentication flowchart") == "plantuml"
 
-    def test_generic_system_design(self):
-        assert classify_prompt("Design a microservices architecture for an e-commerce platform") == "mermaid"
+    def test_generic_system_design_defaults_plantuml(self):
+        assert classify_prompt("Design a microservices architecture for an e-commerce platform") == "plantuml"
+
+    def test_physical_layout_defaults_plantuml(self):
+        assert classify_prompt("PVC air cannon with trigger mechanism") == "plantuml"
+
+    def test_empty_prompt_defaults_plantuml(self):
+        assert classify_prompt("") == "plantuml"
+
+    def test_chinese_prompt_defaults_plantuml(self):
+        assert classify_prompt("数据采集层架构图") == "plantuml"
+
+    def test_vpc_keyword(self):
+        assert classify_prompt("Show me a VPC with subnets") == "plantuml"
+
+    # --- Mermaid (only 4 specific diagram types) ---
 
     def test_sequence_diagram(self):
-        assert classify_prompt("Show the login flow between client and server") == "mermaid"
+        assert classify_prompt("Show the sequence diagram for login API flow") == "mermaid"
+
+    def test_auth_flow(self):
+        assert classify_prompt("Show the auth flow between client and server") == "mermaid"
 
     def test_er_diagram(self):
         assert classify_prompt("Database schema for a blog with users and posts") == "mermaid"
 
-    def test_mixed_cloud_and_generic(self):
-        assert classify_prompt("Flowchart showing EC2 instance lifecycle") == "plantuml"
+    def test_entity_relationship(self):
+        assert classify_prompt("Entity relationship diagram for e-commerce") == "mermaid"
 
-    def test_case_insensitive(self):
-        assert classify_prompt("AWS LAMBDA with DynamoDB") == "plantuml"
+    def test_class_diagram(self):
+        assert classify_prompt("Class diagram for the payment module") == "mermaid"
 
-    def test_empty_prompt(self):
-        assert classify_prompt("") == "mermaid"
+    def test_class_hierarchy(self):
+        assert classify_prompt("Show the class hierarchy of the animal kingdom") == "mermaid"
 
-    def test_chinese_prompt_no_cloud(self):
-        assert classify_prompt("数据采集层架构图") == "mermaid"
+    def test_state_machine(self):
+        assert classify_prompt("State machine for order processing") == "mermaid"
 
-    def test_vpc_keyword(self):
-        assert classify_prompt("Show me a VPC with subnets") == "plantuml"
+    def test_state_diagram(self):
+        assert classify_prompt("State diagram for a traffic light") == "mermaid"
+
+    def test_lifecycle(self):
+        assert classify_prompt("Pod lifecycle in Kubernetes") == "mermaid"
 
 
 class TestParseRendererTag:
@@ -62,10 +84,10 @@ class TestParseRendererTag:
         assert ":::renderer" not in code
 
     def test_mermaid_tag(self):
-        text = ":::renderer=mermaid:::\ngraph TD\n  A-->B"
+        text = ":::renderer=mermaid:::\nsequenceDiagram\n  Alice->>Bob: Hello"
         renderer, code = _parse_renderer_tag(text)
         assert renderer == "mermaid"
-        assert "graph TD" in code
+        assert "sequenceDiagram" in code
         assert ":::renderer" not in code
 
     def test_no_tag_with_startuml(self):
@@ -74,36 +96,51 @@ class TestParseRendererTag:
         assert renderer == "plantuml"
         assert code == text
 
-    def test_no_tag_with_mermaid_content(self):
-        text = "graph TD\n  A-->B"
-        renderer, code = _parse_renderer_tag(text)
-        assert renderer == "mermaid"
-        assert code == text
-
-    def test_no_tag_with_flowchart(self):
-        text = "flowchart LR\n  A-->B"
-        renderer, code = _parse_renderer_tag(text)
-        assert renderer == "mermaid"
-
-    def test_no_tag_with_sequence(self):
+    def test_no_tag_with_sequence_diagram(self):
         text = "sequenceDiagram\n  Alice->>Bob: Hello"
         renderer, code = _parse_renderer_tag(text)
         assert renderer == "mermaid"
 
-    def test_no_tag_with_init_directive(self):
+    def test_no_tag_with_class_diagram(self):
+        text = "classDiagram\n  Animal <|-- Dog"
+        renderer, code = _parse_renderer_tag(text)
+        assert renderer == "mermaid"
+
+    def test_no_tag_with_er_diagram(self):
+        text = "erDiagram\n  USER ||--o{ ORDER : places"
+        renderer, code = _parse_renderer_tag(text)
+        assert renderer == "mermaid"
+
+    def test_no_tag_with_state_diagram(self):
+        text = "stateDiagram\n  [*] --> Active"
+        renderer, code = _parse_renderer_tag(text)
+        assert renderer == "mermaid"
+
+    def test_no_tag_with_flowchart_defaults_plantuml(self):
+        """Flowcharts go to PlantUML now — Mermaid only for 4 types."""
+        text = "flowchart LR\n  A-->B"
+        renderer, code = _parse_renderer_tag(text)
+        assert renderer == "plantuml"
+
+    def test_no_tag_with_graph_defaults_plantuml(self):
+        text = "graph TD\n  A-->B"
+        renderer, code = _parse_renderer_tag(text)
+        assert renderer == "plantuml"
+
+    def test_no_tag_with_init_directive_defaults_plantuml(self):
         text = "%%{init: {'theme': 'base'}}%%\ngraph TD\n  A-->B"
         renderer, code = _parse_renderer_tag(text)
-        assert renderer == "mermaid"
+        assert renderer == "plantuml"
 
     def test_tag_with_leading_whitespace(self):
-        text = "  :::renderer=mermaid:::  \ngraph TD\n  A-->B"
+        text = "  :::renderer=mermaid:::  \nsequenceDiagram\n  A->>B: Hello"
         renderer, code = _parse_renderer_tag(text)
         assert renderer == "mermaid"
 
-    def test_unknown_content_defaults_mermaid(self):
+    def test_unknown_content_defaults_plantuml(self):
         text = "some random text"
         renderer, code = _parse_renderer_tag(text)
-        assert renderer == "mermaid"
+        assert renderer == "plantuml"
 
 
 # ---------------------------------------------------------------------------

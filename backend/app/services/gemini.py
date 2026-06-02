@@ -209,19 +209,23 @@ SYSTEM_PROMPT = """You are an expert infrastructure and software architect. Your
 
 RENDERER SELECTION (CRITICAL — output this FIRST):
 - Your VERY FIRST line of output MUST be a renderer tag: :::renderer=plantuml::: OR :::renderer=mermaid:::
-- Use "plantuml" ONLY when the diagram involves cloud provider services (AWS, GCP, Azure) that benefit from official icon libraries
-- Use "mermaid" for ALL other diagrams: flowcharts, sequence diagrams, class diagrams, ER diagrams, state machines, mind maps, general system designs, non-cloud architectures
+- Use "plantuml" as the DEFAULT for most diagrams — cloud architectures, general system designs, flowcharts, physical layouts, hardware diagrams, and anything ambiguous
+- Use "mermaid" ONLY for these 4 specific diagram types where it produces superior output:
+  1. sequenceDiagram — API call flows, authentication flows, request/response sequences
+  2. erDiagram — database schemas, entity relationships
+  3. classDiagram — OOP class hierarchies, entity models, interface definitions
+  4. stateDiagram-v2 — state machines, lifecycle diagrams, workflow states
+- If unsure which renderer to use, ALWAYS default to plantuml
 - After the renderer tag, output the diagram code (no explanations, no markdown, no code fences)
 
-MERMAID RULES (when renderer=mermaid):
+MERMAID RULES (when renderer=mermaid — ONLY for sequence, ER, class, state diagrams):
 1. Output valid Mermaid syntax — do NOT wrap in @startuml/@enduml
-2. Use appropriate diagram types:
-   - graph TD/LR for flowcharts and architectures
+2. Use ONLY these diagram types:
    - sequenceDiagram for request flows
    - classDiagram for class/entity relationships
    - stateDiagram-v2 for state machines
    - erDiagram for ER diagrams
-   - gantt for timelines
+3. Do NOT use Mermaid for flowcharts (graph TD/LR) or general architecture — use PlantUML instead
 3. Subgraph rules (CRITICAL — violations cause parse errors):
    - ALWAYS use an ID for subgraphs: `subgraph my_id["Display Name"]` — NEVER `subgraph "Display Name"` without an ID
    - The `style` directive requires a node/subgraph ID, NOT a quoted string: `style my_id fill:#eee` — NEVER `style "Display Name" fill:#eee`
@@ -541,19 +545,33 @@ CLOUD_KEYWORDS = {
 }
 
 
+# Mermaid is only used for these 4 specific diagram types
+MERMAID_KEYWORDS = {
+    "sequence diagram", "request flow", "api flow", "auth flow",
+    "er diagram", "entity relationship", "database schema", "db schema",
+    "class diagram", "class hierarchy", "interface", "inheritance",
+    "state machine", "state diagram", "lifecycle", "workflow states",
+}
+
+
 def classify_prompt(prompt: str) -> str:
-    """Classify a user prompt as needing plantuml or mermaid rendering."""
+    """Classify a user prompt as needing plantuml or mermaid rendering.
+
+    Mermaid is only used for 4 specific diagram types where it excels.
+    PlantUML is the default for everything else.
+    """
     lower = prompt.lower()
-    if any(kw in lower for kw in CLOUD_KEYWORDS):
-        return "plantuml"
-    return "mermaid"
+    if any(kw in lower for kw in MERMAID_KEYWORDS):
+        return "mermaid"
+    # Default to plantuml for everything (cloud and non-cloud)
+    return "plantuml"
 
 
 def _parse_renderer_tag(text: str) -> tuple[str, str]:
     """Parse the :::renderer=X::: tag from Gemini output.
 
     Returns (renderer, code) tuple. Falls back to content-based detection
-    if the tag is missing.
+    if the tag is missing. Defaults to plantuml when ambiguous.
     """
     # Look for the renderer tag on the first non-empty line
     lines = text.split("\n")
@@ -571,13 +589,16 @@ def _parse_renderer_tag(text: str) -> tuple[str, str]:
     # Fallback: detect from content
     if "@startuml" in text:
         return "plantuml", text
-    # Mermaid diagram types
-    if any(kw in text for kw in ["graph ", "flowchart ", "sequenceDiagram", "classDiagram",
-                                   "stateDiagram", "erDiagram", "gantt", "%%{"]):
+    # Only route to Mermaid for the 4 specific diagram types it handles well
+    if any(kw in text for kw in ["sequenceDiagram", "classDiagram",
+                                   "stateDiagram", "erDiagram"]):
         return "mermaid", text
+    # Mermaid flowcharts/graphs → route to plantuml (PlantUML handles these better)
+    if any(kw in text for kw in ["graph ", "flowchart ", "gantt", "%%{"]):
+        return "plantuml", text
 
-    # Default to mermaid for non-cloud content
-    return "mermaid", text
+    # Default to plantuml
+    return "plantuml", text
 
 
 def _strip_fences(text: str) -> str:
@@ -920,10 +941,13 @@ async def generate_diagram(prompt: str, context: str | None = None,
 
     renderer, code = _parse_renderer_tag(text)
 
-    # Safety net: if Gemini said mermaid but content has cloud keywords, override
-    if renderer == "mermaid" and classify_prompt(prompt) == "plantuml":
-        # Re-check — if code actually has @startuml, trust Gemini
-        if "@startuml" not in code:
+    # Safety net: only allow Mermaid for the 4 specific diagram types
+    if renderer == "mermaid":
+        mermaid_ok = any(kw in code for kw in [
+            "sequenceDiagram", "classDiagram", "stateDiagram", "erDiagram",
+        ])
+        if not mermaid_ok:
+            # Gemini generated Mermaid for a non-approved type → force PlantUML
             renderer = "plantuml"
 
     if renderer == "plantuml":
