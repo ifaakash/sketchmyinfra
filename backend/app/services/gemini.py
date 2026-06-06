@@ -341,8 +341,10 @@ AWS Diagram Rules (when AWS services are mentioned):
   * Analytics/Athena.puml → Athena(...)
   * Analytics/KinesisDataStreams.puml → KinesisDataStreams(...)
   * Analytics/EMR.puml → EMR(...)
+  * SecurityIdentityCompliance/Cognito.puml → Cognito(...)
   * SecurityIdentityCompliance/IdentityandAccessManagement.puml → IdentityandAccessManagement(...)  [NOT IAM]
   * SecurityIdentityCompliance/WAF.puml → WAF(...)
+  * BusinessApplications/SimpleEmailService.puml → SimpleEmailService(...)  [NOT ApplicationIntegration/SimpleEmailService]
 - KNOWN MISSING icons — these do NOT exist in the library, use a plain `rectangle` instead: SecurityGroup, TargetGroup, NATGateway (use VPCNATGateway), InternetGateway (use VPCInternetGateway)
 - If a service has no verified icon above, use a plain rectangle or component element instead — never guess a path
 - Do NOT use Internetalt1 or other General/ icons — they are unreliable. Use a plain `actor` element for users with `skinparam actorStyle awesome` for a person silhouette icon
@@ -641,6 +643,12 @@ def _post_process_puml(text: str) -> str:
     # Also handle standalone #line:color or #fill:color
     text = re.sub(r'#fill:([#\w]+)', r'\1', text)
     text = re.sub(r'#line:([#\w]+)', r'\1', text)
+
+    # Fix misplaced AWS icon include paths
+    text = text.replace(
+        "ApplicationIntegration/SimpleEmailService",
+        "BusinessApplications/SimpleEmailService",
+    )
 
     text = _sanitize_puml(text)
 

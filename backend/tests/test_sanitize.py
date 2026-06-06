@@ -477,6 +477,20 @@ class TestProductionRegressions:
         assert "##" not in result
         assert "#deb887" in result
 
+    def test_ses_include_path_corrected(self):
+        """Jun 7 2026: SES icon is in BusinessApplications/, not ApplicationIntegration/.
+        Wrong path causes 404 on remote include → PlantUML server returns 400."""
+        puml = (
+            '@startuml\n'
+            '!define AWSPuml https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v20.0/dist\n'
+            '!include AWSPuml/ApplicationIntegration/SimpleEmailService.puml\n'
+            'SimpleEmailService(ses, "SES", "")\n'
+            '@enduml'
+        )
+        result = _post_process_puml(puml)
+        assert "BusinessApplications/SimpleEmailService" in result
+        assert "ApplicationIntegration/SimpleEmailService" not in result
+
     def test_renderer_tag_stripped(self):
         puml = ':::renderer=plantuml:::\n@startuml\nrectangle "Foo"\n@enduml'
         result = _post_process_puml(puml)
