@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     # Gemini
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-2.0-flash"
+    gemini_model: str = "gemini-2.5-flash"
 
     # PlantUML (internal Docker service)
     plantuml_server_url: str = "http://plantuml:8080"

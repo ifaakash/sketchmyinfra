@@ -69,6 +69,11 @@ async def extract_diagram_ir(prompt: str) -> DiagramIR:
 
     data = response.json()
 
+    # Check for truncation
+    finish_reason = data.get("candidates", [{}])[0].get("finishReason", "")
+    if finish_reason == "MAX_TOKENS":
+        logger.warning("Gemini output truncated (MAX_TOKENS) — prompt may produce too much JSON")
+
     # Extract text from response
     try:
         text = data["candidates"][0]["content"]["parts"][0]["text"]

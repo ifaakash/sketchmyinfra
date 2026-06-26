@@ -199,9 +199,9 @@ State types: state, choice, fork, join, start, end
   "title": "Building Plan",
   "spatial": {
     "elements": [
-      {"id": "wall_left", "type": "rectangle", "x": 100, "y": 100, "width": 10, "height": 300, "label": "Wall", "color": "#333333", "fill": "#cccccc", "stroke_width": 2, "font_size": 14, "rotation": 0, "points": null},
-      {"id": "dim_label", "type": "text", "x": 50, "y": 50, "width": 100, "height": 20, "label": "3m", "color": "#666666", "fill": null, "stroke_width": 1, "font_size": 12, "rotation": 0, "points": null},
-      {"id": "wire1", "type": "arrow", "x": 200, "y": 150, "width": 100, "height": 0, "label": null, "color": "#0000ff", "fill": null, "stroke_width": 1, "font_size": 16, "rotation": 0, "points": [[0,0],[100,0]]}
+      {"id": "wall_left", "type": "rectangle", "x": 100, "y": 100, "width": 10, "height": 300, "label": "Wall", "color": "#333333", "fill": "#cccccc"},
+      {"id": "dim_label", "type": "text", "x": 50, "y": 50, "width": 100, "height": 20, "label": "3m"},
+      {"id": "wire1", "type": "arrow", "x": 200, "y": 150, "width": 100, "height": 0, "color": "#0000ff", "points": [[0,0],[100,0]]}
     ],
     "dimensions": [
       {"from_element": "wall_left", "to_element": "wall_right", "value": "12m", "side": "top"}
@@ -224,11 +224,20 @@ Dimension sides: top, bottom, left, right
 1. Output ONLY valid JSON — no markdown fences, no explanation
 2. All IDs must be snake_case and unique within their scope
 3. For cloud diagrams, always include proper grouping (region, VPC, subnets for AWS)
-4. For spatial diagrams, use realistic coordinates — scale 1 unit = 1 pixel, typical canvas 1200x800
-5. Use appropriate node types (database for DBs, queue for message queues, etc.)
-6. Every edge must reference existing node IDs
-7. Group children must reference existing node or group IDs
-8. If something doesn't fit any category, use "technical_illustration" with spatial track
-9. For AWS cloud architectures, use groups with types: "cloud" (outer), "region", "vpc", "public_subnet", "private_subnet"
-10. Populate ONLY the variant field that matches the category. Set all others to null/omit them.
+4. Use appropriate node types (database for DBs, queue for message queues, etc.)
+5. Every edge must reference existing node IDs
+6. Group children must reference existing node or group IDs
+7. If something doesn't fit any category, use "technical_illustration" with spatial track
+8. For AWS cloud architectures, use groups with types: "cloud" (outer), "region", "vpc", "public_subnet", "private_subnet"
+9. Populate ONLY the variant field that matches the category. Set all others to null/omit them.
+
+## CRITICAL — Spatial diagram output limits
+
+For spatial diagrams (building_plan, circuit_diagram, site_layout, technical_illustration):
+- Use AT MOST 25 elements. Combine related shapes rather than drawing every detail.
+- Represent major structural components only — walls, major sections, key components.
+- Use text elements for labels and dimensions instead of drawing dimension lines.
+- Omit null fields to keep JSON compact (omit "color": null, "fill": null, "points": null, "rotation": 0).
+- Use canvas 1200x800. Scale coordinates proportionally.
+- DO NOT draw every brick, wire, or fastener — focus on the diagram's key message.
 """
