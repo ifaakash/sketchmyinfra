@@ -35,7 +35,7 @@ async function handleResponse(response) {
 }
 
 /**
- * Generate diagram code from a natural language prompt.
+ * Generate diagram code from a natural language prompt (v1 — legacy).
  * @param {string} prompt - User's architecture description
  * @param {string|null} context - Previous diagram code for iteration
  * @param {string|null} contextRenderer - Renderer of the context diagram
@@ -57,6 +57,34 @@ async function apiGenerate(prompt, context = null, contextRenderer = null) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
+      credentials: 'include',
+      signal: controller.signal
+    });
+    return handleResponse(response);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/**
+ * Generate diagram via v2 IR-based pipeline.
+ * Returns renderer (plantuml|d2|excalidraw), category, code, image, excalidraw_data.
+ * @param {string} prompt
+ * @returns {Promise<{renderer: string, category: string, code: string|null, image: string|null, excalidraw_data: object|null, prompt_used: string}>}
+ */
+async function apiGenerateV2(prompt) {
+  if (USE_MOCKS) {
+    return mockGenerate(prompt, null);
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60000);
+
+  try {
+    const response = await fetch(`${API_BASE}/api/v2/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt }),
       credentials: 'include',
       signal: controller.signal
     });
@@ -95,7 +123,31 @@ async function apiRender(puml, format = 'png') {
 }
 
 /**
- * Report a client-side render error (Mermaid) to the backend for tracking.
+ * Render D2 code into an image.
+ * @param {string} code - D2 source code
+ * @param {string} format - 'png' or 'svg'
+ * @returns {Promise<{image: string, format: string}>}
+ */
+async function apiRenderD2(code, format = 'svg') {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+
+  try {
+    const response = await fetch(`${API_BASE}/api/render/d2`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, format }),
+      credentials: 'include',
+      signal: controller.signal
+    });
+    return handleResponse(response);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/**
+ * Report a client-side render error to the backend for tracking.
  * Fire-and-forget — errors here are silently ignored.
  */
 function reportRenderError(prompt, renderer, errorMessage) {

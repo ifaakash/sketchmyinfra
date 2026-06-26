@@ -135,7 +135,20 @@ export default function Editor({ theme, user }) {
     if (user === undefined) return;
 
     if (isNew) {
-      setInitialData({ elements: [], appState: {}, files: {} });
+      // Check for imported Excalidraw data from the generate pipeline
+      const imported = localStorage.getItem("smi_excalidraw_import");
+      if (imported) {
+        try {
+          const data = JSON.parse(imported);
+          setInitialData(data);
+          setTitle("Generated Diagram");
+        } catch {
+          setInitialData({ elements: [], appState: {}, files: {} });
+        }
+        localStorage.removeItem("smi_excalidraw_import");
+      } else {
+        setInitialData({ elements: [], appState: {}, files: {} });
+      }
       setSaveStatus("unsaved");
       return;
     }
