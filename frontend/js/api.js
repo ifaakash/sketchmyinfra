@@ -35,44 +35,12 @@ async function handleResponse(response) {
 }
 
 /**
- * Generate diagram code from a natural language prompt (v1 — legacy).
- * @param {string} prompt - User's architecture description
- * @param {string|null} context - Previous diagram code for iteration
- * @param {string|null} contextRenderer - Renderer of the context diagram
- * @returns {Promise<{renderer: string, code: string, prompt_used: string, puml: string|null}>}
- */
-async function apiGenerate(prompt, context = null, contextRenderer = null) {
-  if (USE_MOCKS) {
-    return mockGenerate(prompt, context);
-  }
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30000);
-
-  try {
-    const body = { prompt, context };
-    if (contextRenderer) body.context_renderer = contextRenderer;
-
-    const response = await fetch(`${API_BASE}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      credentials: 'include',
-      signal: controller.signal
-    });
-    return handleResponse(response);
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-/**
- * Generate diagram via v2 IR-based pipeline.
+ * Generate diagram via IR-based pipeline.
  * Returns renderer (plantuml|d2|excalidraw), category, code, image, excalidraw_data.
  * @param {string} prompt
  * @returns {Promise<{renderer: string, category: string, code: string|null, image: string|null, excalidraw_data: object|null, prompt_used: string}>}
  */
-async function apiGenerateV2(prompt) {
+async function apiGenerate(prompt) {
   if (USE_MOCKS) {
     return mockGenerate(prompt, null);
   }
@@ -81,7 +49,7 @@ async function apiGenerateV2(prompt) {
   const timeout = setTimeout(() => controller.abort(), 60000);
 
   try {
-    const response = await fetch(`${API_BASE}/api/v2/generate`, {
+    const response = await fetch(`${API_BASE}/api/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt }),

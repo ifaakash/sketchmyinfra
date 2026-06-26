@@ -183,7 +183,7 @@ async function handleGenerate() {
     showPanel('loading');
     setLoadingText('Generating diagram...');
 
-    const result = await apiGenerateV2(prompt);
+    const result = await apiGenerate(prompt);
     currentRenderer = result.renderer || 'plantuml';
 
     // Excalidraw track — redirect to draw editor

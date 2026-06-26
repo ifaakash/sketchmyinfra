@@ -4,8 +4,13 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
 
+from app.generators.plantuml_gen import generate_plantuml
+from app.generators.d2_gen import generate_d2
+from app.ir.router import route
+from app.ir.schema import DiagramTrack
 from app.schemas import GenerateRequest
-from app.services.gemini import generate_puml, GeminiError
+from app.services.d2 import D2Error, render_d2
+from app.services.gemini import extract_diagram_ir, GeminiError
 from app.services.plantuml import render_puml, PlantUMLError
 
 router = APIRouter(prefix="/api/test", tags=["test"])
@@ -15,28 +20,37 @@ OUTPUT_DIR = Path("/backend/test_output")
 
 @router.post("/full-pipeline")
 async def test_full_pipeline(req: GenerateRequest):
-    """Full pipeline test: prompt → Gemini → PUML → PlantUML → saved image file.
-
-    Saves the PUML code and rendered image to /backend/test_output/.
-    Returns the file paths and a preview URL.
-    """
+    """Full pipeline test: prompt → Gemini IR → code generator → render → saved image."""
     OUTPUT_DIR.mkdir(exist_ok=True)
 
-    # Step 1: Generate PUML from prompt
+    # Step 1: Extract IR
     try:
-        puml = await generate_puml(req.prompt, req.context)
+        ir = await extract_diagram_ir(req.prompt)
     except GeminiError as e:
-        raise HTTPException(status_code=502, detail=f"Generate failed: {e}")
+        raise HTTPException(status_code=502, detail=f"IR extraction failed: {e}")
 
-    # Step 2: Render to SVG and PNG
+    track, renderer = route(ir)
+
+    # Step 2: Generate code
+    if track == DiagramTrack.SPATIAL:
+        raise HTTPException(status_code=400, detail="Spatial diagrams use Excalidraw — use the main UI")
+
+    if renderer == "plantuml":
+        code = generate_plantuml(ir)
+    else:
+        code = generate_d2(ir)
+
+    # Step 3: Render to SVG and PNG
     results = {}
     for fmt in ("svg", "png"):
         try:
-            data_uri = await render_puml(puml, fmt)
-        except PlantUMLError as e:
+            if renderer == "d2":
+                data_uri = await render_d2(code, fmt)
+            else:
+                data_uri = await render_puml(code, fmt)
+        except (PlantUMLError, D2Error) as e:
             raise HTTPException(status_code=502, detail=f"Render failed ({fmt}): {e}")
 
-        # Extract base64 data and save to file
         header, b64data = data_uri.split(",", 1)
         raw = base64.b64decode(b64data)
 
@@ -45,15 +59,18 @@ async def test_full_pipeline(req: GenerateRequest):
         filepath.write_bytes(raw)
         results[fmt] = str(filepath)
 
-    # Save PUML source
-    puml_path = OUTPUT_DIR / "test_diagram.puml"
-    puml_path.write_text(puml)
+    # Save code source
+    ext = "puml" if renderer == "plantuml" else "d2"
+    code_path = OUTPUT_DIR / f"test_diagram.{ext}"
+    code_path.write_text(code)
 
     return {
         "prompt": req.prompt,
-        "puml": puml,
+        "category": ir.category.value,
+        "renderer": renderer,
+        "code": code,
         "files": {
-            "puml": str(puml_path),
+            "source": str(code_path),
             "svg": results.get("svg"),
             "png": results.get("png"),
         },
@@ -65,13 +82,19 @@ async def test_full_pipeline(req: GenerateRequest):
 async def preview():
     """View the last generated test diagram in the browser."""
     svg_path = OUTPUT_DIR / "test_diagram.svg"
-    puml_path = OUTPUT_DIR / "test_diagram.puml"
 
     if not svg_path.exists():
         return HTMLResponse("<h2>No test diagram yet. POST to /api/test/full-pipeline first.</h2>")
 
     svg_content = svg_path.read_text()
-    puml_content = puml_path.read_text() if puml_path.exists() else "N/A"
+
+    # Find the source code file (puml or d2)
+    code_content = "N/A"
+    for ext in ("puml", "d2"):
+        p = OUTPUT_DIR / f"test_diagram.{ext}"
+        if p.exists():
+            code_content = p.read_text()
+            break
 
     return HTMLResponse(f"""
     <!DOCTYPE html>
@@ -88,8 +111,8 @@ async def preview():
         <h1>Test Pipeline Result</h1>
         <h3>Rendered Diagram</h3>
         <div class="diagram">{svg_content}</div>
-        <h3>PlantUML Source</h3>
-        <pre>{puml_content}</pre>
+        <h3>Diagram Source</h3>
+        <pre>{code_content}</pre>
     </body>
     </html>
     """)
