@@ -56,7 +56,7 @@ async def extract_diagram_ir(prompt: str) -> DiagramIR:
         },
     }
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
+    async with httpx.AsyncClient(timeout=90.0) as client:
         response = await client.post(
             GEMINI_URL,
             params={"key": settings.gemini_api_key},
@@ -90,7 +90,7 @@ async def extract_diagram_ir(prompt: str) -> DiagramIR:
         # Retry once with lower temperature
         logger.warning("IR parse failed, retrying with temperature=0.1: %s", e)
         payload["generationConfig"]["temperature"] = 0.1
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=90.0) as client:
             response = await client.post(
                 GEMINI_URL,
                 params={"key": settings.gemini_api_key},
