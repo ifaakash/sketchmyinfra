@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import admin, auth, drawings, feedback, generate, history, render, test
+from app.routers import admin, auth, drawings, feedback, generate_v2, history, render, test
 
 
 class _HealthCheckFilter(logging.Filter):
@@ -39,7 +39,7 @@ def create_app() -> FastAPI:
     app.include_router(auth.router)
     app.include_router(drawings.router)
     app.include_router(feedback.router)
-    app.include_router(generate.router)
+    app.include_router(generate_v2.router)
     app.include_router(history.router)
     app.include_router(render.router)
 

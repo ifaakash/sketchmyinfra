@@ -47,6 +47,8 @@ class Generation(Base):
     prompt: Mapped[str] = mapped_column(Text, nullable=False)
     puml_code: Mapped[str | None] = mapped_column(Text)
     renderer: Mapped[str] = mapped_column(String(20), nullable=False, server_default="plantuml")
+    category: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    ir_data: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="success")
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     ip_address: Mapped[str] = mapped_column(INET, nullable=False)

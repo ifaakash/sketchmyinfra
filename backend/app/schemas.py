@@ -6,6 +6,11 @@ class RenderRequest(BaseModel):
     format: str = Field(default="svg", pattern="^(svg|png)$")
 
 
+class D2RenderRequest(BaseModel):
+    code: str = Field(..., min_length=1, description="D2 source code")
+    format: str = Field(default="svg", pattern="^(svg|png)$")
+
+
 class RenderResponse(BaseModel):
     image: str = Field(..., description="Base64 data URI of the rendered diagram")
     format: str
@@ -13,15 +18,15 @@ class RenderResponse(BaseModel):
 
 class GenerateRequest(BaseModel):
     prompt: str = Field(..., min_length=1, max_length=2000)
-    context: str | None = Field(default=None, description="Previous diagram code for iteration")
-    context_renderer: str | None = Field(default=None, description="Renderer of the context diagram")
 
 
-class GenerateResponse(BaseModel):
-    renderer: str = Field(default="plantuml", description="Renderer used: plantuml or mermaid")
-    code: str = Field(..., description="Diagram source code (PlantUML or Mermaid)")
+class GenerateV2Response(BaseModel):
+    renderer: str = Field(..., description="Renderer: plantuml, d2, or excalidraw")
+    category: str = Field(..., description="Diagram category detected")
+    code: str | None = Field(default=None, description="Diagram source code (PlantUML or D2) — null for excalidraw")
+    image: str | None = Field(default=None, description="Base64 data URI of rendered image — null for excalidraw")
+    excalidraw_data: dict | None = Field(default=None, description="Excalidraw scene JSON — null for graph track")
     prompt_used: str
-    puml: str | None = Field(default=None, description="PlantUML code (backward compat, only when renderer=plantuml)")
 
 
 class ErrorResponse(BaseModel):
@@ -88,7 +93,7 @@ class GenerationStatsItem(BaseModel):
 
 class RenderErrorReport(BaseModel):
     prompt: str = Field(..., min_length=1, max_length=2000)
-    renderer: str = Field(..., pattern="^(plantuml|mermaid)$")
+    renderer: str = Field(..., pattern="^(plantuml|d2|excalidraw)$")
     error_message: str = Field(..., max_length=1000)
 
 

@@ -156,7 +156,8 @@ function initScrollReveal() {
 }
 
 /**
- * Main generate flow: prompt -> PUML -> render -> display.
+ * Main generate flow: prompt -> v2 pipeline (Gemini IR -> code generator -> render).
+ * V2 returns server-rendered images for PlantUML/D2, or Excalidraw JSON for spatial diagrams.
  */
 async function handleGenerate() {
   const input = $('#prompt-input');
@@ -172,42 +173,55 @@ async function handleGenerate() {
   isGenerating = true;
   currentPrompt = prompt;
 
-  // After 8s still generating, hint that auto-fix may be running
-  const fixingHint = setTimeout(() => {
-    if (isGenerating) setLoadingText('Auto-fixing diagram...');
-  }, 8000);
+  // After 10s still generating, hint that AI is working
+  const progressHint = setTimeout(() => {
+    if (isGenerating) setLoadingText('AI is analyzing your prompt...');
+  }, 10000);
 
   try {
-    // Phase 1: Generate diagram (backend classifies renderer)
     setGenerateLoading(true);
     showPanel('loading');
     setLoadingText('Generating diagram...');
 
-    const genResult = await apiGenerate(
-      prompt,
-      currentCode || currentPuml || null,
-      currentRenderer || null
-    );
-    currentRenderer = genResult.renderer || 'plantuml';
-    currentCode = genResult.code || genResult.puml;
-    currentPuml = genResult.puml || currentCode; // backward compat
+    const result = await apiGenerate(prompt);
+    currentRenderer = result.renderer || 'plantuml';
+
+    // Excalidraw track — redirect to draw editor
+    if (currentRenderer === 'excalidraw' && result.excalidraw_data) {
+      setLoadingText('Opening in diagram editor...');
+      try {
+        // Create a drawing from the Excalidraw data
+        const drawing = await fetch(`${API_BASE}/api/drawings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: result.category.replace(/_/g, ' ') + ' diagram',
+            data: result.excalidraw_data,
+          }),
+          credentials: 'include',
+        }).then(r => r.json());
+
+        window.location.href = `/draw/edit/${drawing.share_id || drawing.id}`;
+      } catch (drawErr) {
+        // Fallback: store in localStorage and open draw app
+        localStorage.setItem('smi_excalidraw_import', JSON.stringify(result.excalidraw_data));
+        window.location.href = '/draw/';
+      }
+      return;
+    }
+
+    // Graph track (PlantUML or D2) — image already rendered server-side
+    currentCode = result.code || '';
+    currentPuml = currentCode;
+    currentImageUri = result.image || '';
     showPumlCode(currentCode);
 
     // Update code panel label
     const codeLabel = $('#puml-label');
     if (codeLabel) {
-      codeLabel.textContent = currentRenderer === 'mermaid' ? 'Mermaid Code' : 'PlantUML Code';
+      const labels = { plantuml: 'PlantUML Code', d2: 'D2 Code', mermaid: 'Mermaid Code' };
+      codeLabel.textContent = labels[currentRenderer] || 'Diagram Code';
     }
-
-    // Phase 2: Render diagram
-    setLoadingText('Rendering diagram...');
-    let renderResult;
-    if (currentRenderer === 'mermaid') {
-      renderResult = await renderMermaid(currentCode);
-    } else {
-      renderResult = await apiRender(currentCode, 'svg');
-    }
-    currentImageUri = renderResult.image;
 
     // Show result
     showDiagram(currentImageUri);
@@ -245,14 +259,10 @@ async function handleGenerate() {
         err.message || 'Try simplifying your prompt or breaking the architecture into smaller parts.',
         currentImageUri || null
       );
-      // Report client-side render errors (Mermaid) to backend for tracking
-      if (currentRenderer && currentRenderer !== 'plantuml') {
-        reportRenderError(prompt, currentRenderer, err.message);
-      }
     }
     showToast(err.message || 'Generation failed', 'error', 4000);
   } finally {
-    clearTimeout(fixingHint);
+    clearTimeout(progressHint);
     setGenerateLoading(false);
     isGenerating = false;
   }
@@ -264,9 +274,12 @@ async function handleGenerate() {
 function detectRenderer(code) {
   const trimmed = code.trim();
   if (trimmed.startsWith('@startuml')) return 'plantuml';
-  const mermaidStarts = ['graph ', 'flowchart ', 'sequenceDiagram', 'classDiagram',
-    'stateDiagram', 'erDiagram', 'gantt', '%%{'];
-  if (mermaidStarts.some(m => trimmed.startsWith(m))) return 'mermaid';
+  // D2 detection: look for D2-specific patterns
+  if (trimmed.includes('shape: sequence_diagram') || trimmed.includes('shape: sql_table') ||
+      trimmed.includes('shape: class') || trimmed.includes('shape: cylinder') ||
+      /^\w+\s*:\s*"/.test(trimmed) || /^\w+\s*->\s*\w+/.test(trimmed)) {
+    return 'd2';
+  }
   return currentRenderer || 'plantuml';
 }
 
@@ -287,12 +300,12 @@ async function handleReRender() {
     showPanel('loading');
     setLoadingText('Rendering diagram...');
 
-    // Auto-detect renderer from code content (handles stale state / manual edits)
+    // Auto-detect renderer from code content
     currentRenderer = detectRenderer(code);
 
     let result;
-    if (currentRenderer === 'mermaid') {
-      result = await renderMermaid(code);
+    if (currentRenderer === 'd2') {
+      result = await apiRenderD2(code, 'svg');
     } else {
       result = await apiRender(code, 'svg');
     }
@@ -366,9 +379,9 @@ async function handleDownload(format) {
     showToast('Preparing PNG…', 'info', 2000);
     try {
       let pngUri;
-      if (currentRenderer === 'mermaid') {
-        // Convert SVG to PNG client-side for Mermaid diagrams
-        pngUri = await svgToPngDataUri(currentImageUri);
+      if (currentRenderer === 'd2') {
+        const result = await apiRenderD2(currentCode, 'png');
+        pngUri = result.image;
       } else {
         const result = await apiRender(currentCode, 'png');
         pngUri = result.image;

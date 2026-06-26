@@ -4,6 +4,17 @@
 
 SketchMyInfra is an AI-powered infrastructure diagram generator. Users describe cloud architecture in natural language, and Gemini AI converts it to PlantUML or Mermaid code, which is rendered as PNG/SVG. Live at [sketchmyinfra.com](https://sketchmyinfra.com).
 
+## Documentation Policy
+
+Whenever implementation depends on a framework, SDK, library or API, delegate to the `docs-researcher` agent for lookup. The agent follows this priority:
+
+1. Context7 first.
+2. Official documentation if Context7 is insufficient.
+3. Web search as last resort.
+4. Prefer official documentation over blogs.
+5. Mention the documentation source used.
+6. Never assume an API exists without verification.
+
 ## Tech Stack
 
 | Layer | Technology |

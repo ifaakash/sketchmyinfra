@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     # PlantUML (internal Docker service)
     plantuml_server_url: str = "http://plantuml:8080"
 
+    # D2 (CLI binary, runs as subprocess inside API container)
+    d2_binary_path: str = "/usr/local/bin/d2"
+    d2_layout_engine: str = "elk"
+    d2_timeout_seconds: int = 30
+
     # OAuth - Google
     google_client_id: str = ""
     google_client_secret: str = ""

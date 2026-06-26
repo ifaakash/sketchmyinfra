@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException
 
-from app.schemas import RenderRequest, RenderResponse
-from app.services.plantuml import render_puml, PlantUMLError
+from app.schemas import D2RenderRequest, RenderRequest, RenderResponse
+from app.services.d2 import D2Error, render_d2
+from app.services.plantuml import PlantUMLError, render_puml
 
 router = APIRouter(prefix="/api", tags=["render"])
 
@@ -26,5 +27,18 @@ async def render(req: RenderRequest):
         raise HTTPException(status_code=502, detail=str(e))
     except Exception:
         raise HTTPException(status_code=500, detail="Render service unavailable")
+
+    return RenderResponse(image=image, format=req.format)
+
+
+@router.post("/render/d2", response_model=RenderResponse)
+async def render_d2_endpoint(req: D2RenderRequest):
+    """Render D2 code to an image via the D2 CLI."""
+    try:
+        image = await render_d2(req.code, req.format)
+    except D2Error as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="D2 render service unavailable")
 
     return RenderResponse(image=image, format=req.format)
