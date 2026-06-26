@@ -238,7 +238,8 @@ For spatial diagrams (building_plan, circuit_diagram, site_layout, technical_ill
 - Use labeled rectangles for major components (e.g. one rectangle for "Arduino Uno" not separate pins).
 - Use text elements for labels and annotations.
 - Use arrows/lines ONLY for key connections — not every wire or cable.
-- Omit ALL fields with default values. Only include fields you explicitly set. Never include "color": null, "fill": null, "points": null, "rotation": 0, "stroke_width": 1, "font_size": 16.
+- ALWAYS include "id", "type", "x", "y" for every element — these are required.
+- You may omit optional fields that use defaults: "color", "fill", "points", "rotation", "stroke_width", "font_size", "width", "height".
 - Canvas: 1200x800. Scale coordinates proportionally.
 - For circuit diagrams: one rectangle per component, arrows for connections, text for pin labels. NOT individual pins as separate elements.
 - For building plans: one rectangle per wall/section, text for dimensions. NOT individual bricks or materials.

@@ -216,8 +216,8 @@ class SpatialElement(BaseModel):
     """A positioned shape on a 2D canvas."""
     id: str
     type: Literal["rectangle", "ellipse", "diamond", "text", "line", "arrow"]
-    x: float
-    y: float
+    x: float = 0
+    y: float = 0
     width: float = 100
     height: float = 50
     label: str | None = None
