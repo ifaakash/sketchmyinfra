@@ -1075,3 +1075,82 @@ async def fix_mermaid(code: str, error: str) -> str:
 
 class GeminiError(Exception):
     pass
+
+
+# ---------------------------------------------------------------------------
+# V2: Structured IR extraction (JSON mode)
+# ---------------------------------------------------------------------------
+
+from app.ir.prompts import EXTRACTION_SYSTEM_PROMPT  # noqa: E402
+from app.ir.schema import DiagramIR  # noqa: E402
+
+
+async def extract_diagram_ir(prompt: str) -> DiagramIR:
+    """Extract structured diagram IR from a natural language prompt.
+
+    Uses Gemini's JSON mode for reliable structured output.
+    Returns a validated DiagramIR model.
+
+    Raises GeminiError on API failure or invalid JSON.
+    """
+    payload = {
+        "system_instruction": {"parts": [{"text": EXTRACTION_SYSTEM_PROMPT}]},
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "temperature": 0.3,
+            "maxOutputTokens": 8192,
+            "responseMimeType": "application/json",
+        },
+    }
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.post(
+            GEMINI_URL,
+            params={"key": settings.gemini_api_key},
+            json=payload,
+        )
+
+    if response.status_code != 200:
+        error = response.json().get("error", {}).get("message", "Unknown error")
+        raise GeminiError(f"Gemini API error: {error}")
+
+    data = response.json()
+
+    # Extract text from response
+    try:
+        text = data["candidates"][0]["content"]["parts"][0]["text"]
+    except (KeyError, IndexError) as e:
+        raise GeminiError(f"Unexpected Gemini response structure: {e}")
+
+    # Strip markdown fences if present (safety net)
+    text = _strip_fences(text)
+
+    # Parse and validate with Pydantic
+    try:
+        ir = DiagramIR.model_validate_json(text)
+    except Exception as e:
+        # Retry once with lower temperature
+        logger.warning("IR parse failed, retrying with temperature=0.1: %s", e)
+        payload["generationConfig"]["temperature"] = 0.1
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(
+                GEMINI_URL,
+                params={"key": settings.gemini_api_key},
+                json=payload,
+            )
+        if response.status_code != 200:
+            raise GeminiError(f"Gemini retry failed: {response.status_code}")
+
+        data = response.json()
+        try:
+            text = data["candidates"][0]["content"]["parts"][0]["text"]
+        except (KeyError, IndexError):
+            raise GeminiError("Gemini retry returned unexpected structure")
+
+        text = _strip_fences(text)
+        try:
+            ir = DiagramIR.model_validate_json(text)
+        except Exception as parse_err:
+            raise GeminiError(f"Failed to parse IR after retry: {parse_err}")
+
+    return ir

@@ -6,6 +6,11 @@ class RenderRequest(BaseModel):
     format: str = Field(default="svg", pattern="^(svg|png)$")
 
 
+class D2RenderRequest(BaseModel):
+    code: str = Field(..., min_length=1, description="D2 source code")
+    format: str = Field(default="svg", pattern="^(svg|png)$")
+
+
 class RenderResponse(BaseModel):
     image: str = Field(..., description="Base64 data URI of the rendered diagram")
     format: str
