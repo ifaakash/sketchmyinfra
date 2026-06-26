@@ -29,6 +29,15 @@ class GenerateResponse(BaseModel):
     puml: str | None = Field(default=None, description="PlantUML code (backward compat, only when renderer=plantuml)")
 
 
+class GenerateV2Response(BaseModel):
+    renderer: str = Field(..., description="Renderer: plantuml, d2, or excalidraw")
+    category: str = Field(..., description="Diagram category detected")
+    code: str | None = Field(default=None, description="Diagram source code (PlantUML or D2) — null for excalidraw")
+    image: str | None = Field(default=None, description="Base64 data URI of rendered image — null for excalidraw")
+    excalidraw_data: dict | None = Field(default=None, description="Excalidraw scene JSON — null for graph track")
+    prompt_used: str
+
+
 class ErrorResponse(BaseModel):
     detail: str
 
