@@ -36,8 +36,9 @@ async def render_d2(code: str, fmt: str = "svg") -> str:
     Raises:
         D2Error: If D2 exits with a non-zero code or times out.
     """
-    if fmt not in ("svg", "png"):
-        raise D2Error(f"Unsupported format: {fmt}")
+    # D2 PNG requires Playwright (browser engine) — force SVG only
+    if fmt != "svg":
+        fmt = "svg"
 
     # Write source to a temp file
     tmp_dir = tempfile.mkdtemp(prefix="d2_")
