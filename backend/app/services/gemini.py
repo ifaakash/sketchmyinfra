@@ -51,7 +51,7 @@ async def extract_diagram_ir(prompt: str) -> DiagramIR:
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
             "temperature": 0.3,
-            "maxOutputTokens": 16384,
+            "maxOutputTokens": 65536,
             "responseMimeType": "application/json",
         },
     }
