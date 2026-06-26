@@ -136,10 +136,9 @@ GCP_PLANTUML_ICONS: dict[str, tuple[str, str]] = {
 # ---------------------------------------------------------------------------
 
 D2_ICONS: dict[str, str] = {
-    # AWS (used when multi-cloud falls back to D2)
+    # AWS — verified working on Terrastruct CDN
     "aws:lambda":           "https://icons.terrastruct.com/aws%2FCompute%2FAWS-Lambda.svg",
     "aws:ec2":              "https://icons.terrastruct.com/aws%2FCompute%2FAmazon-EC2.svg",
-    "aws:ecs":              "https://icons.terrastruct.com/aws%2FContainers%2FAmazon-Elastic-Container-Service.svg",
     "aws:s3":               "https://icons.terrastruct.com/aws%2FStorage%2FAmazon-Simple-Storage-Service-S3.svg",
     "aws:rds":              "https://icons.terrastruct.com/aws%2FDatabase%2FAmazon-RDS.svg",
     "aws:dynamodb":         "https://icons.terrastruct.com/aws%2FDatabase%2FAmazon-DynamoDB.svg",
@@ -148,26 +147,19 @@ D2_ICONS: dict[str, str] = {
     "aws:api_gateway":      "https://icons.terrastruct.com/aws%2FNetworking%20%26%20Content%20Delivery%2FAmazon-API-Gateway.svg",
     "aws:sqs":              "https://icons.terrastruct.com/aws%2FApplication%20Integration%2FAmazon-Simple-Queue-Service-SQS.svg",
     "aws:sns":              "https://icons.terrastruct.com/aws%2FApplication%20Integration%2FAmazon-Simple-Notification-Service-SNS.svg",
-    # GCP
+    # GCP — verified working on Terrastruct CDN
     "gcp:cloud_run":        "https://icons.terrastruct.com/gcp%2FProducts%20and%20services%2FCompute%2FCloud%20Run.svg",
     "gcp:compute_engine":   "https://icons.terrastruct.com/gcp%2FProducts%20and%20services%2FCompute%2FCompute%20Engine.svg",
     "gcp:cloud_functions":  "https://icons.terrastruct.com/gcp%2FProducts%20and%20services%2FCompute%2FCloud%20Functions.svg",
-    "gcp:gke":              "https://icons.terrastruct.com/gcp%2FProducts%20and%20services%2FCompute%2FKubernetes%20Engine.svg",
     "gcp:cloud_sql":        "https://icons.terrastruct.com/gcp%2FProducts%20and%20services%2FDatabases%2FCloud%20SQL.svg",
     "gcp:cloud_storage":    "https://icons.terrastruct.com/gcp%2FProducts%20and%20services%2FStorage%2FCloud%20Storage.svg",
-    "gcp:pub_sub":          "https://icons.terrastruct.com/gcp%2FProducts%20and%20services%2FData%20Analytics%2FCloud%20Pub_Sub.svg",
+    "gcp:pub_sub":          "https://icons.terrastruct.com/gcp%2FProducts%20and%20services%2FData%20Analytics%2FCloud%20PubSub.svg",
     "gcp:bigquery":         "https://icons.terrastruct.com/gcp%2FProducts%20and%20services%2FData%20Analytics%2FBigQuery.svg",
     "gcp:cloud_load_balancing": "https://icons.terrastruct.com/gcp%2FProducts%20and%20services%2FNetworking%2FCloud%20Load%20Balancing.svg",
     "gcp:cloud_cdn":        "https://icons.terrastruct.com/gcp%2FProducts%20and%20services%2FNetworking%2FCloud%20CDN.svg",
     "gcp:cloud_armor":      "https://icons.terrastruct.com/gcp%2FProducts%20and%20services%2FNetworking%2FCloud%20Armor.svg",
-    # Azure
-    "azure:app_service":    "https://icons.terrastruct.com/azure%2FCompute%2FApp%20Services.svg",
-    "azure:functions":      "https://icons.terrastruct.com/azure%2FCompute%2FFunction%20Apps.svg",
-    "azure:vm":             "https://icons.terrastruct.com/azure%2FCompute%2FVirtual%20Machine.svg",
-    "azure:aks":            "https://icons.terrastruct.com/azure%2FContainers%2FKubernetes%20Services.svg",
-    "azure:sql_database":   "https://icons.terrastruct.com/azure%2FDatabases%2FSQL%20Database.svg",
-    "azure:cosmos_db":      "https://icons.terrastruct.com/azure%2FDatabases%2FAzure%20Cosmos%20DB.svg",
-    "azure:blob_storage":   "https://icons.terrastruct.com/azure%2FStorage%2FBlob%20Storage.svg",
+    # Azure and some AWS/GCP icons removed — Terrastruct CDN returns 403.
+    # D2 generator gracefully skips missing icons (renders without icon).
 }
 
 
