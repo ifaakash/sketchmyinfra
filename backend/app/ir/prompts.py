@@ -231,13 +231,15 @@ Dimension sides: top, bottom, left, right
 8. For AWS cloud architectures, use groups with types: "cloud" (outer), "region", "vpc", "public_subnet", "private_subnet"
 9. Populate ONLY the variant field that matches the category. Set all others to null/omit them.
 
-## CRITICAL — Spatial diagram output limits
+## CRITICAL — Spatial diagram output limits (MUST FOLLOW)
 
 For spatial diagrams (building_plan, circuit_diagram, site_layout, technical_illustration):
-- Use AT MOST 25 elements. Combine related shapes rather than drawing every detail.
-- Represent major structural components only — walls, major sections, key components.
-- Use text elements for labels and dimensions instead of drawing dimension lines.
-- Omit null fields to keep JSON compact (omit "color": null, "fill": null, "points": null, "rotation": 0).
-- Use canvas 1200x800. Scale coordinates proportionally.
-- DO NOT draw every brick, wire, or fastener — focus on the diagram's key message.
+- HARD LIMIT: Maximum 15 elements. If the user's description implies more, simplify by grouping related parts into single shapes.
+- Use labeled rectangles for major components (e.g. one rectangle for "Arduino Uno" not separate pins).
+- Use text elements for labels and annotations.
+- Use arrows/lines ONLY for key connections — not every wire or cable.
+- Omit ALL fields with default values. Only include fields you explicitly set. Never include "color": null, "fill": null, "points": null, "rotation": 0, "stroke_width": 1, "font_size": 16.
+- Canvas: 1200x800. Scale coordinates proportionally.
+- For circuit diagrams: one rectangle per component, arrows for connections, text for pin labels. NOT individual pins as separate elements.
+- For building plans: one rectangle per wall/section, text for dimensions. NOT individual bricks or materials.
 """
