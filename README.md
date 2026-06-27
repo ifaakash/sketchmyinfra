@@ -1,5 +1,5 @@
 # SketchMyInfra
-<a href="https://saasbrowser.com/en/saas/1486484/sketchmyinfra" target="_blank" rel="noopener"><img src="https://files.saasbrowser.com/5xwjxcwo2wjbqonn4ixi4ymelfga" alt="SketchMyInfra - SaaS search engine verified badge" width="200" height="133" /></a>
+<a href="https://saasbrowser.com/en/saas/1486484/sketchmyinfra" target="_blank" rel="noopener"><img src="https://static-files.saasbrowser.com/saas-browser-badge-17.svg" alt="SketchMyInfra - Compare B2B SaaS" width="200" /></a>
 
 **Turn plain English into production-ready architecture diagrams in seconds.**
 
