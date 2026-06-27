@@ -1,6 +1,10 @@
 # SketchMyInfra
 <a href="https://saasbrowser.com/en/saas/1486484/sketchmyinfra" target="_blank" rel="noopener"><img src="https://static-files.saasbrowser.com/saas-browser-badge-17.svg" alt="SketchMyInfra - Compare B2B SaaS" width="200" /></a>
 
+
+<div id="saas-browser-reviews"></div>
+<a href="https://saasbrowser.com/en/saas/1486484/sketchmyinfra">We're verified on SaaS Browser</a>
+<script src="https://assets.saasbrowser.com/widgets/display.min.js" data-profile="d26d89e3-3e79-45a1-8690-516da6acd2be" data-layout="carousel" data-mode="light" async></script>
 **Turn plain English into production-ready architecture diagrams in seconds.**
 
 [sketchmyinfra.com](https://sketchmyinfra.com) | [About](https://sketchmyinfra.com/about/) | [AWS Diagrams](https://sketchmyinfra.com/aws-architecture-diagram-generator/) | [Lucidchart Alternative](https://sketchmyinfra.com/lucidchart-alternative/)
