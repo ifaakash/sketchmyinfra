@@ -8,6 +8,9 @@ RUN apt-get update && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 
+# Skip Playwright auto-install — we only use SVG output from D2
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+
 WORKDIR /backend
 
 COPY requirements.txt .

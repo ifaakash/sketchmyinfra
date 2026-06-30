@@ -298,3 +298,25 @@ async function copyToClipboard(text) {
     showToast('Failed to copy', 'error', 2000);
   }
 }
+
+/**
+ * Convert an SVG data URI to PNG data URI via Canvas.
+ * Uses 2x scale for retina-quality output.
+ */
+function svgToPngDataUri(svgDataUri) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = 2;
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(scale, scale);
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => reject(new Error('Failed to convert SVG to PNG'));
+    img.src = svgDataUri;
+  });
+}

@@ -96,7 +96,7 @@ async function generateThumbnail(elements, files) {
       appState: { exportBackground: true, viewBackgroundColor: "#ffffff" },
       files: files || {},
       getDimensions: (w, h) => {
-        const maxDim = 400;
+        const maxDim = 800;
         const scale = Math.min(maxDim / w, maxDim / h, 1);
         return { width: Math.round(w * scale), height: Math.round(h * scale), scale };
       },

@@ -364,10 +364,10 @@ function handleNew() {
 /**
  * Download the current diagram.
  * SVG: use the already-rendered data URI directly.
- * PNG: request a fresh PNG render from the backend (currentImageUri is always SVG).
+ * PNG: convert SVG to PNG client-side via Canvas (works for all renderers).
  */
 async function handleDownload(format) {
-  if (!currentImageUri || !currentCode) {
+  if (!currentImageUri) {
     showToast('No diagram to download', 'error', 2000);
     return;
   }
@@ -378,14 +378,7 @@ async function handleDownload(format) {
   if (format === 'png') {
     showToast('Preparing PNG…', 'info', 2000);
     try {
-      let pngUri;
-      if (currentRenderer === 'd2') {
-        const result = await apiRenderD2(currentCode, 'png');
-        pngUri = result.image;
-      } else {
-        const result = await apiRender(currentCode, 'png');
-        pngUri = result.image;
-      }
+      const pngUri = await svgToPngDataUri(currentImageUri);
       downloadDataUri(pngUri, filename);
       showToast(`Downloaded ${filename}`, 'success', 2000);
     } catch (err) {
