@@ -96,7 +96,7 @@ async function generateThumbnail(elements, files) {
       appState: { exportBackground: true, viewBackgroundColor: "#ffffff" },
       files: files || {},
       getDimensions: (w, h) => {
-        const maxDim = 800;
+        const maxDim = 1200;
         const scale = Math.min(maxDim / w, maxDim / h, 1);
         return { width: Math.round(w * scale), height: Math.round(h * scale), scale };
       },
@@ -233,6 +233,18 @@ export default function Editor({ theme, user }) {
     };
   }, []);
 
+  // Ctrl+S / Cmd+S manual save
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        doSave();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [doSave]);
+
   const handleShare = useCallback(() => {
     if (!drawingMeta?.share_id) return;
     const url = `${window.location.origin}/draw/s/${drawingMeta.share_id}`;
@@ -311,6 +323,39 @@ export default function Editor({ theme, user }) {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <SaveStatus status={saveStatus} />
+          <button
+            style={{
+              ...shareBtn,
+              background: saveStatus === "saving" ? "#374151" : "#1e293b",
+              border: "1px solid #374151",
+              opacity: saveStatus === "saving" ? 0.6 : 1,
+              cursor: saveStatus === "saving" ? "default" : "pointer",
+            }}
+            onClick={doSave}
+            disabled={saveStatus === "saving"}
+            title="Save (Ctrl+S)"
+            onMouseEnter={(e) => {
+              if (saveStatus !== "saving") e.target.style.background = "#334155";
+            }}
+            onMouseLeave={(e) => {
+              if (saveStatus !== "saving") e.target.style.background = "#1e293b";
+            }}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              style={{ marginRight: 4, verticalAlign: "middle", display: "inline" }}
+            >
+              <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+              <polyline points="17 21 17 13 7 13 7 21" />
+              <polyline points="7 3 7 8 15 8" />
+            </svg>
+            Save
+          </button>
           {user && drawingMeta?.share_id && (
             <button
               style={shareBtn}
