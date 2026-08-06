@@ -101,6 +101,39 @@ kubectl apply -f k8s/prod/
 kubectl get pods -n prod -w
 ```
 
+### Database access
+
+```bash
+# Log into the PostgreSQL container
+docker exec -it <container-id> psql -U smi -d sketchmyinfra
+```
+
+Inside the psql shell:
+
+```sql
+-- List tables
+\dt
+
+-- Schema of a table
+\d <table-name>
+
+-- Detailed schema (indexes, constraints, triggers)
+\d+ <table-name>
+```
+
+**Clean query output** (no borders, no headers):
+
+```sql
+\x
+-- Expanded display is on.
+
+\t on
+\pset format unaligned
+-- \t hides headers/footers, \pset format unaligned removes table borders
+
+-- Run your query again — clean, machine-parsable output
+```
+
 ## Keywords
 
 infrastructure diagram generator, cloud architecture diagram, PlantUML AI, AWS architecture diagram, text to diagram, AI diagram generator, infrastructure as code visualization, cloud diagram tool, DevOps diagram, architecture documentation
