@@ -68,6 +68,8 @@ cd sketchmyinfra
 # Build images
 docker build -t sketchmyinfra-api:local backend/
 docker build -t sketchmyinfra-frontend:local frontend/
+docker compose build
+docker compose up -d
 
 # Import into k3s
 docker save sketchmyinfra-api:local | sudo k3s ctr images import -
