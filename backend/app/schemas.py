@@ -110,16 +110,89 @@ class GenerationStatsResponse(BaseModel):
     recent: list[GenerationStatsItem]
 
 
-# --- Admin Stats ---
+# --- Admin: pagination envelope ---
+# First pagination convention in this codebase. Other list endpoints
+# (HistoryResponse, DrawingListResponse) return a bare {items: [...]} with no
+# totals; admin tables need page numbers, so they use {items, meta} instead.
+
+class PageMeta(BaseModel):
+    page: int
+    per_page: int
+    total: int
+    total_pages: int
+
+
+# --- Admin: overview ---
+
+class TrendPoint(BaseModel):
+    date: str = Field(..., description="UTC calendar day, YYYY-MM-DD")
+    total: int
+    success: int
+    failed: int
+
 
 class AdminStatsResponse(BaseModel):
     total_users: int
     total_generations: int
+    total_drawings: int
+    total_feedback: int
     generations_24h: int
     generations_7d: int
+    new_users_7d: int
     success_count: int
-    gemini_error_count: int
-    autofix_failed_count: int
-    mermaid_error_count: int = 0
+    failure_count: int
     failure_rate: float
-    recent_failures: list[GenerationStatsItem]
+    # Raw dicts rather than one field per known status: the previous version
+    # hardcoded three status names and silently excluded render_error from the
+    # failure rate. Anything the pipeline writes now shows up automatically.
+    status_counts: dict[str, int]
+    renderer_counts: dict[str, int]
+    category_counts: dict[str, int]
+    trend: list[TrendPoint] = Field(..., description="Last 14 UTC days, gap-filled")
+
+
+# --- Admin: users ---
+
+class AdminUserItem(BaseModel):
+    id: str
+    email: str
+    name: str | None
+    avatar_url: str | None
+    oauth_provider: str
+    tier: str
+    created_at: str
+    generation_count: int
+    last_generation_at: str | None
+
+
+class AdminUsersResponse(BaseModel):
+    items: list[AdminUserItem]
+    meta: PageMeta
+
+
+# --- Admin: generations ---
+
+class AdminGenerationItem(BaseModel):
+    id: str
+    prompt: str = Field(..., description="Truncated for list views")
+    status: str
+    renderer: str
+    category: str | None
+    error_message: str | None
+    created_at: str
+    user_id: str | None
+    user_email: str | None = Field(None, description="None for anonymous generations")
+    ip_address: str | None
+
+
+class AdminGenerationsResponse(BaseModel):
+    items: list[AdminGenerationItem]
+    meta: PageMeta
+
+
+class AdminGenerationDetail(AdminGenerationItem):
+    """Full row for the detail view. Inherits every list field but carries the
+    untruncated prompt plus the heavy columns omitted from list responses."""
+
+    puml_code: str | None
+    ir_data: dict | None
