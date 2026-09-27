@@ -34,6 +34,8 @@ class User(Base):
     __table_args__ = (
         Index("uq_oauth_provider_id", "oauth_provider", "oauth_id", unique=True),
         Index("idx_users_email", "email"),
+        # Admin user list sorts by signup date across the whole table.
+        Index("idx_users_created_at", created_at.desc()),
     )
 
 
@@ -60,6 +62,10 @@ class Generation(Base):
     __table_args__ = (
         Index("idx_generations_user_date", "user_id", "created_at", postgresql_where=(user_id.isnot(None))),
         Index("idx_generations_ip_date", "ip_address", "created_at", postgresql_where=(user_id.is_(None))),
+        # The two indexes above are partial (scoped by user_id IS [NOT] NULL),
+        # so neither serves the admin dashboard's unscoped queries.
+        Index("idx_generations_created_at", created_at.desc()),
+        Index("idx_generations_status_created_at", "status", created_at.desc()),
     )
 
 
