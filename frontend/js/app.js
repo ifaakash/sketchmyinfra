@@ -392,12 +392,11 @@ async function handleDownload(format) {
 }
 
 /**
- * Theme — initialize from localStorage or system preference.
+ * Theme — initialize from localStorage, defaulting to light.
  */
 function initTheme() {
-  const stored = localStorage.getItem('theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const isDark = stored ? stored === 'dark' : prefersDark;
+  // Light is the default; dark only when the user has picked it with the toggle
+  const isDark = localStorage.getItem('theme') === 'dark';
 
   document.documentElement.classList.toggle('dark', isDark);
 }
