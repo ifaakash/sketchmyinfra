@@ -18,6 +18,7 @@ from app.generators.excalidraw_gen import generate_excalidraw
 from app.generators.plantuml_gen import generate_plantuml
 from app.ir.router import route
 from app.ir.schema import DiagramTrack
+from app.metrics import record_generation
 from app.middleware.auth import get_current_user_optional
 from app.models import Generation, User
 from app.schemas import (
@@ -126,6 +127,7 @@ async def generate(
     try:
         ir = await extract_diagram_ir(req.prompt)
     except GeminiError as e:
+        record_generation("gemini_error", None)
         db.add(Generation(
             user_id=user.id if user else None,
             prompt=req.prompt,
@@ -137,6 +139,7 @@ async def generate(
         raise HTTPException(status_code=502, detail=str(e))
     except Exception as e:
         logger.exception("Unexpected error during IR extraction")
+        record_generation("gemini_error", None)
         db.add(Generation(
             user_id=user.id if user else None,
             prompt=req.prompt,
@@ -167,6 +170,7 @@ async def generate(
                 image = await render_puml(code, "svg")
             except PlantUMLError as render_err:
                 logger.warning("PlantUML render failed: %s", render_err)
+                record_generation("autofix_failed", renderer)
                 db.add(Generation(
                     user_id=user.id if user else None,
                     prompt=req.prompt,
@@ -190,6 +194,7 @@ async def generate(
                 image = await render_d2(code, "svg")
             except D2Error as render_err:
                 logger.warning("D2 render failed: %s", render_err)
+                record_generation("autofix_failed", renderer)
                 db.add(Generation(
                     user_id=user.id if user else None,
                     prompt=req.prompt,
@@ -211,6 +216,7 @@ async def generate(
         raise
     except Exception as e:
         logger.exception("Code generation failed")
+        record_generation("gemini_error", renderer)
         db.add(Generation(
             user_id=user.id if user else None,
             prompt=req.prompt,
@@ -224,6 +230,7 @@ async def generate(
         raise HTTPException(status_code=500, detail="Failed to generate diagram code")
 
     # --- Phase 4: Record success ---
+    record_generation("success", renderer)
     db.add(Generation(
         user_id=user.id if user else None,
         prompt=req.prompt,
@@ -259,6 +266,7 @@ async def report_render_error(
 ):
     """Report a client-side render failure for tracking."""
     ip = _get_client_ip(request)
+    record_generation("render_error", req.renderer, source="client")
     db.add(Generation(
         user_id=user.id if user else None,
         prompt=req.prompt,

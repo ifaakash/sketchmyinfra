@@ -2,6 +2,7 @@ import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.config import settings
 from app.routers import admin, auth, drawings, feedback, generate_v2, history, render, test
@@ -49,6 +50,12 @@ def create_app() -> FastAPI:
     @app.get("/api/health")
     async def health():
         return {"status": "ok", "version": "2.0.0"}
+
+    # /metrics sits outside /api/, so nginx never proxies it — only reachable
+    # on the internal network (Prometheus scrapes api:8000/metrics directly)
+    Instrumentator(
+        excluded_handlers=["/api/health", "/metrics"],
+    ).instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 
     return app
 
