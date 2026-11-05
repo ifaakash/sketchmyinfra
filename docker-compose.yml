@@ -15,7 +15,8 @@ services:
     env_file: .env
     expose:
       - "8000"
-    entrypoint: ["/bin/sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+    # Retry migrations: postgres can still be finishing startup when the api starts
+    entrypoint: ["/bin/sh", "-c", "for i in 1 2 3 4 5; do alembic upgrade head && break; [ $$i = 5 ] && exit 1; echo \"alembic failed, retry $$i/5 in 3s\"; sleep 3; done && exec uvicorn app.main:app --host 0.0.0.0 --port 8000"]
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
       interval: 10s
@@ -38,16 +39,18 @@ services:
     expose:
       - "5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U smi -d sketchmyinfra"]
+      # -h 127.0.0.1: the image's temporary init server listens on the unix
+      # socket only, so a socket check can pass before the real server is up
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U smi -d sketchmyinfra"]
       interval: 5s
       timeout: 3s
       retries: 5
+      start_period: 10s
     restart: unless-stopped
 
   plantuml:
-    image: plantuml/plantuml-server:jetty
-    environment:
-      JAVA_TOOL_OPTIONS: "-DPLANTUML_SECURITY_PROFILE=UNSECURE -Djava.net.preferIPv4Stack=true"
+    # Pinned server + vendored icon libraries; security profile set in the Dockerfile
+    build: ./plantuml
     expose:
       - "8080"
     restart: unless-stopped
