@@ -1,6 +1,6 @@
 FROM python:3.12-slim
 
-# Install D2 diagram renderer (supports ARM64/Pi5 via official install script)
+# Install D2 diagram renderer
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl ca-certificates make && \
     curl -fsSL https://d2lang.com/install.sh | sh -s -- && \
