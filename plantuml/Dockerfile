@@ -18,7 +18,8 @@ RUN set -euxo pipefail; \
     mkdir -p /opt/plantuml-libs; \
     fetch() { \
       tmp="$(mktemp -d)"; \
-      curl -fsSL "https://codeload.github.com/$2/tar.gz/$3" | tar -xz -C "$tmp"; \
+      curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 \
+        "https://codeload.github.com/$2/tar.gz/$3" | tar -xz -C "$tmp"; \
       mv "$tmp"/*/dist "/opt/plantuml-libs/$1"; \
       rm -rf "$tmp"; \
     }; \

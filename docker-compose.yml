@@ -50,7 +50,11 @@ services:
 
   plantuml:
     # Pinned server + vendored icon libraries; security profile set in the Dockerfile
-    build: ./plantuml
+    build:
+      context: ./plantuml
+      # Bridge-network DNS to GitHub is unreliable on the host; use host networking
+      # for the one build step that downloads the icon libraries
+      network: host
     expose:
       - "8080"
     restart: unless-stopped
