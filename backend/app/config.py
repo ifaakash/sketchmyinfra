@@ -20,6 +20,9 @@ class Settings(BaseSettings):
 
     # PlantUML (internal Docker service)
     plantuml_server_url: str = "http://plantuml:8080"
+    # Icon libraries baked into the plantuml image (see plantuml/Dockerfile).
+    # Empty string disables include rewriting (server fetches from GitHub).
+    plantuml_lib_dir: str = "/opt/plantuml-libs"
 
     # D2 (CLI binary, runs as subprocess inside API container)
     d2_binary_path: str = "/usr/local/bin/d2"

@@ -95,7 +95,7 @@ AZURE_PLANTUML_BASE = "https://raw.githubusercontent.com/plantuml-stdlib/Azure-P
 
 AZURE_PLANTUML_ICONS: dict[str, tuple[str, str]] = {
     "azure:app_service":         ("Compute/AzureAppService.puml", "AzureAppService"),
-    "azure:functions":           ("Compute/AzureFunctions.puml", "AzureFunctions"),
+    "azure:functions":           ("Compute/AzureFunction.puml", "AzureFunction"),
     "azure:vm":                  ("Compute/AzureVirtualMachine.puml", "AzureVirtualMachine"),
     "azure:aks":                 ("Containers/AzureKubernetesService.puml", "AzureKubernetesService"),
     "azure:container_registry":  ("Containers/AzureContainerRegistry.puml", "AzureContainerRegistry"),
@@ -125,7 +125,7 @@ GCP_PLANTUML_ICONS: dict[str, tuple[str, str]] = {
     "gcp:cloud_cdn":           ("Networking/Cloud_CDN.puml", "Cloud_CDN"),
     "gcp:cloud_load_balancing": ("Networking/Cloud_Load_Balancing.puml", "Cloud_Load_Balancing"),
     "gcp:cloud_armor":         ("Networking/Cloud_Armor.puml", "Cloud_Armor"),
-    "gcp:pub_sub":             ("Data_Analytics/Cloud_Pub_Sub.puml", "Cloud_Pub_Sub"),
+    "gcp:pub_sub":             ("Data_Analytics/Cloud_PubSub.puml", "Cloud_PubSub"),
     "gcp:bigquery":            ("Data_Analytics/BigQuery.puml", "BigQuery"),
 }
 

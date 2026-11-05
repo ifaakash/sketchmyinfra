@@ -96,10 +96,23 @@ def _get_base_for_icon(icon_id: str) -> str | None:
     return None
 
 
+def _uses_aws_groups(ir: DiagramIR, graph: GraphIR) -> bool:
+    """AWS group macros (VPCGroup, RegionGroup, ...) only apply to AWS diagrams.
+
+    Azure/GCP IR also uses region/vpc/subnet group types; rendering those with
+    AWS macros references AWSPuml without defining it and fails to render.
+    """
+    if ir.cloud_provider == "aws":
+        return True
+    return any(n.icon and n.icon.startswith("aws:") for n in graph.nodes)
+
+
 def _collect_includes(ir: DiagramIR, graph: GraphIR) -> list[str]:
     """Build the !define and !include lines needed for all icons in the graph."""
     lines: list[str] = []
-    provider = ir.cloud_provider
+    aws_groups = _uses_aws_groups(ir, graph) and any(
+        g.type in AWS_PLANTUML_GROUPS for g in graph.groups
+    )
 
     # Collect all unique icon ids from nodes
     icon_ids: set[str] = set()
@@ -107,7 +120,7 @@ def _collect_includes(ir: DiagramIR, graph: GraphIR) -> list[str]:
         if node.icon:
             icon_ids.add(node.icon)
 
-    if not icon_ids:
+    if not icon_ids and not aws_groups:
         return lines
 
     # Determine which bases are needed
@@ -121,6 +134,10 @@ def _collect_includes(ir: DiagramIR, graph: GraphIR) -> list[str]:
                 bases_needed["AzurePuml"] = base
             elif icon_id.startswith("gcp:"):
                 bases_needed["GCPPuml"] = base
+
+    # AWS groups need AWSCommon even when no AWS icon is present
+    if aws_groups:
+        bases_needed["AWSPuml"] = AWS_PLANTUML_BASE
 
     # Emit defines and common includes
     for define_name, base_url in sorted(bases_needed.items()):
@@ -136,9 +153,10 @@ def _collect_includes(ir: DiagramIR, graph: GraphIR) -> list[str]:
 
     # Collect group includes for AWS
     group_types_needed: set[str] = set()
-    for group in graph.groups:
-        if group.type in AWS_PLANTUML_GROUPS:
-            group_types_needed.add(group.type)
+    if aws_groups:
+        for group in graph.groups:
+            if group.type in AWS_PLANTUML_GROUPS:
+                group_types_needed.add(group.type)
 
     # Always include basic groups for AWS if we have AWS icons
     if "AWSPuml" in bases_needed:
@@ -216,6 +234,7 @@ def _render_group_recursive(
     groups_by_id: dict[str, IRGroup],
     group_children: dict[str, list[str]],
     nodes_by_id: dict[str, IRNode],
+    aws_groups: bool,
     indent: int = 0,
 ) -> list[str]:
     """Render a group and its contents recursively."""
@@ -223,7 +242,7 @@ def _render_group_recursive(
     prefix = "  " * indent
 
     # Use AWS group macros if available
-    if group.type in AWS_PLANTUML_GROUPS:
+    if aws_groups and group.type in AWS_PLANTUML_GROUPS:
         _, macro = AWS_PLANTUML_GROUPS[group.type]
         label = _safe_label(group.label)
         lines.append(f'{prefix}{macro}({group.id}, "{label}") {{')
@@ -240,7 +259,7 @@ def _render_group_recursive(
             child_group = groups_by_id[child_id]
             lines.extend(
                 _render_group_recursive(
-                    child_group, groups_by_id, group_children, nodes_by_id, indent + 1
+                    child_group, groups_by_id, group_children, nodes_by_id, aws_groups, indent + 1
                 )
             )
 
@@ -303,8 +322,11 @@ def generate_plantuml(ir: DiagramIR) -> str:
                 grouped_node_ids.add(child)
 
     # Render groups (recursive)
+    aws_groups = _uses_aws_groups(ir, graph)
     for group in root_groups:
-        lines.extend(_render_group_recursive(group, groups_by_id, group_children, nodes_by_id))
+        lines.extend(
+            _render_group_recursive(group, groups_by_id, group_children, nodes_by_id, aws_groups)
+        )
         lines.append("")
 
     # Render ungrouped nodes

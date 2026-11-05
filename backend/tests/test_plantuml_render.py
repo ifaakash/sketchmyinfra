@@ -263,3 +263,91 @@ class TestFalsePositiveLabels:
         resp = _render(puml)
         assert resp.status_code == 200
         assert not _is_error_svg(resp)
+
+
+# ---------------------------------------------------------------------------
+# Cloud icon libraries (served locally by the plantuml image, see plantuml/Dockerfile)
+# ---------------------------------------------------------------------------
+
+AWS_BASE = "https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v20.0/dist"
+
+# The diagram from the "Cannot open URL" incident (every AWS render returned 400)
+AWS_VPC_INCIDENT = f"""@startuml
+allow_mixing
+!define AWSPuml {AWS_BASE}
+!include AWSPuml/AWSCommon.puml
+!include AWSPuml/Groups/AWSCloud.puml
+!include AWSPuml/Groups/PrivateSubnet.puml
+!include AWSPuml/Groups/PublicSubnet.puml
+!include AWSPuml/Groups/Region.puml
+!include AWSPuml/Groups/VPC.puml
+!include AWSPuml/NetworkingContentDelivery/ElasticLoadBalancingApplicationLoadBalancer.puml
+!include AWSPuml/Compute/EC2Instance.puml
+!include AWSPuml/Compute/Lambda.puml
+!include AWSPuml/NetworkingContentDelivery/VPCNATGateway.puml
+!include AWSPuml/Database/RDS.puml
+!include AWSPuml/Storage/SimpleStorageService.puml
+top to bottom direction
+
+RegionGroup(aws_region, "AWS Region") {{
+  VPCGroup(vpc, "VPC") {{
+    PublicSubnetGroup(public_subnet, "Public Subnet") {{
+      ElasticLoadBalancingApplicationLoadBalancer(alb, "Application Load Balancer", "")
+      EC2Instance(ec2_instance, "EC2 Instance", "")
+      storage "EBS Volume" as ebs_volume
+      Lambda(lambda_function, "Lambda Function", "")
+      VPCNATGateway(nat_gateway, "NAT Gateway", "")
+    }}
+    PrivateSubnetGroup(private_subnet_1, "Private Subnet 1") {{
+      rectangle "Auto Scaling Group" as auto_scaling_group
+      RDS(rds_instance, "RDS Instance", "")
+    }}
+    PrivateSubnetGroup(private_subnet_2, "Private Subnet 2") {{
+    }}
+    SimpleStorageService(s3_bucket, "S3 Bucket", "")
+    rectangle "VPN Connection" as vpn_connection
+  }}
+}}
+
+alb --> auto_scaling_group : Load Balances
+ec2_instance --> ebs_volume : Attached to
+lambda_function --> s3_bucket : Accesses
+auto_scaling_group --> rds_instance : Accesses
+@enduml"""
+
+
+def _render_local(puml: str) -> httpx.Response:
+    """Render with GitHub include URLs rewritten, as render_puml does."""
+    from app.services.plantuml import _localize_includes
+
+    return _render(_localize_includes(puml))
+
+
+def _error(resp: httpx.Response) -> list[str]:
+    return resp.headers.get_list("x-plantuml-diagram-error")
+
+
+class TestCloudIconLibraries:
+    def test_aws_vpc_incident_diagram(self):
+        resp = _render_local(AWS_VPC_INCIDENT)
+        assert resp.status_code == 200, _error(resp)
+
+    @pytest.mark.parametrize("provider", ["aws", "azure", "gcp"])
+    def test_every_icon_in_table_renders(self, provider):
+        from app.generators import icons
+
+        table, define, base, common = {
+            "aws": (icons.AWS_PLANTUML_ICONS, "AWSPuml", icons.AWS_PLANTUML_BASE, "AWSCommon"),
+            "azure": (icons.AZURE_PLANTUML_ICONS, "AzurePuml", icons.AZURE_PLANTUML_BASE, "AzureCommon"),
+            "gcp": (icons.GCP_PLANTUML_ICONS, "GCPPuml", icons.GCP_PLANTUML_BASE, "GCPCommon"),
+        }[provider]
+        lines = ["@startuml", f"!define {define} {base}", f"!include {define}/{common}.puml"]
+        for i, (path, macro) in enumerate(table.values()):
+            lines += [f"!include {define}/{path}", f'{macro}(n{i}, "n{i}", "")']
+        if provider == "aws":
+            for i, (path, macro) in enumerate(icons.AWS_PLANTUML_GROUPS.values()):
+                lines += [f"!include {define}/{path}", f'{macro}(g{i}, "g{i}") {{', "}"]
+        lines.append("@enduml")
+
+        resp = _render_local("\n".join(lines))
+        assert resp.status_code == 200, _error(resp)

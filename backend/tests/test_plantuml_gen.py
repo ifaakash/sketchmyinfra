@@ -180,6 +180,47 @@ class TestAWSIcons:
         # Should fall back to plain rectangle
         assert '"Custom Service" as custom' in code
 
+    def test_aws_groups_without_icons_define_awspuml(self):
+        ir = DiagramIR(
+            category=DiagramCategory.CLOUD_ARCHITECTURE,
+            track=DiagramTrack.GRAPH,
+            cloud_provider="aws",
+            graph=GraphIR(
+                nodes=[IRNode(id="app", label="App")],
+                edges=[],
+                groups=[IRGroup(id="vpc", label="VPC", type="vpc", children=["app"])],
+            ),
+        )
+        code = generate_plantuml(ir)
+        assert "!define AWSPuml" in code
+        assert "!include AWSPuml/AWSCommon.puml" in code
+        assert "!include AWSPuml/Groups/VPC.puml" in code
+        assert "VPCGroup(vpc" in code
+
+
+class TestNonAWSGroups:
+    def test_azure_groups_do_not_use_aws_macros(self):
+        ir = DiagramIR(
+            category=DiagramCategory.CLOUD_ARCHITECTURE,
+            track=DiagramTrack.GRAPH,
+            cloud_provider="azure",
+            graph=GraphIR(
+                nodes=[IRNode(id="gw", label="App Gateway", icon="azure:app_gateway")],
+                edges=[],
+                groups=[
+                    IRGroup(id="region", label="East US", type="region", children=["vnet"]),
+                    IRGroup(id="vnet", label="VNet", type="vpc", children=["gw"]),
+                ],
+            ),
+        )
+        code = generate_plantuml(ir)
+        assert "AWSPuml" not in code
+        assert "RegionGroup" not in code
+        assert "VPCGroup" not in code
+        assert '"East US" as region' in code
+        assert '"VNet" as vnet' in code
+        assert "!include AzurePuml/Networking/AzureApplicationGateway.puml" in code
+
 
 class TestLabelSafety:
     def test_ampersand_escaped(self):
