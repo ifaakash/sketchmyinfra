@@ -17,7 +17,7 @@ services:
     image: prom/alertmanager:latest
     container_name: alertmanager
     volumes:
-      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - ./prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
       # Optional: Add storage retention if you want alert history to persist across restarts
