@@ -1,0 +1,17 @@
+groups:
+  - name: smi-alerts
+    rules:
+        - alert: GenerationFailuresSpike
+          expr: sum(increase(smi_generations_total{source="server",status!="success"}[10m])) >= 3
+        - alert: GenerationFailureRatioHigh
+          expr: |
+            sum(rate(smi_generations_total{source="server",status!="success"}[30m]))
+              / sum(rate(smi_generations_total{source="server"}[30m])) > 0.3
+            and sum(increase(smi_generations_total{source="server"}[30m])) >= 5
+          for: 5m
+        - alert: Api5xxRate
+          expr: sum(increase(http_requests_total{status="5xx"}[5m])) >= 5
+          for: 2m
+        - alert: ApiMetricsDown
+          expr: up{job="api"} == 0
+          for: 2m
