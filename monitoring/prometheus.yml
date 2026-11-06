@@ -1,4 +1,4 @@
 scrape_configs:
   - job_name: 'api'
     static_configs:
-      - targets: ['app:8000']
+      - targets: ['sketchmyinfra-api-1:8000']

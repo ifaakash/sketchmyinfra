@@ -9,6 +9,8 @@ services:
       api:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - smi
 
   api:
     build: ./backend
@@ -26,6 +28,8 @@ services:
       db:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - smi
 
   db:
     image: postgres:16-alpine
@@ -43,6 +47,8 @@ services:
       timeout: 3s
       retries: 5
     restart: unless-stopped
+    networks:
+      - smi
 
   plantuml:
     image: plantuml/plantuml-server:jetty
@@ -51,6 +57,13 @@ services:
     expose:
       - "8080"
     restart: unless-stopped
+    networks:
+      - smi
 
 volumes:
   pgdata:
+
+networks:
+  smi:
+    name: smi-network
+    driver: bridge
