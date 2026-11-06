@@ -9,6 +9,11 @@ scrape_configs:
     static_configs:
       - targets: ['sketchmyinfra-api-1:8000']
 
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
 storage:
   tsdb:
     retention:
