@@ -1,0 +1,9 @@
+# Identity the agent pods run as. Deliberately has NO RoleBinding, and the
+# Job sets automountServiceAccountToken: false — the agent can't talk to the
+# k8s API at all.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: agent
+  namespace: agent
+automountServiceAccountToken: false

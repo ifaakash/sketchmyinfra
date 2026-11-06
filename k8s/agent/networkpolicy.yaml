@@ -1,0 +1,39 @@
+# Agent pods: no inbound traffic; outbound only DNS + HTTPS to the public
+# internet (GitHub, LLM API). NetworkPolicy matches IPs, not domain names, so
+# "only api.github.com" isn't expressible here — instead every private range
+# is excluded, so a prompt-injected agent can't reach the Pi's LAN, the
+# cluster, Tailscale peers or cloud metadata.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: agent-egress
+  namespace: agent
+spec:
+  podSelector:
+    matchLabels:
+      app: smi-agent
+  policyTypes: ["Ingress", "Egress"]
+  ingress: []
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8        # k3s pod/service CIDRs live here
+              - 172.16.0.0/12     # docker bridge networks
+              - 192.168.0.0/16    # home LAN
+              - 100.64.0.0/10     # Tailscale
+              - 169.254.0.0/16    # link-local / metadata
+              - 127.0.0.0/8
+      ports:
+        - { protocol: TCP, port: 443 }
