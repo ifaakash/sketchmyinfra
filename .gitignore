@@ -17,3 +17,7 @@ k8s/prod/secret.yaml
 # Draw app (Excalidraw) — built output + deps
 frontend/draw-app/node_modules/
 frontend/draw/
+
+# Agent dispatcher secrets
+dispatcher/secrets/
+k8s/agent/secret.yaml
