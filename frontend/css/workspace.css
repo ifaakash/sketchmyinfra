@@ -1,0 +1,191 @@
+/* ===== Workspace theme (app shell) =====
+ * Design tokens for the workspace UI. Tokens are prefixed --smi- so they can
+ * load alongside glass.css (which owns --bg, --ink, ...) during the migration.
+ * Dark mode follows the existing `.dark` class on <html> (see initTheme in app.js).
+ * All text/background pairs below are checked against WCAG AA (4.5:1).
+ */
+
+/* ----- Tokens ----- */
+:root {
+  /* Surfaces */
+  --smi-bg: #f6f7f9;          /* app ground, behind panels */
+  --smi-surface: #ffffff;     /* panels, header, cards */
+  --smi-surface-2: #f0f2f5;   /* segmented controls, inline code */
+  --smi-canvas: #fbfcfd;      /* diagram area + code block */
+  --smi-canvas-dot: #d5dae1;
+  --smi-selected: #eef3ff;    /* active list row */
+
+  /* Lines */
+  --smi-border: #e3e6eb;
+  --smi-border-strong: #c9cfd8;  /* inputs */
+  --smi-border-soft: #eef0f3;
+
+  /* Text */
+  --smi-ink: #14171c;         /* 17.9:1 on surface */
+  --smi-ink-2: #4a5260;       /* 7.9:1 secondary */
+  --smi-ink-3: #5f6775;       /* 5.7:1 labels, meta */
+  --smi-ink-faint: #8b93a1;   /* line numbers only — decorative, not body text */
+
+  /* Accent */
+  --smi-accent: #2558e8;       /* button background; white text 5.8:1 */
+  --smi-accent-hover: #1a43b8;
+  --smi-accent-text: #2558e8;  /* links, active tab text */
+  --smi-on-accent: #ffffff;
+  --smi-strong: #14171c;       /* secondary solid button */
+  --smi-on-strong: #ffffff;
+  --smi-ring: rgba(37, 88, 232, 0.35);
+
+  /* Status */
+  --smi-ok: #1f9d55;
+  --smi-warn: #c2410c;         /* 5.2:1 */
+  --smi-warn-bg: #fff4ec;
+
+  /* Code syntax */
+  --smi-code-keyword: #8a5cf6;
+  --smi-code-directive: #2558e8;
+  --smi-code-string: #1f7a45;
+
+  /* Type */
+  --smi-font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --smi-font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  --smi-text-xs: 11px;    /* section labels, status bar */
+  --smi-text-sm: 12px;    /* meta, chips, code */
+  --smi-text-base: 13px;  /* app body */
+  --smi-text-md: 14px;    /* primary buttons, titles */
+  --smi-text-lg: 16px;
+  --smi-text-xl: 20px;
+  --smi-leading: 1.45;
+
+  /* Spacing — 4px grid */
+  --smi-space-1: 4px;
+  --smi-space-2: 8px;
+  --smi-space-3: 12px;
+  --smi-space-4: 16px;
+  --smi-space-5: 20px;
+  --smi-space-6: 24px;
+
+  /* Radii */
+  --smi-radius-sm: 6px;
+  --smi-radius: 8px;
+  --smi-radius-md: 10px;
+  --smi-radius-lg: 12px;
+  --smi-radius-pill: 999px;
+
+  /* Control heights */
+  --smi-control-sm: 32px;
+  --smi-control: 36px;
+  --smi-control-lg: 44px;  /* primary actions; minimum touch target */
+
+  /* Layout */
+  --smi-header-h: 52px;
+  --smi-statusbar-h: 28px;
+  --smi-sidebar-w: 336px;
+  --smi-codepanel-w: 380px;
+
+  /* Elevation */
+  --smi-shadow-sm: 0 1px 2px rgba(20, 23, 28, 0.08);
+  --smi-shadow: 0 8px 24px rgba(20, 23, 28, 0.08);
+  --smi-shadow-sheet: 0 -8px 32px rgba(20, 23, 28, 0.16);
+}
+
+.dark {
+  --smi-bg: #0e1015;
+  --smi-surface: #161920;
+  --smi-surface-2: #1c2029;
+  --smi-canvas: #12151b;
+  --smi-canvas-dot: #2a2f3a;
+  --smi-selected: #1a2440;
+
+  --smi-border: #2a2f3a;
+  --smi-border-strong: #3a404c;
+  --smi-border-soft: #20242d;
+
+  --smi-ink: #e8eaee;         /* 14.6:1 */
+  --smi-ink-2: #b4bac6;       /* 9.0:1 */
+  --smi-ink-3: #8f97a5;       /* 6.0:1 */
+  --smi-ink-faint: #5f6775;
+
+  --smi-accent: #2558e8;       /* kept: white on a lighter blue fails AA (4.4:1) */
+  --smi-accent-hover: #3d6ff5;
+  --smi-accent-text: #7fa3ff;  /* 7.2:1 */
+  --smi-strong: #e8eaee;
+  --smi-on-strong: #14171c;
+  --smi-ring: rgba(127, 163, 255, 0.45);
+
+  --smi-ok: #3fbf75;
+  --smi-warn: #f08a4b;         /* 7.1:1 */
+  --smi-warn-bg: #2a1c14;
+
+  --smi-code-keyword: #b49aff;
+  --smi-code-directive: #7fa3ff;
+  --smi-code-string: #6fcf97;
+
+  --smi-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --smi-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --smi-shadow-sheet: 0 -8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* Phones: slightly larger body text and touch-sized controls */
+@media (max-width: 760px) {
+  :root {
+    --smi-text-base: 14px;
+    --smi-control: 44px;
+  }
+}
+
+/* ----- Base (scoped to the workspace shell) ----- */
+.smi-app {
+  font-family: var(--smi-font-sans);
+  font-size: var(--smi-text-base);
+  line-height: var(--smi-leading);
+  color: var(--smi-ink);
+  background: var(--smi-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+.smi-app :focus-visible {
+  outline: 2px solid var(--smi-accent-text);
+  outline-offset: 2px;
+}
+
+/* Dotted diagram canvas */
+.smi-dots {
+  background-color: var(--smi-canvas);
+  background-image: radial-gradient(var(--smi-canvas-dot) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+/* Uppercase section label (Describe your infra, Templates, Recent) */
+.smi-label {
+  font-size: var(--smi-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--smi-ink-3);
+}
+
+/* Generated-code block (#puml-code) */
+.smi-code {
+  font-family: var(--smi-font-mono);
+  font-size: var(--smi-text-sm);
+  line-height: 1.7;
+  background: var(--smi-canvas);
+  color: var(--smi-ink);
+}
+
+/* Screen-reader-only text (labels for icon-only inputs) */
+.smi-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .smi-app * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
