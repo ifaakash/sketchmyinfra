@@ -9,6 +9,8 @@ services:
       api:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - smi
 
   api:
     build: ./backend
@@ -27,6 +29,8 @@ services:
       db:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - smi
 
   db:
     image: postgres:16-alpine
@@ -47,6 +51,8 @@ services:
       retries: 5
       start_period: 10s
     restart: unless-stopped
+    networks:
+      - smi
 
   plantuml:
     # Pinned server + vendored icon libraries; security profile set in the Dockerfile
@@ -58,6 +64,13 @@ services:
     expose:
       - "8080"
     restart: unless-stopped
+    networks:
+      - smi
 
 volumes:
   pgdata:
+
+networks:
+  smi:
+    name: smi-network
+    driver: bridge
