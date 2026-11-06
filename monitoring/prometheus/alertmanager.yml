@@ -1,0 +1,26 @@
+global:
+  resolve_timeout: 5m
+
+# The root route on which each incoming alert enters.
+route:
+  # Group alerts by alertname and instance so you don't get flooded
+  group_by: ['alertname', 'instance']
+  
+  # How long to wait before sending the first notification (allows bundling)
+  group_wait: 30s
+  
+  # How long to wait before sending updates to the same group
+  group_interval: 5m
+  
+  # How long to wait before re-sending a given alert that is still firing
+  repeat_interval: 4h
+  
+  # The default receiver if no child routes match
+  receiver: 'telegram-bot-notifications'
+
+receivers:
+  - name: 'telegram-bot-notifications'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+        channel: '#smi-alerts'
+        send_resolved: true
