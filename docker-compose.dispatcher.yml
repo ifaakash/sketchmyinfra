@@ -1,25 +1,68 @@
+# Agent dispatcher: Alertmanager webhook -> evidence -> k8s agent Job.
+# See dispatcher/README.md for the secrets this expects.
+#
+#   docker compose -f docker-compose.dispatcher.yml up -d --build
+#
+# Separate project name: without it this file shares the "sketchmyinfra"
+# project with docker-compose.yml, and `up --remove-orphans` on either file
+# would delete the other's containers.
+name: smi-dispatcher
+
 services:
+  # Read-only Docker API for the dispatcher: container list + logs only.
+  # Everything else (start/stop/exec/images/POST) returns 403. No ports —
+  # only reachable on smi-network.
   docker-proxy:
     image: tecnativa/docker-socket-proxy:v0.4.1
-    networks: smi
+    environment:
+      CONTAINERS: 1
+      POST: 0
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    environments:
-      - CONTAINERS=1
-      - POST=0
+    restart: unless-stopped
+    networks:
+      - smi
+
   dispatcher:
     build: ./dispatcher
-    environments:
-      - 
+    environment:
+      # Start in dry-run; flip with DISPATCH_MODE=k8s once kubeconfig works
+      DISPATCH_MODE: ${DISPATCH_MODE:-dry-run}
+      DOCKER_HOST: tcp://docker-proxy:2375
+      API_SERVICE_NAME: api
+      # Placeholder agent until the real image exists
+      AGENT_IMAGE: ${AGENT_IMAGE:-busybox:1.37}
+      AGENT_COMMAND: ${AGENT_COMMAND:-["cat", "/incident/incident.json"]}
+    # EVIDENCE_DATABASE_URL (read-only role password) lives here, not in git.
+    # Optional: without it the dispatcher runs with log evidence only.
+    env_file:
+      - path: ./dispatcher/secrets/dispatcher.env
+        required: false
     volumes:
-      - dispatcher/secrets/dispatcher_token: /run/secrets/dispatcher_token:ro
-      - dispatcher/secrets/kubeconfig: /run/secrets/kubeconfig:ro
-    depends_on: 
-      - docker-proxy
+      # Files must be readable by the container user (uid 10001): chmod 644
+      - ./dispatcher/secrets/dispatcher_token:/run/secrets/dispatcher_token:ro
+      - ./dispatcher/secrets/kubeconfig:/run/secrets/kubeconfig:ro
+    # Only makes outbound calls; nothing to write, nothing to escalate
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
-        
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/healthz')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      - docker-proxy
+    restart: unless-stopped
+    networks:
+      - smi
 
 networks:
   smi:
-    smi-network: 
-      external: true
+    name: smi-network
+    external: true
