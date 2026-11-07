@@ -20,21 +20,39 @@ const moonIcon = (
   </svg>
 );
 
+// Light by default; dark only if picked with a toggle. Shares the "theme" key
+// with the main site (same origin), so the choice carries across both.
+function savedTheme() {
+  try {
+    return localStorage.getItem("theme") === "dark" ? "dark" : "light";
+  } catch {
+    return "light";
+  }
+}
+
 export default function App() {
-  const [theme, setTheme] = useState("dark");
+  const [theme, setTheme] = useState(savedTheme);
   const [user, setUser] = useState(undefined); // undefined=loading, null=anon, object=logged in
 
   useEffect(() => {
     checkAuth().then((u) => setUser(u || null));
   }, []);
 
-  const toggle = useCallback(() => {
-    const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    document.body.style.background = next === "dark" ? "#070f20" : "#ffffff";
+  // Page chrome outside React (body background, navbar) follows the theme too
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
     const navbar = document.querySelector(".navbar");
-    if (navbar) navbar.dataset.theme = next;
+    if (navbar) navbar.dataset.theme = theme;
+    try {
+      localStorage.setItem("theme", theme);
+    } catch {
+      // Storage blocked: the theme still applies for this visit
+    }
   }, [theme]);
+
+  const toggle = useCallback(() => {
+    setTheme((t) => (t === "dark" ? "light" : "dark"));
+  }, []);
 
   const toggleSlot = document.getElementById("theme-toggle-slot");
 

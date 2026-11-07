@@ -15,9 +15,10 @@
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html[data-theme="dark"] body { background: #070f20; }
     body {
       font-family: 'Inter', system-ui, sans-serif;
-      background: #070f20;
+      background: #ffffff;
       color: #e5e7eb;
       height: 100vh;
       overflow: hidden;
@@ -75,9 +76,15 @@
     .nav-links { display: flex; align-items: center; gap: 1.5rem; }
     #excalidraw-root { flex: 1; width: 100%; overflow: hidden; }
   </style>
+  <!-- Apply a saved dark theme before first paint (light is the default); App.jsx keeps it in sync after -->
+  <script>
+    try {
+      if (localStorage.getItem("theme") === "dark") document.documentElement.dataset.theme = "dark";
+    } catch (e) {}
+  </script>
 </head>
 <body>
-  <nav class="navbar">
+  <nav class="navbar" data-theme="light">
     <a href="/" class="nav-logo">
       <div class="logo-box">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -99,6 +106,9 @@
       <div id="theme-toggle-slot"></div>
     </div>
   </nav>
+  <script>
+    if (document.documentElement.dataset.theme === "dark") document.querySelector(".navbar").dataset.theme = "dark";
+  </script>
 
   <div id="excalidraw-root"></div>
   <script type="module" src="/src/main.jsx"></script>
