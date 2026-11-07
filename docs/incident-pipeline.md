@@ -108,9 +108,16 @@ docker exec alertmanager amtool config routes test \
 # expect: agent-dispatcher,telegram-bot-notifications   (after Phase 3 wiring)
 
 # Synthetic alert — skips Prometheus entirely. Proves Alertmanager → Telegram (→ dispatcher).
+# Quote annotation values ('summary="..."'), otherwise amtool warns about the new matcher parser.
 docker exec alertmanager amtool alert add alertname=TestAlert severity=warning \
-  --annotation=summary="hello from amtool" --alertmanager.url=http://localhost:9093
-# Add agent=true to also exercise the dispatcher route.
+  --annotation='summary="hello from amtool"' --alertmanager.url=http://localhost:9093
+# Add agent=true to also exercise the dispatcher route. Use a NEW alertname per test:
+# an existing alert group won't re-notify until repeat_interval (4h).
+
+# Did delivery work? Per-integration counters on Alertmanager's own /metrics
+curl -s $A/metrics | grep -E '^alertmanager_notifications_total|^alertmanager_notification_requests_failed_total'
+# requests_failed{integration="webhook"} rising = dispatcher returning non-2xx (see its logs)
+docker logs alertmanager 2>&1 | grep -E "Notify attempt failed|retry canceled" | tail -5
 
 curl -s $A/api/v2/alerts | python3 -m json.tool          # what Alertmanager currently holds
 curl -s $A/api/v2/status | python3 -m json.tool | head   # version + loaded config (secrets masked)
@@ -119,6 +126,9 @@ curl -s $A/api/v2/status | python3 -m json.tool | head   # version + loaded conf
 docker exec alertmanager amtool silence add alertname=GenerationFailuresSpike \
   --duration=1h --comment="planned work" --alertmanager.url=http://localhost:9093
 ```
+> Alertmanager retries a failed webhook with backoff, then **gives up** ("notify retry canceled after N
+> attempts"). After fixing the dispatcher, fire a new alert; the old one won't be resent for 4h.
+>
 > A synthetic alert passing does **not** prove Prometheus → Alertmanager. That's exactly how the missing
 > `alerting:` block went unnoticed. Always run 2.3 once as well.
 
@@ -128,6 +138,8 @@ No published port, so call it from inside the container:
 D="docker compose -f docker-compose.dispatcher.yml"
 $D ps                                                   # dispatcher: healthy
 $D logs -f dispatcher                                   # Dispatched / Skipping / WARNING lines
+$D logs --tail 80 dispatcher | grep -A12 ERROR          # k8s failures are logged at ERROR with a traceback
+$D exec dispatcher env | grep -E "DISPATCH_MODE|AGENT_"  # what the RUNNING container uses
 
 # Fake Alertmanager webhook
 $D exec -T dispatcher python3 - "$(cat dispatcher/secrets/dispatcher_token)" <<'EOF'
@@ -147,7 +159,10 @@ $D exec -T dispatcher python3 -c "import urllib.request; print(urllib.request.ur
 ### 2.6 k8s agent Job
 ```bash
 kubectl -n agent get jobs,cm,pods
+kubectl -n agent get jobs -w                        # watch Jobs appear/complete (Ctrl-C to stop)
 kubectl -n agent logs job/<name>                    # placeholder prints the incident JSON
+kubectl -n agent logs -f job/<name>                 # follow a running agent
+kubectl -n agent get jobs --sort-by=.metadata.creationTimestamp -o name | tail -1   # newest Job
 kubectl -n agent describe job/<name>                # events: image pull, PSA rejections, deadline
 kubectl -n agent get cm <name>-incident -o jsonpath='{.data.incident\.json}'
 
@@ -177,11 +192,16 @@ kubectl auth can-i create jobs   -n default --as=$SA    # no
 | 2026-11-07 | Pod Security | `kubectl run` a privileged pod in `agent` | Forbidden by PSA `restricted` ✅ |
 | 2026-11-07 | NetworkPolicy | curl from a pod labelled `app=smi-agent` | api.github.com 200; k8s API / 10.43.0.1 / port 80 blocked ✅ |
 | 2026-11-07 | Compose service (#64) | `compose up --build`, fake webhook, `touch /` | healthy; 202/200; uid 10001; read-only FS ✅ |
+| 2026-11-07 | Phase 3 config live on the Pi (#67) | `/api/v1/targets`, `/api/v1/rules`, `amtool config routes test`, `/api/v2/status` | api + dispatcher targets up; 7 rules, `agent=true` on 3; `agent=true` → dispatcher + Telegram; `bot_token_file` ✅ |
+| 2026-11-07 | Drill A1: Alertmanager → dispatcher → k3s | `amtool alert add alertname=DrillTest agent=true` | Telegram ✅; webhook delivered ✅; dispatcher **503 ×4**: `No route to host` to `192.168.1.50:6443` ❌; **`DispatcherErrors` fired to Telegram** (self-monitoring works) ✅ |
+| 2026-11-07 | Drill A2 after kubeconfig fix | `amtool alert add alertname=DrillTest2 agent=true` | `Dispatched`; Job `agent-drilltest2-...` Complete in 11s ✅ |
 
 **Bugs found by testing (all fixed):**
 - `kubectl apply -f dir/` applies files alphabetically, so `agent-sa.yaml` ran before the namespace existed. Renamed to `00-namespace.yaml`.
 - `secret.example.yaml` would have been applied by `kubectl apply -f k8s/agent/`. Renamed to `secret.yaml.example`.
 - `kubernetes==37.0.2` needs `PyYAML>=6.0.3`, so the 6.0.2 pin made pip resolution impossible.
+- Pi kubeconfig pointed at `192.168.1.50`, the example IP from the script's usage line, not the Pi
+  (`192.168.1.6`), giving `No route to host`. The script now uses a `<pi-ip>` placeholder.
 - Compose draft: `environments`, scalar `networks`, `src: dst` volume maps, and empty keys. Also, with no `name:`, it shared the app's project, so `--remove-orphans` could delete app containers.
 
 ---
@@ -221,10 +241,24 @@ scrape_configs:
 
 ---
 
-## 5. Current state (on `main`, 2026-11-07)
+## 5. Current state (on the Pi, 2026-11-07)
 
 | Item | State |
 |---|---|
+| Backend metrics, `/metrics` internal-only | ✅ |
+| Prometheus: targets `api:8000` + `dispatcher:8080`, 7 rules, 4d / 1GB retention | ✅ (#67) |
+| Prometheus → Alertmanager | ✅ |
+| Alertmanager → Telegram (`bot_token_file`) | ✅ (#67) |
+| Alertmanager → dispatcher (`agent="true"` route, shared token) | ✅ (#67, drill A2) |
+| Dispatcher → k3s (`DISPATCH_MODE=k8s`, kubeconfig → `192.168.1.6:6443`) | ✅ (drill A2: Job Complete) |
+| Dispatcher self-alerts | ✅ (`DispatcherErrors` fired during drill A1) |
+| Read-only DB role / `dispatcher.env` | ❓ verify `failed_generations` in the incident (not in `evidence_errors`) |
+| Real-failure drill from Prometheus (§2.3) | ⏳ next |
+| `prom/alertmanager:latest`, unpinned Prometheus | ⚠️ pin (running: Alertmanager 0.34.2, Prometheus 3.16.0) |
+| 9090/9093 published on 0.0.0.0 | ⚠️ bind to `127.0.0.1` or the Tailscale IP (Alertmanager has no auth, so anyone on the LAN can silence) |
+| Agent image | ❌ Phase 4 |
+
+---|---|
 | Backend metrics, `/metrics` internal-only | ✅ |
 | Prometheus scraping api, 4 rules, 4d / 1GB retention | ✅ |
 | Prometheus → Alertmanager (`alerting:` block) | ✅ (`66c0feb`), re-verify with `/api/v1/alertmanagers` |
@@ -244,18 +278,19 @@ scrape_configs:
 ## 6. Remaining plan
 
 ### Phase 3: Wire it together (config only)
+✅ done · ◐ partial (`bot_token_file` done; pin tags + bind ports left) · ❓ unverified · ⏳ next
 | # | Step | ✅ Check |
 |---|---|---|
-| 3.1 | On the Pi: `kubectl apply -f k8s/agent/` | `kubectl -n agent get sa,role,rolebinding,netpol` |
-| 3.2 | Dispatcher secrets: `openssl rand -hex 32 > dispatcher/secrets/dispatcher_token`; `dispatcher/scripts/make-kubeconfig.sh https://<pi-ip>:6443 > dispatcher/secrets/kubeconfig`; `chmod 644 dispatcher/secrets/*` | The IP is in the k3s cert SANs (script header) |
-| 3.3 | Read-only DB role (SQL in `dispatcher/README.md` §3) + `dispatcher/secrets/dispatcher.env` from `dispatcher/dispatcher.env.example` | `psql` as `smi_dispatcher`: `SELECT prompt FROM generations` → permission denied |
-| 3.4 | `docker compose -f docker-compose.dispatcher.yml up -d --build` (dry-run) | §2.5 fake webhook → 202; `api_logs` / `failed_generations` populated |
-| 3.5 | `DISPATCH_MODE=k8s docker compose -f docker-compose.dispatcher.yml up -d` | §2.5 again → Job in `agent`; `kubectl logs` prints the incident |
-| 3.6 | Alertmanager: `agent-dispatcher` webhook receiver + child route `agent="true"` (`continue: true`) + catch-all Telegram child route; mount the token at `/etc/alertmanager/secrets/dispatcher_token` (snippet in `dispatcher/README.md` §5) | `amtool config routes test ... agent=true` → both receivers |
-| 3.7 | `alerts.yml`: add `agent: "true"` + `severity` + `annotations` (summary/description/runbook) to `GenerationFailuresSpike`, `GenerationFailureRatioHigh`, `Api5xxRate`. **Not** `ApiMetricsDown` | `promtool check rules` |
-| 3.8 | `prometheus.yml`: target `api:8000`; add the `dispatcher` job; add the dispatcher self-alerts (§4) | `/api/v1/targets` → api + dispatcher UP |
-| 3.9 | Hygiene: `bot_token_file`, pin image tags, bind ports to 127.0.0.1/Tailscale | `git grep bot_token` shows no token |
-| 3.10 | **Drill** (§2.3) | Telegram page **and** a Job in `agent` with the real incident; `smi_dispatcher_alerts_total{result="dispatched"}` = 1 |
+| 3.1 ✅ | On the Pi: `kubectl apply -f k8s/agent/` | `kubectl -n agent get sa,role,rolebinding,netpol` |
+| 3.2 ✅ | Dispatcher secrets: `openssl rand -hex 32 > dispatcher/secrets/dispatcher_token`; `dispatcher/scripts/make-kubeconfig.sh https://<pi-ip>:6443 > dispatcher/secrets/kubeconfig`; `chmod 644 dispatcher/secrets/*` | The IP is in the k3s cert SANs (script header) |
+| 3.3 ❓ | Read-only DB role (SQL in `dispatcher/README.md` §3) + `dispatcher/secrets/dispatcher.env` from `dispatcher/dispatcher.env.example` | `psql` as `smi_dispatcher`: `SELECT prompt FROM generations` → permission denied |
+| 3.4 ✅ | `docker compose -f docker-compose.dispatcher.yml up -d --build` (dry-run) | §2.5 fake webhook → 202; `api_logs` / `failed_generations` populated |
+| 3.5 ✅ | `DISPATCH_MODE=k8s docker compose -f docker-compose.dispatcher.yml up -d` | §2.5 again → Job in `agent`; `kubectl logs` prints the incident |
+| 3.6 ✅ | Alertmanager: `agent-dispatcher` webhook receiver + child route `agent="true"` (`continue: true`) + catch-all Telegram child route; mount the token at `/etc/alertmanager/secrets/dispatcher_token` (snippet in `dispatcher/README.md` §5) | `amtool config routes test ... agent=true` → both receivers |
+| 3.7 ✅ | `alerts.yml`: add `agent: "true"` + `severity` + `annotations` (summary/description/runbook) to `GenerationFailuresSpike`, `GenerationFailureRatioHigh`, `Api5xxRate`. **Not** `ApiMetricsDown` | `promtool check rules` |
+| 3.8 ✅ | `prometheus.yml`: target `api:8000`; add the `dispatcher` job; add the dispatcher self-alerts (§4) | `/api/v1/targets` → api + dispatcher UP |
+| 3.9 ◐ | Hygiene: `bot_token_file`, pin image tags, bind ports to 127.0.0.1/Tailscale | `git grep bot_token` shows no token |
+| 3.10 ⏳ | **Drill** (§2.3) | Telegram page **and** a Job in `agent` with the real incident; `smi_dispatcher_alerts_total{result="dispatched"}` = 1 |
 
 ### Phase 4: The agent image (build)
 | # | Step | ✅ Check |
@@ -288,6 +323,10 @@ scrape_configs:
 | Telegram works with `amtool`, but real failures never page | Same as above; a synthetic alert skips Prometheus | §2.3 drill |
 | Telegram gets the alert, no Job | No webhook route / no `agent="true"` label / token mismatch | `amtool config routes test`; dispatcher logs; `smi_dispatcher_alerts_total{result="unauthorized"}` |
 | Dispatcher `401` | Token file differs between Alertmanager and the dispatcher, or isn't readable by uid 10001 | `sha256sum` both files; `chmod 644` |
+| Dispatcher `503`, `No route to host` / `Connection refused` | Wrong IP in the kubeconfig `server:` (e.g. the example IP), or a firewall blocking Docker → host:6443 | `grep server: dispatcher/secrets/kubeconfig`; `$D exec dispatcher python3 -c "import socket; socket.create_connection(('<pi-ip>', 6443), 3)"` |
+| Fixed the dispatcher, but the old alert never arrives | Alertmanager gave up ("retry canceled") and won't resend that group until `repeat_interval` (4h) | Fire a test alert with a new `alertname` |
+| Changed the kubeconfig, still failing | The dispatcher caches its k8s client after the first request | `$D restart dispatcher` |
+| `export DISPATCH_MODE=k8s` had no effect | Shell variables are only read when compose **creates** the container | `DISPATCH_MODE=k8s $D up -d`; check with `$D exec dispatcher env` |
 | Dispatcher `503`, TLS error in logs | The kubeconfig server address isn't in the k3s cert SANs | `openssl s_client -connect <ip>:6443 </dev/null \| openssl x509 -noout -ext subjectAltName` |
 | `200 cooldown` / `busy` when you expected a Job | A Job for this alert in the last hour, or one still running | `kubectl -n agent get jobs` |
 | Job stuck `ContainerCreating` | Incident ConfigMap missing, or the image isn't in containerd | `kubectl -n agent describe pod ...` |
@@ -295,3 +334,74 @@ scrape_configs:
 | `api_logs` empty | The api logged nothing in the window (normal when idle), or the proxy is unreachable | `evidence_errors` in the incident; `docker logs --since 30m <api>` |
 | `failed_generations` error | `EVIDENCE_DATABASE_URL` unset, or the role lacks a column grant | `evidence_errors` in the incident |
 | A secret file mount turned into a directory | The file didn't exist at `up` time | Create the file, `rm -r` the directory, `up -d` |
+
+---
+
+## 8. Cheat sheet (debugging + simulating)
+
+```bash
+P=http://localhost:9090; A=http://localhost:9093          # on the Pi
+D="docker compose -f docker-compose.dispatcher.yml"
+M="docker compose -f monitoring/docker-compose.monitoring.yml"
+```
+
+### Simulate, from cheapest to most realistic
+| Level | Command | Exercises |
+|---|---|---|
+| Dispatcher only | Fake webhook (§2.5) | token, guards, evidence, Job creation |
+| Alertmanager onward | `docker exec alertmanager amtool alert add alertname=Drill$(date +%s) agent=true severity=warning --annotation='summary="drill"' --alertmanager.url=http://localhost:9093` | routing, Telegram, webhook token, dispatcher, k3s |
+| Telegram only | Same, **without** `agent=true` | Telegram receiver |
+| Whole pipeline | Bad `GEMINI_API_KEY` + 3× generate (§2.3) | metrics, rules, `for:`, everything |
+
+`Drill$(date +%s)` gives a unique alertname, so you never hit the 4h repeat or the 1h dispatcher cooldown.
+
+### Is it healthy?
+```bash
+curl -s $P/api/v1/targets | python3 -c "import sys,json; [print(t['labels']['job'], t['health'], t.get('lastError','')) for t in json.load(sys.stdin)['data']['activeTargets']]"
+curl -s $P/api/v1/rules   | python3 -c "import sys,json; [print(r['name'], r['state'], r.get('labels',{}).get('agent','-')) for g in json.load(sys.stdin)['data']['groups'] for r in g['rules']]"
+curl -s $P/api/v1/alertmanagers | grep -o 'http://[^"]*'                    # must not be empty
+curl -s $A/api/v2/alerts | python3 -c "import sys,json; [print(a['labels'].get('alertname'), a['status']['state'], [r['name'] for r in a['receivers']]) for a in json.load(sys.stdin)]"
+curl -sG $P/api/v1/query --data-urlencode 'query=smi_dispatcher_alerts_total' | python3 -m json.tool | grep -E '"result"|"[0-9.]+"$'
+$D ps; $M ps
+```
+> `grep -c` counts **lines**, and the Prometheus API returns one-line JSON, so `grep -c` prints `1` for any number
+> of matches. Use `grep -o ... | wc -l` or the Python one-liners above.
+
+### Where did it stop?
+```bash
+docker logs alertmanager 2>&1 | grep -E "Notify attempt failed|retry canceled" | tail -5   # AM → receivers
+curl -s $A/metrics | grep -E '^alertmanager_notification_requests_failed_total'
+$D logs --tail 80 dispatcher | grep -E "Dispatched|Skipping|POST /alert|ERROR"
+$D logs --tail 80 dispatcher | grep -A12 ERROR
+kubectl -n agent get jobs,pods
+kubectl -n agent describe job/<name> | tail -20                                           # events
+kubectl -n agent logs job/<name>
+```
+
+### Validate config before reloading
+```bash
+docker exec prometheus promtool check config /etc/prometheus/prometheus.yml
+docker exec alertmanager amtool check-config /etc/alertmanager/alertmanager.yml
+docker exec alertmanager amtool config routes test --config.file=/etc/alertmanager/alertmanager.yml alertname=X agent=true
+curl -X POST $P/-/reload                                       # Prometheus config/rules
+$M up -d --force-recreate alertmanager                         # Alertmanager config or mounts changed
+```
+
+### k3s connectivity (dispatcher → API)
+```bash
+grep server: dispatcher/secrets/kubeconfig
+echo | openssl s_client -connect <pi-ip>:6443 2>/dev/null | openssl x509 -noout -ext subjectAltName   # IP must be listed
+$D exec dispatcher python3 -c "import socket; socket.create_connection(('<pi-ip>', 6443), 3); print('ok')"
+dispatcher/scripts/make-kubeconfig.sh https://<pi-ip>:6443 > dispatcher/secrets/kubeconfig && chmod 644 dispatcher/secrets/kubeconfig
+$D restart dispatcher                                           # client is cached
+kubectl auth can-i create jobs -n agent --as=system:serviceaccount:agent:dispatcher
+```
+
+### Reset / clean up
+```bash
+kubectl -n agent delete job <name>                              # also deletes its ConfigMap (ownerReference); clears that alert's cooldown
+kubectl -n agent delete jobs -l app=smi-agent                   # all agent Jobs
+docker exec alertmanager amtool alert query --alertmanager.url=http://localhost:9093
+docker exec alertmanager amtool silence add alertname=<name> --duration=1h --comment="testing" --alertmanager.url=http://localhost:9093
+docker exec alertmanager amtool silence expire $(docker exec alertmanager amtool silence query -q --alertmanager.url=http://localhost:9093) --alertmanager.url=http://localhost:9093
+```

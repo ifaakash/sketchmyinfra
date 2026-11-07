@@ -2,7 +2,7 @@
 # Build a kubeconfig for the dispatcher ServiceAccount (k8s/agent/dispatcher-rbac.yaml).
 # Run on the Pi (or anywhere with admin kubectl access):
 #
-#   dispatcher/scripts/make-kubeconfig.sh https://192.168.1.50:6443 > dispatcher/secrets/kubeconfig
+#   dispatcher/scripts/make-kubeconfig.sh https://<pi-ip>:6443 > dispatcher/secrets/kubeconfig
 #
 # The server URL must be an address in the k3s API cert's SANs. From inside a
 # compose container 127.0.0.1 is the container itself and host.docker.internal
