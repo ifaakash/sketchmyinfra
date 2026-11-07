@@ -4,7 +4,7 @@ Flow:
   1. GET  /api/auth/{provider}/login     -> 302 to Google/GitHub
   2. GET  /api/auth/{provider}/callback  -> exchange code, upsert user,
                                             set HttpOnly session cookie,
-                                            302 to APP_URL/
+                                            302 to APP_URL/app/
   3. GET  /api/auth/me                   -> current user as JSON
   4. POST /api/auth/logout               -> clear cookie
 
@@ -98,7 +98,7 @@ async def callback(
 
     if error:
         # User denied consent or provider rejected the request.
-        return RedirectResponse(url=f"{settings.app_url}/?auth_error={error}", status_code=302)
+        return RedirectResponse(url=f"{settings.app_url}/app/?auth_error={error}", status_code=302)
 
     if not code or not state:
         raise HTTPException(status_code=400, detail="Missing code or state")
@@ -114,7 +114,7 @@ async def callback(
         # body the browser drops mid-redirect.
         logger.error("OAuth %s exchange failed: %s", provider, e)
         return RedirectResponse(
-            url=f"{settings.app_url}/?auth_error=exchange_failed",
+            url=f"{settings.app_url}/app/?auth_error=exchange_failed",
             status_code=302,
         )
 
@@ -148,7 +148,7 @@ async def callback(
     await db.refresh(user)
 
     token = create_session_token(str(user.id), user.email)
-    response = RedirectResponse(url=f"{settings.app_url}/", status_code=302)
+    response = RedirectResponse(url=f"{settings.app_url}/app/", status_code=302)
     _set_session_cookie(response, token)
     return response
 

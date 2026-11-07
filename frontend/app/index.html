@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generate a Diagram — SketchMyInfra</title>
+  <meta name="description" content="Generate production-ready AWS, GCP, and Azure architecture diagrams from plain English in seconds. Free AI diagram tool — no signup, no credit card, no drag-and-drop.">
+  <link rel="canonical" href="https://sketchmyinfra.com/app/">
+
+  <!-- Open Graph (LinkedIn, Slack, Discord, Facebook) -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sketchmyinfra.com/app/">
+  <meta property="og:title" content="SketchMyInfra — Free AI Architecture Diagram Generator">
+  <meta property="og:description" content="Generate production-ready AWS, GCP, and Azure architecture diagrams from plain English in seconds. Free, no signup required.">
+  <meta property="og:image" content="https://sketchmyinfra.com/assets/og-image.png">
+
+  <!-- Twitter / X card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SketchMyInfra — Free AI Architecture Diagram Generator">
+  <meta name="twitter:description" content="Generate production-ready AWS, GCP, and Azure architecture diagrams from plain English in seconds. Free, no signup required.">
+  <meta name="twitter:image" content="https://sketchmyinfra.com/assets/og-image.png">
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/assets/favicon-192.png" type="image/png" sizes="192x192">
+  <link rel="icon" href="/assets/favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/assets/favicon-192.png">
+
+  <!-- Apply saved theme before first paint (initTheme in app.js runs after DOMContentLoaded) -->
+  <script>
+    try { if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark'); } catch (e) {}
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/tw-config.js?v=1"></script>
+  <link rel="stylesheet" href="/css/workspace.css?v=2">
+</head>
+<body class="smi-app min-h-screen flex flex-col">
+
+  <h1 class="smi-sr-only">AI Architecture Diagram Generator</h1>
+
+  <!-- ===================== HEADER ===================== -->
+  <header id="navbar" class="relative z-40 h-header flex-none px-3 sm:px-4 bg-smi-surface border-b border-smi-border flex items-center gap-2 sm:gap-4">
+    <a href="/" class="flex items-center gap-2 text-smi-ink no-underline" aria-label="SketchMyInfra home">
+      <svg class="w-6 h-6 text-smi-accent-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M10 6.5h4a2.5 2.5 0 0 1 2.5 2.5v5"/></svg>
+      <span class="hidden sm:inline font-bold text-[14px] tracking-tight">SketchMyInfra</span>
+    </a>
+
+    <nav aria-label="Mode" class="mx-auto flex gap-0.5 p-[3px] bg-smi-surface-2 rounded-lg">
+      <a href="/app/" aria-current="page" class="px-3.5 py-1.5 rounded-md bg-smi-surface text-smi-ink font-semibold shadow-smi-sm no-underline">Generate</a>
+      <a href="/draw/" target="_blank" class="px-3.5 py-1.5 rounded-md text-smi-ink-2 font-medium hover:text-smi-ink no-underline">Draw</a>
+    </nav>
+
+    <div class="hidden md:flex items-center gap-2">
+      <a href="/" class="px-2 py-1.5 text-smi-ink-2 font-medium hover:text-smi-ink no-underline">Home</a>
+      <button id="btn-theme" class="w-9 h-9 grid place-items-center rounded-lg border border-smi-border bg-smi-surface text-smi-ink-2 hover:text-smi-ink" title="Toggle theme" aria-label="Toggle theme">
+        <svg id="icon-sun" class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg id="icon-moon" class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+      <!-- Auth widget (populated by js/auth.js) -->
+      <div id="auth-slot" class="flex items-center"></div>
+    </div>
+
+    <div class="flex md:hidden items-center gap-1">
+      <button id="btn-theme-mobile" class="w-11 h-11 grid place-items-center text-smi-ink-2" title="Toggle theme" aria-label="Toggle theme">
+        <svg class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+      <button id="btn-mobile-menu" class="w-11 h-11 grid place-items-center text-smi-ink-2" aria-label="Open menu">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </div>
+
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="hidden md:hidden absolute top-full inset-x-0 bg-smi-surface border-b border-smi-border shadow-smi px-4 py-3 flex flex-col gap-1">
+      <a href="/" class="py-2 text-smi-ink no-underline">Home</a>
+      <a href="/feedback/" class="py-2 text-smi-ink no-underline">Feedback</a>
+      <a href="/releases/" class="py-2 text-smi-ink no-underline">Releases</a>
+      <!-- Auth slot (populated by auth.js) -->
+      <div id="auth-slot-mobile" class="pt-2 mt-1 border-t border-smi-border"></div>
+    </div>
+  </header>
+
+  <!-- ===================== WORKSPACE ===================== -->
+  <div class="flex-1 flex flex-wrap min-h-0">
+
+    <!-- Left: prompt, templates, history -->
+    <aside aria-label="Prompt" class="flex-[1_1_300px] max-w-[var(--smi-sidebar-w)] max-md:max-w-none min-w-0 bg-smi-surface border-r border-smi-border p-4 flex flex-col gap-5">
+      <section class="flex flex-col gap-2">
+        <label for="prompt-input" class="smi-label">Describe your infra</label>
+        <textarea
+          id="prompt-input"
+          rows="6"
+          class="w-full resize-y rounded-[10px] border border-smi-border-strong bg-smi-surface text-smi-ink p-3 leading-normal placeholder:text-smi-ink-3 focus:outline-none focus:border-smi-accent-text"
+          placeholder="e.g., AWS VPC with public and private subnets, ALB, ECS Fargate, and RDS Aurora..."
+        ></textarea>
+        <button id="btn-generate" class="h-11 rounded-[10px] bg-smi-accent hover:bg-smi-accent-hover text-smi-on-accent font-semibold text-[14px] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-wait">
+          <svg id="generate-icon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span id="generate-text">Generate</span>
+          <span class="hidden sm:inline font-mono text-[11px] font-medium px-1.5 py-0.5 rounded bg-white/20">Ctrl+↵</span>
+        </button>
+      </section>
+
+      <section id="examples-section" class="flex flex-col gap-2">
+        <h2 class="smi-label">Templates</h2>
+        <div class="grid grid-cols-2 gap-1.5">
+          <button class="example-chip text-left p-2.5 rounded-lg border border-smi-border bg-smi-surface hover:border-smi-border-strong text-[12px] font-medium text-smi-ink" data-prompt="AWS VPC with public and private subnets, ALB, ECS Fargate, and RDS Aurora in us-west-2">VPC + ECS<span class="block font-normal text-smi-ink-3">AWS</span></button>
+          <button class="example-chip text-left p-2.5 rounded-lg border border-smi-border bg-smi-surface hover:border-smi-border-strong text-[12px] font-medium text-smi-ink" data-prompt="GCP architecture with Cloud Load Balancer, Cloud Run services, Cloud SQL PostgreSQL, and Cloud Storage bucket">Cloud Run<span class="block font-normal text-smi-ink-3">GCP</span></button>
+          <button class="example-chip text-left p-2.5 rounded-lg border border-smi-border bg-smi-surface hover:border-smi-border-strong text-[12px] font-medium text-smi-ink" data-prompt="Microservices architecture with API gateway, 3 backend services, RabbitMQ message queue, PostgreSQL database, and Redis cache">Microservices<span class="block font-normal text-smi-ink-3">Gateway · MQ</span></button>
+          <button class="example-chip text-left p-2.5 rounded-lg border border-smi-border bg-smi-surface hover:border-smi-border-strong text-[12px] font-medium text-smi-ink" data-prompt="CI/CD pipeline: GitHub repo triggers GitHub Actions, builds Docker image, pushes to container registry, deploys to Kubernetes with Slack notifications">CI/CD pipeline<span class="block font-normal text-smi-ink-3">GitHub Actions</span></button>
+        </div>
+        <button id="btn-show-templates" class="self-start flex items-center gap-1.5 py-1 text-[12px] font-medium text-smi-accent-text" aria-controls="templates-panel">
+          More templates
+          <svg id="templates-chevron" class="w-3 h-3 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div id="templates-panel" class="hidden flex flex-col gap-0.5">
+          <button class="example-chip text-left px-2 py-2 rounded-md hover:bg-smi-surface-2 text-[12px] text-smi-ink" data-prompt="Azure App Service with Application Gateway, Azure SQL Database, and Blob Storage in West Europe"><span class="text-smi-ink-3">Azure ·</span> App Service + SQL</button>
+          <button class="example-chip text-left px-2 py-2 rounded-md hover:bg-smi-surface-2 text-[12px] text-smi-ink" data-prompt="AWS serverless API: API Gateway with Lambda functions, DynamoDB table, S3 for file storage, CloudFront CDN, and Cognito user pool for auth in us-east-1"><span class="text-smi-ink-3">AWS ·</span> Serverless API — Lambda + DynamoDB</button>
+          <button class="example-chip text-left px-2 py-2 rounded-md hover:bg-smi-surface-2 text-[12px] text-smi-ink" data-prompt="AWS VPC with two availability zones, public subnets with ALB and NAT Gateway, private subnets with ECS Fargate, Multi-AZ RDS Aurora PostgreSQL, ElastiCache Redis, and CloudWatch monitoring in us-east-1"><span class="text-smi-ink-3">AWS ·</span> Multi-AZ HA — ALB + ECS + Aurora</button>
+          <button class="example-chip text-left px-2 py-2 rounded-md hover:bg-smi-surface-2 text-[12px] text-smi-ink" data-prompt="AWS data pipeline: S3 data lake, Glue ETL jobs, Redshift data warehouse, Step Functions orchestrator, CloudWatch Events trigger, and QuickSight dashboards"><span class="text-smi-ink-3">AWS ·</span> Data pipeline — S3 + Glue + Redshift</button>
+          <button class="example-chip text-left px-2 py-2 rounded-md hover:bg-smi-surface-2 text-[12px] text-smi-ink" data-prompt="GCP event-driven architecture: Cloud Load Balancing, Cloud Run microservices, Cloud Pub/Sub for messaging, Cloud SQL PostgreSQL, Cloud Storage, and Cloud Armor WAF"><span class="text-smi-ink-3">GCP ·</span> Event-driven — Cloud Run + Pub/Sub</button>
+          <button class="example-chip text-left px-2 py-2 rounded-md hover:bg-smi-surface-2 text-[12px] text-smi-ink" data-prompt="Database migration pipeline using Debezium CDC connector reading from source PostgreSQL, publishing change events to Apache Kafka cluster with 3 brokers, Kafka Connect sink writing to target PostgreSQL, with schema registry and monitoring"><span class="text-smi-ink-3">Data ·</span> CDC migration — Debezium + Kafka</button>
+          <button class="example-chip text-left px-2 py-2 rounded-md hover:bg-smi-surface-2 text-[12px] text-smi-ink" data-prompt="GitOps deployment pipeline: GitHub repository, GitHub Actions for CI building Docker images, image pushed to container registry, ArgoCD watching the repo and syncing to Kubernetes cluster, Prometheus scraping metrics, Grafana dashboards"><span class="text-smi-ink-3">DevOps ·</span> GitOps — ArgoCD + Prometheus</button>
+        </div>
+      </section>
+
+      <section id="history-panel" class="flex flex-col gap-1 min-h-0">
+        <div class="flex items-center justify-between">
+          <h2 class="smi-label">Recent</h2>
+          <button id="btn-clear-history" class="text-[12px] text-smi-ink-3 hover:text-smi-ink">Clear</button>
+        </div>
+        <div id="history-list" class="flex flex-col gap-0.5 max-h-72 overflow-y-auto">
+          <p id="history-empty" class="text-smi-ink-3 text-[12px] py-3">No diagrams yet</p>
+        </div>
+      </section>
+    </aside>
+
+    <!-- Center: diagram canvas -->
+    <main id="generator" class="smi-dots flex-[999_1_420px] min-w-0 min-h-[520px] flex flex-col">
+
+      <div id="empty-state" class="flex-1 flex flex-col items-center justify-center p-8 text-center">
+        <svg class="w-12 h-12 mb-4 text-smi-ink-faint" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M10 6.5h4a2.5 2.5 0 0 1 2.5 2.5v5"/></svg>
+        <h2 class="text-[16px] font-semibold text-smi-ink mb-1">Your diagram will appear here</h2>
+        <p class="text-smi-ink-3 max-w-xs">Describe your architecture in plain English, or pick a template, then hit Generate.</p>
+      </div>
+
+      <div id="loading-state" class="hidden flex-1 flex flex-col items-center justify-center p-8">
+        <div class="shimmer w-full max-w-lg h-64 rounded-xl mb-4"></div>
+        <p id="loading-text" class="text-smi-ink-2 animate-pulse">Generating diagram...</p>
+      </div>
+
+      <div id="diagram-state" class="hidden flex-1 flex flex-col min-h-0">
+        <div class="flex flex-wrap items-center gap-1.5 px-4 py-3">
+          <button id="btn-download-png" class="h-8 px-3 rounded-lg border border-smi-border bg-smi-surface text-[12px] font-medium text-smi-ink hover:border-smi-border-strong">PNG</button>
+          <button id="btn-download-svg" class="h-8 px-3 rounded-lg border border-smi-border bg-smi-surface text-[12px] font-medium text-smi-ink hover:border-smi-border-strong">SVG</button>
+          <span class="flex-1"></span>
+          <button id="btn-iterate" class="h-8 px-3 rounded-lg border border-smi-border bg-smi-surface text-[12px] font-medium text-smi-ink hover:border-smi-border-strong">Iterate</button>
+          <button id="btn-new" class="h-8 px-3 rounded-lg bg-smi-strong text-smi-on-strong text-[12px] font-semibold">New</button>
+        </div>
+        <div class="flex-1 overflow-auto px-6 pb-6 flex items-start justify-center">
+          <!-- Diagrams render on white in both themes: PlantUML/D2 output assumes a light background -->
+          <img id="diagram-image" class="max-w-full h-auto bg-white rounded-xl border border-smi-border shadow-smi p-4 cursor-zoom-in" alt="AI-generated architecture diagram" />
+        </div>
+      </div>
+
+      <div id="error-state" class="hidden flex-1 relative overflow-hidden">
+        <!-- Blurred last diagram (or sample fallback) shown behind the card -->
+        <div class="absolute inset-0 flex items-center justify-center p-8 opacity-30 pointer-events-none">
+          <img id="error-bg-image" src="/assets/sample-sequence.png" alt="" class="max-w-full max-h-full object-contain" style="filter: blur(3px);" />
+        </div>
+        <div class="relative flex items-center justify-center h-full p-8 text-center">
+          <div class="bg-smi-surface border border-smi-border rounded-2xl shadow-smi px-7 py-7 max-w-sm">
+            <svg class="w-9 h-9 mx-auto mb-3 text-smi-warn" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg>
+            <h3 id="error-title" class="text-[16px] font-bold text-smi-ink mb-2">Oops! That's a tricky one.</h3>
+            <div id="error-detail" class="text-smi-ink-2 mb-5">Can you tweak your prompt and hit Generate again? A little more context usually does the trick.</div>
+            <button id="btn-retry" class="h-11 w-full rounded-[10px] bg-smi-accent hover:bg-smi-accent-hover text-smi-on-accent font-semibold">Try Again</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right: generated code (hidden until a diagram exists) -->
+    <aside id="puml-panel" aria-label="Generated code" class="hidden flex-[1_1_320px] max-w-[var(--smi-codepanel-w)] max-xl:max-w-none min-w-0 bg-smi-surface border-l border-smi-border flex flex-col">
+      <div class="h-11 flex items-center gap-2 px-3 border-b border-smi-border">
+        <span id="puml-label" class="font-semibold text-smi-ink">Diagram Code</span>
+        <span class="flex-1"></span>
+        <button id="btn-copy-puml" class="h-8 px-2.5 rounded-md border border-smi-border text-[12px] font-medium text-smi-ink-2 hover:text-smi-ink">Copy</button>
+        <button id="btn-edit-puml" class="h-8 px-2.5 rounded-md bg-smi-strong text-smi-on-strong text-[12px] font-semibold">Edit</button>
+      </div>
+      <textarea
+        id="puml-code"
+        class="smi-code flex-1 w-full min-h-[320px] p-3 border-0 resize-none focus:outline-none"
+        spellcheck="false"
+        aria-label="Diagram code"
+        readonly
+      ></textarea>
+      <div id="puml-actions" class="hidden p-3 border-t border-smi-border">
+        <button id="btn-render" class="h-10 w-full rounded-lg bg-smi-accent hover:bg-smi-accent-hover text-smi-on-accent font-semibold">Re-render diagram</button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ===================== STATUS BAR ===================== -->
+  <footer class="h-status flex-none px-4 border-t border-smi-border bg-smi-surface flex items-center gap-4 text-[11px] text-smi-ink-3">
+    <span>&copy; 2026 SketchMyInfra</span>
+    <a href="/releases/" class="hidden sm:inline hover:text-smi-ink no-underline">Releases</a>
+    <!-- Shown by feedback.js (showFeedbackForm) -->
+    <a id="feedback-fab" href="/feedback/" class="hidden hover:text-smi-ink no-underline">Feedback</a>
+    <span class="ml-auto hidden sm:inline font-mono">Ctrl/⌘ + Enter to generate</span>
+  </footer>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed top-16 right-4 z-50 space-y-2"></div>
+
+  <!-- Image Zoom Modal -->
+  <div id="zoom-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 cursor-zoom-out">
+    <img id="zoom-image" class="max-w-[95vw] max-h-[95vh] object-contain bg-white rounded-lg" alt="Zoomed diagram" />
+  </div>
+
+  <!-- Scripts — ?v= cache-buster, bump on each deploy -->
+  <script src="/js/mock.js?v=4"></script>
+  <script src="/js/api.js?v=6"></script>
+  <script src="/js/ui.js?v=5"></script>
+  <script src="/js/history.js?v=5"></script>
+  <script src="/js/feedback.js?v=1"></script>
+  <script src="/js/auth.js?v=6"></script>
+  <script src="/js/app.js?v=11"></script>
+</body>
+</html>
