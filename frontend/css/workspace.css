@@ -220,6 +220,14 @@
 .smi-app .history-item p:first-child { color: var(--smi-ink); font-size: var(--smi-text-sm); }
 .smi-app .history-item p:last-child { color: var(--smi-ink-3); font-size: var(--smi-text-xs); }
 
+/* Live feedback cards (markup built by feedback.js on /about/) */
+.smi-app .testimonial-card {
+  background: var(--smi-surface);
+  border: 1px solid var(--smi-border);
+  border-radius: var(--smi-radius-lg);
+  padding: var(--smi-space-4);
+}
+
 /* Theme switch smoothing (toggleTheme adds .transitioning for 350ms) */
 html.transitioning,
 html.transitioning * {
