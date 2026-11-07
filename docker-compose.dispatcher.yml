@@ -1,0 +1,25 @@
+services:
+  docker-proxy:
+    image: tecnativa/docker-socket-proxy:v0.4.1
+    networks: smi
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environments:
+      - CONTAINERS=1
+      - POST=0
+  dispatcher:
+    build: ./dispatcher
+    environments:
+      - 
+    volumes:
+      - dispatcher/secrets/dispatcher_token: /run/secrets/dispatcher_token:ro
+      - dispatcher/secrets/kubeconfig: /run/secrets/kubeconfig:ro
+    depends_on: 
+      - docker-proxy
+    healthcheck:
+        
+
+networks:
+  smi:
+    smi-network: 
+      external: true
