@@ -1,3 +1,5 @@
+import uuid
+
 from pydantic import BaseModel, Field
 
 
@@ -26,6 +28,8 @@ class GenerateV2Response(BaseModel):
     code: str | None = Field(default=None, description="Diagram source code (PlantUML or D2) — null for excalidraw")
     image: str | None = Field(default=None, description="Base64 data URI of rendered image — null for excalidraw")
     excalidraw_data: dict | None = Field(default=None, description="Excalidraw scene JSON — null for graph track")
+    ir: dict | None = Field(default=None, description="GraphIR as JSON, for the draw-app's Open in Editor — null unless the IR is a graph")
+    generation_id: uuid.UUID | None = Field(default=None, description="Generation row id, used to record editor opens")
     prompt_used: str
 
 
@@ -148,6 +152,10 @@ class AdminStatsResponse(BaseModel):
     status_counts: dict[str, int]
     renderer_counts: dict[str, int]
     category_counts: dict[str, int]
+    # Graph-track successes opened in the draw-app, and that as a % of all
+    # successful graph generations. Feeds the "what do people pay for" decision.
+    editor_opens: int
+    editor_open_rate: float
     trend: list[TrendPoint] = Field(..., description="Last 14 UTC days, gap-filled")
 
 
