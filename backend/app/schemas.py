@@ -28,7 +28,8 @@ class GenerateV2Response(BaseModel):
     code: str | None = Field(default=None, description="Diagram source code (PlantUML or D2) — null for excalidraw")
     image: str | None = Field(default=None, description="Base64 data URI of rendered image — null for excalidraw")
     excalidraw_data: dict | None = Field(default=None, description="Excalidraw scene JSON — null for graph track")
-    ir: dict | None = Field(default=None, description="GraphIR as JSON, for the draw-app's Open in Editor — null unless the IR is a graph")
+    editable: bool = Field(default=False, description="Diagram can be opened in the editor (graph IRs); drives the Open in Editor button")
+    ir: dict | None = Field(default=None, description="GraphIR as JSON for Open in Editor — Pro users only, null otherwise")
     generation_id: uuid.UUID | None = Field(default=None, description="Generation row id, used to record editor opens")
     prompt_used: str
 

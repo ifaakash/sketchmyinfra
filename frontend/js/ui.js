@@ -172,7 +172,7 @@ function showUpgradePrompt(limit, lastImageUri = null) {
           `<li>Unlimited diagram generations</li>` +
           `<li>Priority rendering</li>` +
           `<li>History saved across sessions</li>` +
-          `<li>Early supporter pricing: <strong class="text-gray-900 dark:text-emerald-400">$2/month</strong></li>` +
+          `<li>Early supporter pricing: <strong class="text-gray-900 dark:text-emerald-400">$5/month</strong></li>` +
         `</ul>` +
       `</div>` +
       `<button id="btn-notify-pro" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-medium text-sm px-5 py-2.5 rounded-lg transition-colors mb-2">` +
@@ -215,6 +215,95 @@ function showUpgradePrompt(limit, lastImageUri = null) {
       });
     }
   }, 0);
+}
+
+const PRO_INTEREST_KEY = 'smi_pro_interest';
+
+/**
+ * Same rule as the backend's _check_rate_limit: tier "pro" with no expiry,
+ * or a trial that hasn't ended yet.
+ */
+function isProUser(user = window.currentUser) {
+  if (!user || user.tier !== 'pro') return false;
+  return !user.trial_expires_at || new Date(user.trial_expires_at) > new Date();
+}
+
+/**
+ * Upsell for Open in Editor. Payments aren't live, so it records interest
+ * (Formspree, tagged by source) instead of selling.
+ */
+function showProModal() {
+  const modal = $('#pro-modal');
+  if (!modal) return;
+
+  const signedIn = !!window.currentUser?.email;
+  const alreadyJoined = localStorage.getItem(PRO_INTEREST_KEY) === '1';
+  $('#pro-interest-email')?.classList.toggle('hidden', signedIn);
+  $('#pro-interest-form')?.classList.toggle('hidden', alreadyJoined);
+  $('#pro-interest-done')?.classList.toggle('hidden', !alreadyJoined);
+  $('#pro-interest-error')?.classList.add('hidden');
+
+  modal.classList.remove('hidden');
+  if (!signedIn && !alreadyJoined) $('#pro-interest-email')?.focus();
+}
+
+function hideProModal() {
+  $('#pro-modal')?.classList.add('hidden');
+}
+
+function bindProModal() {
+  const modal = $('#pro-modal');
+  if (!modal) return;
+
+  $('#pro-modal-close')?.addEventListener('click', hideProModal);
+  // Backdrop click closes; clicks inside the card don't
+  modal.addEventListener('click', (e) => { if (e.target === modal) hideProModal(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.classList.contains('hidden')) hideProModal();
+  });
+
+  $('#pro-interest-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $('#pro-interest-submit');
+    const errorEl = $('#pro-interest-error');
+    const email = (window.currentUser?.email || $('#pro-interest-email')?.value || '').trim();
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errorEl.textContent = 'Enter a valid email address.';
+      errorEl.classList.remove('hidden');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+    errorEl.classList.add('hidden');
+
+    try {
+      const res = await fetch('https://formspree.io/f/xykboawb', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          email,
+          _subject: 'SketchMyInfra Pro Interest (Open in Editor)',
+          source: 'open-in-editor',
+          signed_in: !!window.currentUser,
+        }),
+      });
+      // Unlike the rate-limit prompt, a signed-out user's email exists
+      // nowhere else, so a failed submit must not look like success
+      if (!res.ok) throw new Error(`Formspree ${res.status}`);
+
+      localStorage.setItem(PRO_INTEREST_KEY, '1');
+      $('#pro-interest-form')?.classList.add('hidden');
+      $('#pro-interest-done')?.classList.remove('hidden');
+    } catch {
+      errorEl.textContent = 'Something went wrong. Please try again.';
+      errorEl.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "I'm interested, notify me";
+    }
+  });
 }
 
 /**
