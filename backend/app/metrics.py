@@ -24,3 +24,14 @@ def record_generation(status: str, renderer: str | None, source: str = "server")
     render-error endpoint, so alerts can ignore unauthenticated reports.
     """
     GENERATIONS.labels(status=status, renderer=renderer or "unknown", source=source).inc()
+
+
+EDITOR_OPENS = Counter(
+    "smi_editor_opens",
+    "Generated diagrams opened in the draw-app editor (first open only)",
+    ["renderer"],
+)
+
+
+def record_editor_open(renderer: str | None) -> None:
+    EDITOR_OPENS.labels(renderer=renderer or "unknown").inc()

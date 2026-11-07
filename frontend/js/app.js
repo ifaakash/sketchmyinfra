@@ -10,6 +10,10 @@ let currentRenderer = 'plantuml';
 let currentImageUri = '';
 let currentPrompt = '';
 let isGenerating = false;
+// Graph IR of the diagram on screen, for "Open in Editor". Null whenever the
+// shown diagram didn't come straight from a generation (history, edited code).
+let currentIr = null;
+let currentGenerationId = null;
 
 // Marketing sections moved to /about/. URL fragments never reach the server,
 // so old links like /#features can only be redirected here, client-side.
@@ -86,6 +90,7 @@ function bindEvents() {
   $('#btn-download-png')?.addEventListener('click', () => handleDownload('png'));
   $('#btn-download-svg')?.addEventListener('click', () => handleDownload('svg'));
   $('#btn-iterate')?.addEventListener('click', handleIterate);
+  $('#btn-open-editor')?.addEventListener('click', handleOpenEditor);
   $('#btn-new')?.addEventListener('click', handleNew);
   $('#btn-retry')?.addEventListener('click', handleGenerate);
 
@@ -211,13 +216,19 @@ async function handleGenerate() {
             data: result.excalidraw_data,
           }),
           credentials: 'include',
-        }).then(r => r.json());
+        }).then(r => {
+          // Anonymous users get a 401 here; without this check share_id is
+          // undefined and they land on /draw/edit/undefined
+          if (!r.ok) throw new Error(`Drawing create failed: ${r.status}`);
+          return r.json();
+        });
 
-        window.location.href = `/draw/edit/${drawing.share_id || drawing.id}`;
+        window.location.href = `/draw/edit/${drawing.share_id}`;
       } catch (drawErr) {
-        // Fallback: store in localStorage and open draw app
+        // Fallback: hand the scene over via localStorage. Only /draw/new reads
+        // it — /draw/ is the gallery.
         localStorage.setItem('smi_excalidraw_import', JSON.stringify(result.excalidraw_data));
-        window.location.href = '/draw/';
+        window.location.href = '/draw/new';
       }
       return;
     }
@@ -226,6 +237,7 @@ async function handleGenerate() {
     currentCode = result.code || '';
     currentPuml = currentCode;
     currentImageUri = result.image || '';
+    setEditableIr(result.ir, result.generation_id);
     showPumlCode(currentCode);
 
     // Update code panel label
@@ -324,6 +336,9 @@ async function handleReRender() {
     currentCode = code;
     currentPuml = code;
     currentImageUri = result.image;
+    // Hand-edited code has drifted from the IR, so the editor would open
+    // the original diagram, not this one
+    setEditableIr(null);
 
     showDiagram(currentImageUri);
     showToast('Diagram re-rendered', 'success', 2000);
@@ -368,9 +383,49 @@ function handleNew() {
   currentRenderer = 'plantuml';
   currentImageUri = '';
   currentPrompt = '';
+  setEditableIr(null);
   hidePumlCode();
   showPanel('empty');
   input?.focus();
+}
+
+/**
+ * Track the IR behind the diagram on screen; "Open in Editor" only shows
+ * when there is one (graph-track generations).
+ */
+function setEditableIr(ir, generationId = null) {
+  currentIr = ir || null;
+  currentGenerationId = ir ? generationId : null;
+  $('#btn-open-editor')?.classList.toggle('hidden', !currentIr);
+}
+
+/**
+ * Open the current diagram in the draw-app as editable shapes. The IR goes
+ * over via localStorage (same origin); /draw/new imports it. For PlantUML the
+ * rendered SVG goes too, so the editor can copy its layout and icons and open
+ * on the picture the user is looking at. A new tab keeps this result open.
+ */
+function handleOpenEditor() {
+  if (!currentIr) return;
+  const payload = {
+    ir: currentIr,
+    generation_id: currentGenerationId,
+    title: currentIr.title || currentIr.graph?.title || currentPrompt.slice(0, 60) || 'Generated Diagram',
+    svg: currentRenderer === 'plantuml' ? currentImageUri : null,
+  };
+  try {
+    localStorage.setItem('smi_ir_import', JSON.stringify(payload));
+  } catch (err) {
+    // Likely over quota: the SVG (with embedded icons) is the big part.
+    // Without it the editor still opens, just auto-laid-out.
+    try {
+      localStorage.setItem('smi_ir_import', JSON.stringify({ ...payload, svg: null }));
+    } catch (err2) {
+      showToast('Could not open the editor (browser storage is full or blocked)', 'error', 4000);
+      return;
+    }
+  }
+  window.open('/draw/new', '_blank');
 }
 
 /**

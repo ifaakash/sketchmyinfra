@@ -197,6 +197,21 @@ async def admin_stats(db: AsyncSession = Depends(get_db)):
     )
     renderer_counts = {row[0]: row[1] for row in renderer_result.all()}
 
+    # Open rate is over graph-track successes only: spatial results already
+    # land in the editor, and failed generations have nothing to open.
+    graph_success = await scalar(
+        select(func.count()).select_from(Generation).where(
+            Generation.status == "success",
+            # ->> (astext) turns a JSON null into SQL NULL; -> would not, and
+            # model_dump writes "graph": null for every non-graph IR.
+            Generation.ir_data["graph"].astext.isnot(None),
+        )
+    )
+    editor_opens = await scalar(
+        select(func.count()).select_from(Generation).where(Generation.opened_in_editor_at.isnot(None))
+    )
+    editor_open_rate = (editor_opens / graph_success * 100) if graph_success > 0 else 0.0
+
     category_result = await db.execute(
         select(Generation.category, func.count()).group_by(Generation.category)
     )
@@ -236,6 +251,8 @@ async def admin_stats(db: AsyncSession = Depends(get_db)):
         status_counts=status_counts,
         renderer_counts=renderer_counts,
         category_counts=category_counts,
+        editor_opens=editor_opens,
+        editor_open_rate=round(editor_open_rate, 2),
         trend=trend,
     )
 

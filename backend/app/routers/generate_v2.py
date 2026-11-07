@@ -4,10 +4,11 @@ prompt → Gemini (JSON extraction) → IR → code generator → renderer → r
 """
 
 import logging
+import uuid
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy import cast, func, select
+from sqlalchemy import cast, func, select, update
 from sqlalchemy.dialects.postgresql import INET
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,7 +19,7 @@ from app.generators.excalidraw_gen import generate_excalidraw
 from app.generators.plantuml_gen import generate_plantuml
 from app.ir.router import route
 from app.ir.schema import DiagramTrack
-from app.metrics import record_generation
+from app.metrics import record_editor_open, record_generation
 from app.middleware.auth import get_current_user_optional
 from app.models import Generation, User
 from app.schemas import (
@@ -231,7 +232,11 @@ async def generate(
 
     # --- Phase 4: Record success ---
     record_generation("success", renderer)
+    # Assigned here rather than by the column default (which only fires on
+    # flush) so the id can go in the response without a refresh round-trip.
+    generation_id = uuid.uuid4()
     db.add(Generation(
+        id=generation_id,
         user_id=user.id if user else None,
         prompt=req.prompt,
         puml_code=code,
@@ -249,6 +254,9 @@ async def generate(
         code=code,
         image=image,
         excalidraw_data=excalidraw_data,
+        # Only graph IRs can be laid out by the draw-app's Open in Editor
+        ir=ir.model_dump(mode="json") if ir.graph else None,
+        generation_id=generation_id,
         prompt_used=req.prompt,
     )
 
@@ -277,6 +285,34 @@ async def report_render_error(
     ))
     await db.commit()
     return {"status": "recorded"}
+
+
+@router.post("/generations/{generation_id}/opened-in-editor", status_code=204)
+async def record_opened_in_editor(
+    generation_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Mark a generation as opened in the draw-app.
+
+    Public (anonymous users can open the editor too) and idempotent: only the
+    first open sets the timestamp and counts, so reloads and replays don't
+    inflate the open rate.
+    """
+    result = await db.execute(
+        update(Generation)
+        .where(Generation.id == generation_id, Generation.opened_in_editor_at.is_(None))
+        .values(opened_in_editor_at=datetime.now(timezone.utc))
+        .returning(Generation.renderer)
+    )
+    renderer = result.scalar_one_or_none()
+    if renderer is not None:
+        await db.commit()
+        record_editor_open(renderer)
+        return
+
+    exists = await db.execute(select(Generation.id).where(Generation.id == generation_id))
+    if exists.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Generation not found")
 
 
 @router.get("/generations/stats", response_model=GenerationStatsResponse)

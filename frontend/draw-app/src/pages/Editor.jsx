@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Excalidraw, exportToBlob } from "@excalidraw/excalidraw";
 import "@excalidraw/excalidraw/index.css";
-import { drawingsAPI } from "../api";
+import { drawingsAPI, markOpenedInEditor } from "../api";
 import { localDrawings } from "../storage";
 
 const AUTOSAVE_DELAY = 3000;
@@ -125,14 +125,53 @@ export default function Editor({ theme, user }) {
   const [saveStatus, setSaveStatus] = useState("saved");
   const [copied, setCopied] = useState(false);
   const [loadError, setLoadError] = useState(null);
+  const [importError, setImportError] = useState(null);
 
   const sceneRef = useRef({ elements: [], files: {} });
   const saveTimerRef = useRef(null);
   const isNew = !shareId && !localId;
 
+  // A generated diagram's IR, handed over by the generator's "Open in Editor".
+  // Read once into a ref: the load effect re-runs when `user` resolves, and the
+  // localStorage key is removed on first read.
+  const irImportRef = useRef(undefined);
+  if (isNew && irImportRef.current === undefined) {
+    const raw = localStorage.getItem("smi_ir_import");
+    localStorage.removeItem("smi_ir_import");
+    try {
+      irImportRef.current = raw ? JSON.parse(raw) : null;
+    } catch {
+      irImportRef.current = null;
+    }
+  }
+
   // Load drawing data
   useEffect(() => {
     if (user === undefined) return;
+    let cancelled = false;
+
+    if (isNew && irImportRef.current) {
+      const { ir, svg, generation_id, title: importTitle } = irImportRef.current;
+      setSaveStatus("unsaved");
+      // Lazy: ELK is ~1.5 MB, only worth loading when there's an IR to lay out
+      import("../irToExcalidraw")
+        .then(({ irToScene }) => irToScene(ir, svg))
+        .then((scene) => {
+          if (cancelled) return;
+          setInitialData(scene);
+          setTitle(importTitle || "Generated Diagram");
+          if (generation_id) markOpenedInEditor(generation_id);
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          console.error("IR import failed:", err);
+          setImportError("Couldn't convert this diagram for editing. You can still draw it here from scratch.");
+          setInitialData({ elements: [], appState: {}, files: {} });
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
 
     if (isNew) {
       // Check for imported Excalidraw data from the generate pipeline
@@ -368,6 +407,21 @@ export default function Editor({ theme, user }) {
           )}
         </div>
       </div>
+
+      {importError && (
+        <div
+          role="alert"
+          style={{
+            padding: "8px 1rem",
+            background: "#3b1d1d",
+            color: "#fca5a5",
+            fontSize: "0.8rem",
+            borderBottom: "1px solid #7f1d1d",
+          }}
+        >
+          {importError}
+        </div>
+      )}
 
       <div style={{ flex: 1 }}>
         <Excalidraw

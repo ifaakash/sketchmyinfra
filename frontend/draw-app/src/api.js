@@ -25,6 +25,14 @@ export const drawingsAPI = {
   delete: (id) => fetchAPI(`/${id}`, { method: "DELETE" }),
 };
 
+// Fire-and-forget: records that a generated diagram was opened in the editor
+export function markOpenedInEditor(generationId) {
+  return fetch(`/api/generations/${encodeURIComponent(generationId)}/opened-in-editor`, {
+    method: "POST",
+    credentials: "include",
+  }).catch(() => {});
+}
+
 export async function checkAuth() {
   try {
     const res = await fetch("/api/auth/me", { credentials: "include" });
