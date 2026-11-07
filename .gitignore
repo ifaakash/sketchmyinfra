@@ -21,3 +21,6 @@ frontend/draw/
 # Agent dispatcher secrets
 dispatcher/secrets/
 k8s/agent/secret.yaml
+
+# Monitoring secrets (telegram bot token)
+monitoring/secrets/

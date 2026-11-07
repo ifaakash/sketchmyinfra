@@ -5,9 +5,18 @@ rule_files:
   - "/etc/prometheus/alerts.yml"
 
 scrape_configs:
+  # Service names on smi-network, not container names (those change with the
+  # compose project name)
   - job_name: 'api'
     static_configs:
-      - targets: ['sketchmyinfra-api-1:8000']
+      - targets: ['api:8000']
+
+  # Separate job: if it shared `api`, a dead dispatcher would fire ApiMetricsDown.
+  # This scrape monitors the dispatcher itself; alerts reach it via the
+  # Alertmanager webhook, not via Prometheus.
+  - job_name: 'dispatcher'
+    static_configs:
+      - targets: ['dispatcher:8080']
 
 alerting:
   alertmanagers:
