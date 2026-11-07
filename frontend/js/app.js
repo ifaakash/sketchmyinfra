@@ -10,10 +10,13 @@ let currentRenderer = 'plantuml';
 let currentImageUri = '';
 let currentPrompt = '';
 let isGenerating = false;
-// Graph IR of the diagram on screen, for "Open in Editor". Null whenever the
-// shown diagram didn't come straight from a generation (history, edited code).
+// Graph IR of the diagram on screen, for "Open in Editor". The API only sends
+// it to Pro users; currentEditable says whether the diagram could be edited
+// at all, so free users still see the button (and the upsell). Both reset
+// whenever the shown diagram didn't come straight from a generation.
 let currentIr = null;
 let currentGenerationId = null;
+let currentEditable = false;
 
 // Marketing sections moved to /about/. URL fragments never reach the server,
 // so old links like /#features can only be redirected here, client-side.
@@ -91,6 +94,7 @@ function bindEvents() {
   $('#btn-download-svg')?.addEventListener('click', () => handleDownload('svg'));
   $('#btn-iterate')?.addEventListener('click', handleIterate);
   $('#btn-open-editor')?.addEventListener('click', handleOpenEditor);
+  bindProModal();
   $('#btn-new')?.addEventListener('click', handleNew);
   $('#btn-retry')?.addEventListener('click', handleGenerate);
 
@@ -237,7 +241,7 @@ async function handleGenerate() {
     currentCode = result.code || '';
     currentPuml = currentCode;
     currentImageUri = result.image || '';
-    setEditableIr(result.ir, result.generation_id);
+    setEditableIr(result.ir, result.generation_id, result.editable);
     showPumlCode(currentCode);
 
     // Update code panel label
@@ -390,13 +394,14 @@ function handleNew() {
 }
 
 /**
- * Track the IR behind the diagram on screen; "Open in Editor" only shows
- * when there is one (graph-track generations).
+ * Track the IR behind the diagram on screen; "Open in Editor" shows for any
+ * editable (graph-track) generation, IR or not.
  */
-function setEditableIr(ir, generationId = null) {
+function setEditableIr(ir, generationId = null, editable = !!ir) {
   currentIr = ir || null;
   currentGenerationId = ir ? generationId : null;
-  $('#btn-open-editor')?.classList.toggle('hidden', !currentIr);
+  currentEditable = !!editable;
+  $('#btn-open-editor')?.classList.toggle('hidden', !currentEditable);
 }
 
 /**
@@ -406,7 +411,17 @@ function setEditableIr(ir, generationId = null) {
  * on the picture the user is looking at. A new tab keeps this result open.
  */
 function handleOpenEditor() {
-  if (!currentIr) return;
+  if (!currentEditable) return;
+  // Pro feature, enforced by the API: free users get no IR, so they get the upsell
+  if (!isProUser()) {
+    showProModal();
+    return;
+  }
+  // Pro, but this diagram was generated before they signed in
+  if (!currentIr) {
+    showToast('Generate the diagram again to open it in the editor', 'info', 4000);
+    return;
+  }
   const payload = {
     ir: currentIr,
     generation_id: currentGenerationId,

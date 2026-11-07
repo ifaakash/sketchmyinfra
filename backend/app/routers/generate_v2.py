@@ -60,15 +60,21 @@ def _get_client_ip(request: Request) -> str:
     return request.client.host if request.client else "0.0.0.0"
 
 
+def _is_pro(user: User | None) -> bool:
+    """Pro with no expiry, or a trial that hasn't ended. Mirrored by isProUser() in frontend/js/ui.js."""
+    if not user or user.tier != "pro":
+        return False
+    return user.trial_expires_at is None or user.trial_expires_at > datetime.now(timezone.utc)
+
+
 async def _check_rate_limit(
     user: User | None,
     ip: str,
     db: AsyncSession,
 ) -> None:
     """Count generations in the last 24 hours and raise 429 if over limit."""
-    if user and user.tier == "pro":
-        if user.trial_expires_at is None or user.trial_expires_at > datetime.now(timezone.utc):
-            return
+    if _is_pro(user):
+        return
 
     since = datetime.now(timezone.utc) - timedelta(days=1)
 
@@ -254,8 +260,11 @@ async def generate(
         code=code,
         image=image,
         excalidraw_data=excalidraw_data,
-        # Only graph IRs can be laid out by the draw-app's Open in Editor
-        ir=ir.model_dump(mode="json") if ir.graph else None,
+        # Only graph IRs can be laid out by the draw-app's Open in Editor.
+        # Editing is Pro: everyone learns the diagram is editable (so the
+        # button and upsell show), but only Pro users get the IR to edit.
+        editable=ir.graph is not None,
+        ir=ir.model_dump(mode="json") if ir.graph and _is_pro(user) else None,
         generation_id=generation_id,
         prompt_used=req.prompt,
     )

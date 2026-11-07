@@ -7,6 +7,7 @@ directly with stub sessions and the Gemini/render calls patched out.
 
 import asyncio
 import uuid
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
 import pytest
@@ -87,8 +88,8 @@ def _use_ir(monkeypatch, ir: DiagramIR):
 # Generate response
 # ---------------------------------------------------------------------------
 
-def test_graph_response_includes_ir_and_generation_id(monkeypatch, no_rate_limit):
-    ir = DiagramIR(
+def _graph_ir():
+    return DiagramIR(
         category=DiagramCategory.SYSTEM_ARCHITECTURE,
         track=DiagramTrack.GRAPH,
         graph=GraphIR(
@@ -96,16 +97,51 @@ def test_graph_response_includes_ir_and_generation_id(monkeypatch, no_rate_limit
             edges=[IREdge(source="api", target="db")],
         ),
     )
-    _use_ir(monkeypatch, ir)
-    db = _StubSession()
 
-    resp = asyncio.run(generate_v2.generate(
-        GenerateRequest(prompt="api talks to a db"), _request(), None, db,
+
+def _user(tier="free", trial_expires_at=None):
+    return SimpleNamespace(id=uuid.uuid4(), tier=tier, trial_expires_at=trial_expires_at)
+
+
+def _generate(user, db=None):
+    return asyncio.run(generate_v2.generate(
+        GenerateRequest(prompt="api talks to a db"), _request(), user, db or _StubSession(),
     ))
 
+
+def test_pro_graph_response_includes_ir_and_generation_id(monkeypatch, no_rate_limit):
+    _use_ir(monkeypatch, _graph_ir())
+    db = _StubSession()
+
+    resp = _generate(_user("pro"), db)
+
+    assert resp.editable is True
     assert resp.ir["graph"]["nodes"][0]["id"] == "api"
     # The id returned is the id of the row written, so the editor can mark it
     assert resp.generation_id == db.added[0].id
+
+
+@pytest.mark.parametrize("user", [
+    None,  # anonymous
+    _user("free"),
+    _user("pro", trial_expires_at=datetime.now(timezone.utc) - timedelta(days=1)),
+], ids=["anonymous", "free", "expired-trial"])
+def test_non_pro_gets_editable_flag_but_no_ir(monkeypatch, no_rate_limit, user):
+    """Editing is Pro: the button shows (editable) but there's nothing to edit."""
+    _use_ir(monkeypatch, _graph_ir())
+
+    resp = _generate(user)
+
+    assert resp.editable is True
+    assert resp.ir is None
+
+
+def test_active_trial_gets_ir(monkeypatch, no_rate_limit):
+    _use_ir(monkeypatch, _graph_ir())
+
+    resp = _generate(_user("pro", trial_expires_at=datetime.now(timezone.utc) + timedelta(days=3)))
+
+    assert resp.ir is not None
 
 
 def test_spatial_response_has_no_ir(monkeypatch, no_rate_limit):
@@ -123,6 +159,7 @@ def test_spatial_response_has_no_ir(monkeypatch, no_rate_limit):
     ))
 
     assert resp.renderer == "excalidraw"
+    assert resp.editable is False
     assert resp.ir is None
     assert resp.generation_id is not None
 
