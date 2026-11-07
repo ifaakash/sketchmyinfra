@@ -4,6 +4,8 @@ Always-on service between **Alertmanager** and **k3s**. When a code-related aler
 evidence (failed generations + api logs), then launches a one-shot **agent Job** in the `agent`
 namespace. The agent (built separately) clones the repo, fixes the bug and opens a PR.
 
+End-to-end flow, test commands for every hop, and the remaining plan: [`docs/incident-pipeline.md`](../docs/incident-pipeline.md).
+
 ```
 Alertmanager --POST /alert (Bearer)--> dispatcher (compose)
    1. keep firing alerts labelled agent="true"
@@ -55,24 +57,17 @@ GRANT SELECT (created_at, status, renderer, category, error_message, puml_code)
   ON generations TO smi_dispatcher;
 ```
 
-### 4. Compose services (you write these)
-Two services on `smi-network`, both `restart: unless-stopped`:
-
-**`docker-proxy`**: `tecnativa/docker-socket-proxy` (pin a tag; `v0.4.1` tested)
-- mount `/var/run/docker.sock:/var/run/docker.sock:ro`
-- env `CONTAINERS=1`, `POST=0` (read-only: logs yes; stop/exec/images → 403)
-- **no** `ports:`. Only the dispatcher should reach it.
-
-**`dispatcher`**: `build: ./dispatcher`
-| Setting | Value |
-|---|---|
-| mounts | `dispatcher/secrets/dispatcher_token` → `/run/secrets/dispatcher_token:ro`, `dispatcher/secrets/kubeconfig` → `/run/secrets/kubeconfig:ro` |
-| env | see the table below; put `EVIDENCE_DATABASE_URL` in a gitignored env file |
-| ports | none needed (Alertmanager + Prometheus reach it on the network). For curl tests, bind `127.0.0.1:8080:8080` only |
-| healthcheck | `python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/healthz')"` |
-| depends_on | `docker-proxy` |
-
-Files are read as uid 10001: make the secret files readable (`chmod 644`) or match ownership.
+### 4. Compose services
+Defined in `docker-compose.dispatcher.yml` (its own project, `smi-dispatcher`, on `smi-network`):
+`docker-proxy` (read-only Docker API: logs yes; stop/exec/images → 403) and `dispatcher`
+(read-only FS, all caps dropped, `/healthz` healthcheck, starts in `dry-run`).
+```bash
+cp dispatcher/dispatcher.env.example dispatcher/secrets/dispatcher.env   # optional: DB evidence
+chmod 644 dispatcher/secrets/*            # files are read as uid 10001
+docker compose -f docker-compose.dispatcher.yml up -d --build
+DISPATCH_MODE=k8s docker compose -f docker-compose.dispatcher.yml up -d   # once the kubeconfig works
+```
+Both secret files must exist before `up`. Otherwise Docker creates an empty *directory* in their place.
 
 ### 5. Alertmanager wiring
 Add a child route that matches `agent="true"` and sends it to the webhook, with `continue: true` so
