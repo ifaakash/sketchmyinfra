@@ -1,17 +1,74 @@
 groups:
   - name: smi-alerts
     rules:
+        # agent: "true" routes the alert to the agent dispatcher as well as
+        # Telegram. Only on alerts a code change could fix.
         - alert: GenerationFailuresSpike
           expr: sum(increase(smi_generations_total{source="server",status!="success"}[10m])) >= 3
+          labels:
+            severity: warning
+            agent: "true"
+          annotations:
+            summary: "{{ $value | printf \"%.0f\" }} server-side generation failures in 10m"
+            description: "Gemini errors or render (autofix) failures. Check failed rows in the generations table and api logs."
+
         - alert: GenerationFailureRatioHigh
           expr: |
             sum(rate(smi_generations_total{source="server",status!="success"}[30m]))
               / sum(rate(smi_generations_total{source="server"}[30m])) > 0.3
             and sum(increase(smi_generations_total{source="server"}[30m])) >= 5
           for: 5m
+          labels:
+            severity: warning
+            agent: "true"
+          annotations:
+            summary: "{{ $value | humanizePercentage }} of generations failing over 30m"
+            description: "More than 30% of server-side generations failed (min 5 attempts)."
+
         - alert: Api5xxRate
           expr: sum(increase(http_requests_total{status="5xx"}[5m])) >= 5
           for: 2m
+          labels:
+            severity: warning
+            agent: "true"
+          annotations:
+            summary: "{{ $value | printf \"%.0f\" }} API 5xx responses in 5m"
+            description: "Unhandled errors or upstream failures. Check api logs for tracebacks."
+
+        # Infra, not code: pages you, never the agent
         - alert: ApiMetricsDown
           expr: up{job="api"} == 0
           for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Prometheus can't scrape the API"
+            description: "The api container is down or unreachable on smi-network."
+
+  # Watch the watcher. No agent label: a broken dispatcher can't dispatch its own fix.
+  - name: dispatcher-alerts
+    rules:
+        - alert: DispatcherDown
+          expr: up{job="dispatcher"} == 0
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Agent dispatcher is down"
+            description: "Alerts still reach Telegram, but no agent Jobs will be launched."
+
+        - alert: DispatcherErrors
+          expr: increase(smi_dispatcher_alerts_total{result="error"}[15m]) > 0
+          labels:
+            severity: warning
+          annotations:
+            summary: "Dispatcher failed to launch an agent Job"
+            description: "k8s API, TLS/kubeconfig or RBAC problem. Check dispatcher logs."
+
+        - alert: DispatcherUnauthorized
+          expr: increase(smi_dispatcher_alerts_total{result="unauthorized"}[15m]) > 0
+          labels:
+            severity: warning
+          annotations:
+            summary: "Dispatcher rejected a webhook (401)"
+            description: "Alertmanager and dispatcher token files differ, or the token file isn't readable."
