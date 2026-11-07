@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -54,641 +54,249 @@
   }
   </script>
 
+  <!-- Apply saved theme before first paint (initTheme in app.js runs after DOMContentLoaded) -->
+  <script>
+    try { if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark'); } catch (e) {}
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
+    // Workspace tokens live in css/workspace.css as CSS variables; Tailwind maps
+    // them to utilities (bg-smi-surface, text-smi-ink-3, ...) so dark mode is
+    // just the variables flipping under .dark — no dark: variants needed.
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
           colors: {
-            surface: '#070f20',
-            border: '#1a3464',
-            brand: { 50: '#eef2ff', 100: '#e0e7ff', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 800: '#1e2a6e', 900: '#0f1840' },
-            night: { 800: '#0a1628', 900: '#060d1b', 950: '#030810' },
+            smi: {
+              bg: 'var(--smi-bg)',
+              surface: 'var(--smi-surface)',
+              'surface-2': 'var(--smi-surface-2)',
+              canvas: 'var(--smi-canvas)',
+              selected: 'var(--smi-selected)',
+              border: 'var(--smi-border)',
+              'border-strong': 'var(--smi-border-strong)',
+              'border-soft': 'var(--smi-border-soft)',
+              ink: 'var(--smi-ink)',
+              'ink-2': 'var(--smi-ink-2)',
+              'ink-3': 'var(--smi-ink-3)',
+              'ink-faint': 'var(--smi-ink-faint)',
+              accent: 'var(--smi-accent)',
+              'accent-hover': 'var(--smi-accent-hover)',
+              'accent-text': 'var(--smi-accent-text)',
+              'on-accent': 'var(--smi-on-accent)',
+              strong: 'var(--smi-strong)',
+              'on-strong': 'var(--smi-on-strong)',
+              ok: 'var(--smi-ok)',
+              warn: 'var(--smi-warn)',
+              'warn-bg': 'var(--smi-warn-bg)',
+            },
+            // Still used by markup that auth.js / ui.js inject
+            brand: { 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5' },
           },
           fontFamily: {
-            sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
-            mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
-          }
+            sans: ['var(--smi-font-sans)'],
+            mono: ['var(--smi-font-mono)'],
+          },
+          height: {
+            header: 'var(--smi-header-h)',
+            status: 'var(--smi-statusbar-h)',
+          },
+          boxShadow: {
+            'smi-sm': 'var(--smi-shadow-sm)',
+            smi: 'var(--smi-shadow)',
+          },
         }
       }
     }
   </script>
-  <link rel="stylesheet" href="css/style.css?v=4">
-  <link rel="stylesheet" href="css/glass.css?v=1">
+  <link rel="stylesheet" href="css/workspace.css?v=1">
 </head>
-<body class="glass-page font-sans transition-colors duration-300">
+<body class="smi-app min-h-screen flex flex-col">
 
-  <!-- Light sources behind the glass -->
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
-  <div class="orb orb-3"></div>
+  <h1 class="smi-sr-only">AI Architecture Diagram Generator</h1>
 
-  <!-- Star icon, reused by the testimonial cards -->
-  <svg class="hidden" aria-hidden="true">
-    <symbol id="icon-star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></symbol>
-  </svg>
+  <!-- ===================== HEADER ===================== -->
+  <header id="navbar" class="relative z-40 h-header flex-none px-3 sm:px-4 bg-smi-surface border-b border-smi-border flex items-center gap-2 sm:gap-4">
+    <a href="/" class="flex items-center gap-2 text-smi-ink no-underline" aria-label="SketchMyInfra home">
+      <svg class="w-6 h-6 text-smi-accent-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M10 6.5h4a2.5 2.5 0 0 1 2.5 2.5v5"/></svg>
+      <span class="hidden sm:inline font-bold text-[14px] tracking-tight">SketchMyInfra</span>
+    </a>
 
-  <!-- ===================== NAVBAR ===================== -->
-  <nav id="navbar" class="fixed top-0 inset-x-0 z-50 px-4 pt-4">
-    <div class="glass nav-bar max-w-[1200px] mx-auto pl-5 pr-2 py-2 flex items-center justify-between gap-3">
-      <!-- Logo -->
-      <a href="#" class="flex items-center gap-2.5 group min-h-[44px]">
-        <div class="w-9 h-9 bg-brand-600 rounded-lg flex items-center justify-center group-hover:bg-brand-500 transition-colors">
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
-            <path d="M6 18l1.5-4.5L11 17l-5 1z" fill="#fbbf24"/>
-            <path d="M7.5 13.5l7.5-7.5 3 3-7.5 7.5z" fill="white" opacity="0.9"/>
-            <circle cx="18" cy="6" r="2.5" fill="#34d399" opacity="0.85"/>
-            <circle cx="6" cy="6" r="2" fill="#818cf8" opacity="0.7"/>
-            <line x1="8" y1="6" x2="15.5" y2="6" stroke="white" stroke-width="0.8" opacity="0.4"/>
-          </svg>
-        </div>
-        <span class="text-lg font-bold tracking-tight">SketchMyInfra</span>
-      </a>
+    <nav aria-label="Mode" class="mx-auto flex gap-0.5 p-[3px] bg-smi-surface-2 rounded-lg">
+      <a href="/" aria-current="page" class="px-3.5 py-1.5 rounded-md bg-smi-surface text-smi-ink font-semibold shadow-smi-sm no-underline">Generate</a>
+      <a href="/draw/" target="_blank" class="px-3.5 py-1.5 rounded-md text-smi-ink-2 font-medium hover:text-smi-ink no-underline">Draw</a>
+    </nav>
 
-      <!-- Nav Links -->
-      <div class="hidden md:flex items-center gap-1">
-        <a href="#features" class="nav-link">Features</a>
-        <a href="#testimonials" class="nav-link">Testimonials</a>
-        <a href="#blog" class="nav-link">Blog</a>
-        <a href="#gallery" class="nav-link">Gallery</a>
-        <a href="/draw/" target="_blank" class="nav-link">Draw</a>
-      </div>
+    <div class="hidden md:flex items-center gap-2">
+      <a href="/about/" class="px-2 py-1.5 text-smi-ink-2 font-medium hover:text-smi-ink no-underline">About</a>
+      <button id="btn-theme" class="w-9 h-9 grid place-items-center rounded-lg border border-smi-border bg-smi-surface text-smi-ink-2 hover:text-smi-ink" title="Toggle theme" aria-label="Toggle theme">
+        <svg id="icon-sun" class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg id="icon-moon" class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+      <!-- Auth widget (populated by js/auth.js) -->
+      <div id="auth-slot" class="flex items-center"></div>
+    </div>
 
-      <div class="hidden md:flex items-center gap-2">
-        <!-- Theme Toggle -->
-        <button id="btn-theme" class="btn-ghost !px-0 w-11" title="Toggle theme" aria-label="Toggle theme">
-          <!-- Sun (shown in dark mode) -->
-          <svg id="icon-sun" class="w-4 h-4 text-amber-400 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-          </svg>
-          <!-- Moon (shown in light mode) -->
-          <svg id="icon-moon" class="w-4 h-4 text-brand-600 block dark:hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
-          </svg>
-        </button>
-
-        <!-- Auth widget (populated by js/auth.js) -->
-        <div id="auth-slot" class="flex items-center"></div>
-
-        <a href="#generator" class="btn-primary">Start Building</a>
-      </div>
-
-      <!-- Mobile menu button -->
-      <div class="flex items-center gap-2 md:hidden">
-        <button id="btn-theme-mobile" class="btn-ghost !px-0 w-11" title="Toggle theme" aria-label="Toggle theme">
-          <svg class="w-4 h-4 text-amber-400 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-          </svg>
-          <svg class="w-4 h-4 text-brand-600 block dark:hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
-          </svg>
-        </button>
-        <button id="btn-mobile-menu" class="btn-ghost !px-0 w-11" aria-label="Open menu">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M4 6h16M4 12h16M4 18h16"/>
-          </svg>
-        </button>
-      </div>
+    <div class="flex md:hidden items-center gap-1">
+      <button id="btn-theme-mobile" class="w-11 h-11 grid place-items-center text-smi-ink-2" title="Toggle theme" aria-label="Toggle theme">
+        <svg class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+      <button id="btn-mobile-menu" class="w-11 h-11 grid place-items-center text-smi-ink-2" aria-label="Open menu">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
     </div>
 
     <!-- Mobile menu -->
-    <div id="mobile-menu" class="hidden md:hidden max-w-[1200px] mx-auto mt-2">
-      <div class="px-5 py-4 space-y-1">
-        <a href="#features" class="nav-link w-full">Features</a>
-        <a href="#testimonials" class="nav-link w-full">Testimonials</a>
-        <a href="#blog" class="nav-link w-full">Blog</a>
-        <a href="#gallery" class="nav-link w-full">Gallery</a>
-        <a href="/draw/" target="_blank" class="nav-link w-full">Draw</a>
-        <a href="#generator" class="btn-primary w-full mt-2">Start Building</a>
-        <!-- Auth slot (populated by auth.js) -->
-        <div id="auth-slot-mobile" class="pt-2 mt-2 row-line"></div>
-      </div>
+    <div id="mobile-menu" class="hidden md:hidden absolute top-full inset-x-0 bg-smi-surface border-b border-smi-border shadow-smi px-4 py-3 flex flex-col gap-1">
+      <a href="/about/" class="py-2 text-smi-ink no-underline">About</a>
+      <a href="/feedback/" class="py-2 text-smi-ink no-underline">Feedback</a>
+      <a href="/releases/" class="py-2 text-smi-ink no-underline">Releases</a>
+      <!-- Auth slot (populated by auth.js) -->
+      <div id="auth-slot-mobile" class="pt-2 mt-1 border-t border-smi-border"></div>
     </div>
-  </nav>
+  </header>
 
-  <main class="max-w-[1200px] mx-auto px-6 pt-36 space-y-24">
+  <!-- ===================== WORKSPACE ===================== -->
+  <div class="flex-1 flex flex-wrap min-h-0">
 
-  <!-- ===================== HERO ===================== -->
-  <section class="flex flex-col items-center gap-6 text-center">
-    <!-- Badge -->
-    <div class="pill">
-      <span class="dot animate-pulse"></span>
-      Now in Public Beta
-    </div>
+    <!-- Left: prompt, templates, history -->
+    <aside aria-label="Prompt" class="flex-[1_1_300px] max-w-[var(--smi-sidebar-w)] max-md:max-w-none min-w-0 bg-smi-surface border-r border-smi-border p-4 flex flex-col gap-5">
+      <section class="flex flex-col gap-2">
+        <label for="prompt-input" class="smi-label">Describe your infra</label>
+        <textarea
+          id="prompt-input"
+          rows="6"
+          class="w-full resize-y rounded-[10px] border border-smi-border-strong bg-smi-surface text-smi-ink p-3 leading-normal placeholder:text-smi-ink-3 focus:outline-none focus:border-smi-accent-text"
+          placeholder="e.g., AWS VPC with public and private subnets, ALB, ECS Fargate, and RDS Aurora..."
+        ></textarea>
+        <button id="btn-generate" class="h-11 rounded-[10px] bg-smi-accent hover:bg-smi-accent-hover text-smi-on-accent font-semibold text-[14px] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-wait">
+          <svg id="generate-icon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span id="generate-text">Generate</span>
+          <span class="hidden sm:inline font-mono text-[11px] font-medium px-1.5 py-0.5 rounded bg-white/20">Ctrl+↵</span>
+        </button>
+      </section>
 
-    <h1 class="text-[2.5rem] sm:text-6xl lg:text-[4.75rem] font-bold tracking-[-0.035em] leading-[1.04] max-w-4xl">
-      AI Architecture<br>
-      <span class="text-brand-600 dark:text-brand-400">Diagram Generator</span>
-    </h1>
-
-    <p class="ink-2 text-lg sm:text-[1.1875rem] max-w-2xl leading-relaxed">
-      Turn plain English into production-ready architecture diagrams in seconds.
-      Powered by AI and PlantUML — no drag-and-drop, no manual drawing, just describe and generate.
-    </p>
-
-    <!-- New feature highlight -->
-    <a href="/draw/" target="_blank" class="pill pill-green !font-medium text-sm min-h-[44px] !px-[1.125rem] group">
-      <span class="dot animate-pulse"></span>
-      New: Freehand whiteboard drawing — sketch diagrams your way, completely free
-      <svg class="w-4 h-4 flex-none group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
-    </a>
-
-    <div class="flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto">
-      <a href="#generator" class="btn-primary btn-lg w-full sm:w-auto shadow-lg shadow-brand-600/30">Generate Your First Diagram</a>
-      <a href="#how-it-works" class="btn-ghost btn-lg w-full sm:w-auto">See How It Works</a>
-    </div>
-
-    <!-- Stats bar -->
-    <div class="glass w-full mt-4 p-2 rounded-[1.75rem] grid grid-cols-2 lg:grid-cols-4 gap-2 text-left">
-      <div class="glass-tile p-5 flex flex-col gap-1">
-        <span class="text-4xl font-bold tracking-tight">1K+</span>
-        <span class="muted text-sm">Diagrams Generated</span>
-      </div>
-      <div class="glass-tile p-5 flex flex-col gap-1">
-        <span class="text-4xl font-bold tracking-tight">500+</span>
-        <span class="muted text-sm">Engineers Trust Us</span>
-      </div>
-      <div class="glass-tile p-5 flex flex-col gap-1">
-        <span class="text-4xl font-bold tracking-tight">&lt;15s</span>
-        <span class="muted text-sm">Average Generation</span>
-      </div>
-      <div class="glass-tile p-5 flex flex-col gap-1">
-        <span class="text-4xl font-bold tracking-tight">96%</span>
-        <span class="muted text-sm">Accuracy Rate</span>
-      </div>
-    </div>
-
-    <!-- Tagline -->
-    <p class="ink-2 text-[0.9375rem] max-w-xl">
-      We are growing with you. Use us at zero cost — no credit card required or any payment to get started.
-    </p>
-  </section>
-
-  <!-- ===================== LOGOS / SOCIAL PROOF ===================== -->
-  <section class="!mt-14">
-    <p class="muted text-center text-xs font-semibold uppercase tracking-[0.14em] mb-5">Trusted by teams at</p>
-    <div class="muted flex flex-wrap items-center justify-center gap-x-11 gap-y-4 text-xl font-bold">
-      <span>Shopify</span>
-      <span>Datadog</span>
-      <span>Stripe</span>
-      <span>Vercel</span>
-      <span>HashiCorp</span>
-      <span>Notion</span>
-      <span>Qavio</span>
-    </div>
-  </section>
-
-  <!-- ===================== GENERATOR (THE APP) ===================== -->
-  <section id="generator" class="scroll-mt-28">
-    <div class="text-center mb-7">
-      <h2 class="text-3xl sm:text-[2.375rem] font-bold tracking-tight mb-2.5">Generate a Diagram</h2>
-      <p class="ink-2 text-[1.0625rem]">Describe your architecture below and watch it come to life.</p>
-    </div>
-
-    <div class="glass gen-window p-3 sm:p-4 flex flex-col gap-4">
-
-      <!-- Prompt -->
-      <div class="panel panel-prompt flex flex-col">
-        <div class="panel-head tint-indigo !justify-start">
-          <span class="marker marker-indigo"></span>
-          <label for="prompt-input">Describe your architecture</label>
+      <section id="examples-section" class="flex flex-col gap-2">
+        <h2 class="smi-label">Templates</h2>
+        <div class="grid grid-cols-2 gap-1.5">
+          <button class="example-chip text-left p-2.5 rounded-lg border border-smi-border bg-smi-surface hover:border-smi-border-strong text-[12px] font-medium text-smi-ink" data-prompt="AWS VPC with public and private subnets, ALB, ECS Fargate, and RDS Aurora in us-west-2">VPC + ECS<span class="block font-normal text-smi-ink-3">AWS</span></button>
+          <button class="example-chip text-left p-2.5 rounded-lg border border-smi-border bg-smi-surface hover:border-smi-border-strong text-[12px] font-medium text-smi-ink" data-prompt="GCP architecture with Cloud Load Balancer, Cloud Run services, Cloud SQL PostgreSQL, and Cloud Storage bucket">Cloud Run<span class="block font-normal text-smi-ink-3">GCP</span></button>
+          <button class="example-chip text-left p-2.5 rounded-lg border border-smi-border bg-smi-surface hover:border-smi-border-strong text-[12px] font-medium text-smi-ink" data-prompt="Microservices architecture with API gateway, 3 backend services, RabbitMQ message queue, PostgreSQL database, and Redis cache">Microservices<span class="block font-normal text-smi-ink-3">Gateway · MQ</span></button>
+          <button class="example-chip text-left p-2.5 rounded-lg border border-smi-border bg-smi-surface hover:border-smi-border-strong text-[12px] font-medium text-smi-ink" data-prompt="CI/CD pipeline: GitHub repo triggers GitHub Actions, builds Docker image, pushes to container registry, deploys to Kubernetes with Slack notifications">CI/CD pipeline<span class="block font-normal text-smi-ink-3">GitHub Actions</span></button>
         </div>
-        <div class="p-4 flex flex-col gap-3">
-          <textarea
-            id="prompt-input"
-            rows="3"
-            class="w-full p-0 resize-y focus:outline-none"
-            placeholder="e.g., AWS VPC with public and private subnets, ALB, ECS Fargate, and RDS Aurora..."
-          ></textarea>
-
-          <div class="flex flex-wrap items-center justify-end gap-3">
-            <span class="kbd hidden sm:block">Ctrl+Enter</span>
-            <button id="btn-generate" class="btn-primary !min-h-[48px] !px-7 w-full sm:w-auto">
-              <svg id="generate-icon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
-              </svg>
-              <span id="generate-text">Generate</span>
-            </button>
-          </div>
+        <button id="btn-show-templates" class="self-start flex items-center gap-1.5 py-1 text-[12px] font-medium text-smi-accent-text" aria-controls="templates-panel">
+          More templates
+          <svg id="templates-chevron" class="w-3 h-3 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div id="templates-panel" class="hidden flex flex-col gap-0.5">
+          <button class="example-chip text-left px-2 py-2 rounded-md hover:bg-smi-surface-2 text-[12px] text-smi-ink" data-prompt="Azure App Service with Application Gateway, Azure SQL Database, and Blob Storage in West Europe"><span class="text-smi-ink-3">Azure ·</span> App Service + SQL</button>
+          <button class="example-chip text-left px-2 py-2 rounded-md hover:bg-smi-surface-2 text-[12px] text-smi-ink" data-prompt="AWS serverless API: API Gateway with Lambda functions, DynamoDB table, S3 for file storage, CloudFront CDN, and Cognito user pool for auth in us-east-1"><span class="text-smi-ink-3">AWS ·</span> Serverless API — Lambda + DynamoDB</button>
+          <button class="example-chip text-left px-2 py-2 rounded-md hover:bg-smi-surface-2 text-[12px] text-smi-ink" data-prompt="AWS VPC with two availability zones, public subnets with ALB and NAT Gateway, private subnets with ECS Fargate, Multi-AZ RDS Aurora PostgreSQL, ElastiCache Redis, and CloudWatch monitoring in us-east-1"><span class="text-smi-ink-3">AWS ·</span> Multi-AZ HA — ALB + ECS + Aurora</button>
+          <button class="example-chip text-left px-2 py-2 rounded-md hover:bg-smi-surface-2 text-[12px] text-smi-ink" data-prompt="AWS data pipeline: S3 data lake, Glue ETL jobs, Redshift data warehouse, Step Functions orchestrator, CloudWatch Events trigger, and QuickSight dashboards"><span class="text-smi-ink-3">AWS ·</span> Data pipeline — S3 + Glue + Redshift</button>
+          <button class="example-chip text-left px-2 py-2 rounded-md hover:bg-smi-surface-2 text-[12px] text-smi-ink" data-prompt="GCP event-driven architecture: Cloud Load Balancing, Cloud Run microservices, Cloud Pub/Sub for messaging, Cloud SQL PostgreSQL, Cloud Storage, and Cloud Armor WAF"><span class="text-smi-ink-3">GCP ·</span> Event-driven — Cloud Run + Pub/Sub</button>
+          <button class="example-chip text-left px-2 py-2 rounded-md hover:bg-smi-surface-2 text-[12px] text-smi-ink" data-prompt="Database migration pipeline using Debezium CDC connector reading from source PostgreSQL, publishing change events to Apache Kafka cluster with 3 brokers, Kafka Connect sink writing to target PostgreSQL, with schema registry and monitoring"><span class="text-smi-ink-3">Data ·</span> CDC migration — Debezium + Kafka</button>
+          <button class="example-chip text-left px-2 py-2 rounded-md hover:bg-smi-surface-2 text-[12px] text-smi-ink" data-prompt="GitOps deployment pipeline: GitHub repository, GitHub Actions for CI building Docker images, image pushed to container registry, ArgoCD watching the repo and syncing to Kubernetes cluster, Prometheus scraping metrics, Grafana dashboards"><span class="text-smi-ink-3">DevOps ·</span> GitOps — ArgoCD + Prometheus</button>
         </div>
+      </section>
 
-        <div id="examples-section" class="panel-foot px-4 py-3 flex flex-wrap items-center gap-2">
-          <p class="muted text-[0.8125rem] font-semibold mr-1">Try an example:</p>
-          <button class="example-chip" data-prompt="AWS VPC with public and private subnets, ALB, ECS Fargate, and RDS Aurora in us-west-2">AWS: VPC + ECS</button>
-          <button class="example-chip" data-prompt="GCP architecture with Cloud Load Balancer, Cloud Run services, Cloud SQL PostgreSQL, and Cloud Storage bucket">GCP: Cloud Run</button>
-          <button class="example-chip" data-prompt="Azure App Service with Application Gateway, Azure SQL Database, and Blob Storage in West Europe">Azure: App Service</button>
-          <button class="example-chip" data-prompt="Microservices architecture with API gateway, 3 backend services, RabbitMQ message queue, PostgreSQL database, and Redis cache">Microservices</button>
-          <button class="example-chip" data-prompt="CI/CD pipeline: GitHub repo triggers GitHub Actions, builds Docker image, pushes to container registry, deploys to Kubernetes with Slack notifications">CI/CD Pipeline</button>
-          <button id="btn-show-templates" class="example-chip flex items-center gap-1.5">
-            More templates
-            <svg id="templates-chevron" class="w-3 h-3 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
-          </button>
+      <section id="history-panel" class="flex flex-col gap-1 min-h-0">
+        <div class="flex items-center justify-between">
+          <h2 class="smi-label">Recent</h2>
+          <button id="btn-clear-history" class="text-[12px] text-smi-ink-3 hover:text-smi-ink">Clear</button>
+        </div>
+        <div id="history-list" class="flex flex-col gap-0.5 max-h-72 overflow-y-auto">
+          <p id="history-empty" class="text-smi-ink-3 text-[12px] py-3">No diagrams yet</p>
+        </div>
+      </section>
+    </aside>
+
+    <!-- Center: diagram canvas -->
+    <main id="generator" class="smi-dots flex-[999_1_420px] min-w-0 min-h-[520px] flex flex-col">
+
+      <div id="empty-state" class="flex-1 flex flex-col items-center justify-center p-8 text-center">
+        <svg class="w-12 h-12 mb-4 text-smi-ink-faint" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M10 6.5h4a2.5 2.5 0 0 1 2.5 2.5v5"/></svg>
+        <h2 class="text-[16px] font-semibold text-smi-ink mb-1">Your diagram will appear here</h2>
+        <p class="text-smi-ink-3 max-w-xs">Describe your architecture in plain English, or pick a template, then hit Generate.</p>
+      </div>
+
+      <div id="loading-state" class="hidden flex-1 flex flex-col items-center justify-center p-8">
+        <div class="shimmer w-full max-w-lg h-64 rounded-xl mb-4"></div>
+        <p id="loading-text" class="text-smi-ink-2 animate-pulse">Generating diagram...</p>
+      </div>
+
+      <div id="diagram-state" class="hidden flex-1 flex flex-col min-h-0">
+        <div class="flex flex-wrap items-center gap-1.5 px-4 py-3">
+          <button id="btn-download-png" class="h-8 px-3 rounded-lg border border-smi-border bg-smi-surface text-[12px] font-medium text-smi-ink hover:border-smi-border-strong">PNG</button>
+          <button id="btn-download-svg" class="h-8 px-3 rounded-lg border border-smi-border bg-smi-surface text-[12px] font-medium text-smi-ink hover:border-smi-border-strong">SVG</button>
+          <span class="flex-1"></span>
+          <button id="btn-iterate" class="h-8 px-3 rounded-lg border border-smi-border bg-smi-surface text-[12px] font-medium text-smi-ink hover:border-smi-border-strong">Iterate</button>
+          <button id="btn-new" class="h-8 px-3 rounded-lg bg-smi-strong text-smi-on-strong text-[12px] font-semibold">New</button>
+        </div>
+        <div class="flex-1 overflow-auto px-6 pb-6 flex items-start justify-center">
+          <!-- Diagrams render on white in both themes: PlantUML/D2 output assumes a light background -->
+          <img id="diagram-image" class="max-w-full h-auto bg-white rounded-xl border border-smi-border shadow-smi p-4 cursor-zoom-in" alt="AI-generated architecture diagram" />
         </div>
       </div>
 
-      <!-- Expandable templates panel -->
-      <div id="templates-panel" class="hidden panel">
-        <div class="grid lg:grid-cols-5">
-          <div class="template-col lg:col-span-2">
-            <div class="panel-head caps tint-amber !justify-start"><span class="marker marker-amber"></span>AWS</div>
-            <div class="p-2 flex flex-col gap-0.5">
-              <button class="example-chip template-item w-full text-left" data-prompt="AWS serverless API: API Gateway with Lambda functions, DynamoDB table, S3 for file storage, CloudFront CDN, and Cognito user pool for auth in us-east-1">Serverless API — API Gateway + Lambda + DynamoDB</button>
-              <button class="example-chip template-item w-full text-left" data-prompt="AWS VPC with two availability zones, public subnets with ALB and NAT Gateway, private subnets with ECS Fargate, Multi-AZ RDS Aurora PostgreSQL, ElastiCache Redis, and CloudWatch monitoring in us-east-1">Multi-AZ HA — ALB + ECS + Aurora Multi-AZ + ElastiCache</button>
-              <button class="example-chip template-item w-full text-left" data-prompt="AWS data pipeline: S3 data lake, Glue ETL jobs, Redshift data warehouse, Step Functions orchestrator, CloudWatch Events trigger, and QuickSight dashboards">Data Pipeline — S3 + Glue + Redshift + Step Functions</button>
-            </div>
-          </div>
-          <div class="template-col lg:col-span-1">
-            <div class="panel-head caps tint-indigo !justify-start"><span class="marker marker-indigo"></span>GCP</div>
-            <div class="p-2 flex flex-col gap-0.5">
-              <button class="example-chip template-item w-full text-left" data-prompt="GCP event-driven architecture: Cloud Load Balancing, Cloud Run microservices, Cloud Pub/Sub for messaging, Cloud SQL PostgreSQL, Cloud Storage, and Cloud Armor WAF">Event-Driven — Cloud Run + Pub/Sub + Cloud SQL</button>
-            </div>
-          </div>
-          <div class="template-col lg:col-span-2">
-            <div class="panel-head caps tint-green !justify-start"><span class="marker marker-green"></span>DevOps &amp; Data</div>
-            <div class="p-2 flex flex-col gap-0.5">
-              <button class="example-chip template-item w-full text-left" data-prompt="Database migration pipeline using Debezium CDC connector reading from source PostgreSQL, publishing change events to Apache Kafka cluster with 3 brokers, Kafka Connect sink writing to target PostgreSQL, with schema registry and monitoring">CDC Migration — Debezium + Kafka + Kafka Connect</button>
-              <button class="example-chip template-item w-full text-left" data-prompt="GitOps deployment pipeline: GitHub repository, GitHub Actions for CI building Docker images, image pushed to container registry, ArgoCD watching the repo and syncing to Kubernetes cluster, Prometheus scraping metrics, Grafana dashboards">GitOps — GitHub Actions + ArgoCD + Kubernetes + Prometheus</button>
-            </div>
+      <div id="error-state" class="hidden flex-1 relative overflow-hidden">
+        <!-- Blurred last diagram (or sample fallback) shown behind the card -->
+        <div class="absolute inset-0 flex items-center justify-center p-8 opacity-30 pointer-events-none">
+          <img id="error-bg-image" src="assets/sample-sequence.png" alt="" class="max-w-full max-h-full object-contain" style="filter: blur(3px);" />
+        </div>
+        <div class="relative flex items-center justify-center h-full p-8 text-center">
+          <div class="bg-smi-surface border border-smi-border rounded-2xl shadow-smi px-7 py-7 max-w-sm">
+            <svg class="w-9 h-9 mx-auto mb-3 text-smi-warn" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg>
+            <h3 id="error-title" class="text-[16px] font-bold text-smi-ink mb-2">Oops! That's a tricky one.</h3>
+            <div id="error-detail" class="text-smi-ink-2 mb-5">Can you tweak your prompt and hit Generate again? A little more context usually does the trick.</div>
+            <button id="btn-retry" class="h-11 w-full rounded-[10px] bg-smi-accent hover:bg-smi-accent-hover text-smi-on-accent font-semibold">Try Again</button>
           </div>
         </div>
       </div>
+    </main>
 
-      <div class="flex flex-col lg:flex-row gap-4">
-
-        <!-- Diagram Display -->
-        <div class="panel flex-[2] min-w-0 flex flex-col min-h-[520px]">
-          <div class="panel-head tint-green !justify-start">
-            <span class="marker marker-green"></span>
-            Diagram
-          </div>
-
-          <div id="empty-state" class="flex-1 flex flex-col items-center justify-center p-4">
-            <div class="empty-slot w-full flex-1 flex flex-col items-center justify-center p-8 text-center">
-              <svg class="muted w-14 h-14 mb-4" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <path d="M3 9h18M9 3v18"/>
-              </svg>
-              <h3 class="ink-2 text-lg font-semibold mb-2">Your diagram will appear here</h3>
-              <p class="muted text-sm max-w-xs">Describe your architecture and click Generate to create a PlantUML diagram.</p>
-            </div>
-          </div>
-
-          <div id="loading-state" class="hidden flex-1 flex flex-col items-center justify-center p-8">
-            <div class="shimmer w-full max-w-lg h-64 rounded-xl mb-4"></div>
-            <p id="loading-text" class="ink-2 text-sm animate-pulse">Generating PlantUML code...</p>
-          </div>
-
-          <div id="diagram-state" class="hidden flex-1 flex flex-col overflow-hidden">
-            <div class="diagram-stage flex-1 overflow-auto p-5 flex items-start justify-center">
-              <img id="diagram-image" class="max-w-full h-auto cursor-zoom-in transition-transform" alt="AI-generated AWS architecture diagram" />
-            </div>
-            <div class="row-line px-4 py-3 flex flex-wrap items-center gap-2">
-              <button id="btn-download-png" class="action-btn">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                </svg>
-                Download PNG
-              </button>
-              <button id="btn-download-svg" class="action-btn">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                </svg>
-                Download SVG
-              </button>
-              <div class="flex-1"></div>
-              <button id="btn-iterate" class="action-btn-secondary">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-                Iterate
-              </button>
-              <button id="btn-new" class="action-btn-secondary">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path d="M12 4v16m8-8H4"/>
-                </svg>
-                New
-              </button>
-            </div>
-          </div>
-
-          <div id="error-state" class="hidden flex-1 relative overflow-hidden">
-            <!-- Blurred last diagram (or sample fallback) shown behind the card -->
-            <div class="absolute inset-0 flex items-center justify-center p-8 opacity-40 pointer-events-none">
-              <img id="error-bg-image" src="assets/sample-sequence.png" alt="" class="max-w-full max-h-full object-contain" style="filter: blur(3px);" />
-            </div>
-            <!-- Error card overlay -->
-            <div class="relative flex flex-col items-center justify-center h-full p-8 text-center">
-              <div class="error-card rounded-3xl px-7 py-7 max-w-sm">
-                <svg class="w-9 h-9 mx-auto mb-3 text-amber-600 dark:text-amber-300" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
-                  <circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/>
-                </svg>
-                <h3 id="error-title" class="text-xl font-bold mb-2">Oops! That's a tricky one.</h3>
-                <p id="error-detail" class="ink-2 text-sm max-w-xs mb-5">Can you tweak your prompt and hit Generate again? A little more context usually does the trick.</p>
-                <button id="btn-retry" class="btn-primary !min-h-[48px] w-full">
-                  Try Again
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="flex-1 min-w-0 flex flex-col gap-4">
-
-          <!-- PUML Code Panel -->
-          <div id="puml-panel" class="hidden panel code-panel flex flex-col">
-            <div class="panel-head">
-              <span class="flex items-center gap-2.5"><span class="marker marker-cyan"></span><span id="puml-label">Diagram Code</span></span>
-              <div class="flex items-center gap-0.5">
-                <button id="btn-copy-puml" class="btn-text">Copy</button>
-                <button id="btn-edit-puml" class="btn-text !font-semibold accent-ink">Edit</button>
-              </div>
-            </div>
-            <div class="p-2 flex-1 min-h-0">
-              <textarea
-                id="puml-code"
-                class="w-full h-full min-h-[260px] border rounded-lg px-3 py-2 font-mono resize-y focus:outline-none"
-                readonly
-              ></textarea>
-            </div>
-            <div id="puml-actions" class="hidden panel-foot p-3">
-              <button id="btn-render" class="w-full min-h-[44px] bg-emerald-700 hover:bg-emerald-600 text-white font-semibold text-sm px-4 rounded-xl transition-colors flex items-center justify-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-                Re-render Diagram
-              </button>
-            </div>
-          </div>
-
-          <!-- History -->
-          <div id="history-panel" class="panel flex-1 flex flex-col">
-            <div class="panel-head">
-              <span class="flex items-center gap-2.5"><span class="marker"></span>Session History</span>
-              <button id="btn-clear-history" class="btn-text muted">Clear</button>
-            </div>
-            <div id="history-list" class="p-3 space-y-2 max-h-72 overflow-y-auto">
-              <p id="history-empty" class="muted text-sm text-center py-5">No diagrams yet</p>
-            </div>
-          </div>
-        </div>
+    <!-- Right: generated code (hidden until a diagram exists) -->
+    <aside id="puml-panel" aria-label="Generated code" class="hidden flex-[1_1_320px] max-w-[var(--smi-codepanel-w)] max-xl:max-w-none min-w-0 bg-smi-surface border-l border-smi-border flex flex-col">
+      <div class="h-11 flex items-center gap-2 px-3 border-b border-smi-border">
+        <span id="puml-label" class="font-semibold text-smi-ink">Diagram Code</span>
+        <span class="flex-1"></span>
+        <button id="btn-copy-puml" class="h-8 px-2.5 rounded-md border border-smi-border text-[12px] font-medium text-smi-ink-2 hover:text-smi-ink">Copy</button>
+        <button id="btn-edit-puml" class="h-8 px-2.5 rounded-md bg-smi-strong text-smi-on-strong text-[12px] font-semibold">Edit</button>
       </div>
-    </div>
-  </section>
+      <textarea
+        id="puml-code"
+        class="smi-code flex-1 w-full min-h-[320px] p-3 border-0 resize-none focus:outline-none"
+        spellcheck="false"
+        aria-label="Diagram code"
+        readonly
+      ></textarea>
+      <div id="puml-actions" class="hidden p-3 border-t border-smi-border">
+        <button id="btn-render" class="h-10 w-full rounded-lg bg-smi-accent hover:bg-smi-accent-hover text-smi-on-accent font-semibold">Re-render diagram</button>
+      </div>
+    </aside>
+  </div>
 
-  <!-- ===================== FEATURES ===================== -->
-  <section id="features" class="scroll-mt-28 grid lg:grid-cols-4 gap-x-14 gap-y-6">
-    <div class="lg:col-span-1 flex flex-col gap-3">
-      <span class="eyebrow">01 / Features</span>
-      <h2 class="sec-title">Built for engineers who ship fast</h2>
-      <p class="ink-2 leading-relaxed">Stop spending hours in drawing tools. Describe what you're building and get a diagram that's actually useful.</p>
-    </div>
-    <div class="glass lg:col-span-3 rounded-[1.75rem] px-7 py-2">
-      <div class="py-5 grid md:grid-cols-3 gap-x-6 gap-y-1.5">
-        <h3 class="flex items-center gap-3 text-[1.0625rem] font-bold">
-          <svg class="accent-ink w-5 h-5 flex-none" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-          AI-Powered Generation
-        </h3>
-        <p class="ink-2 md:col-span-2 text-[0.9375rem] leading-relaxed">Describe your architecture in plain English. Our AI understands cloud services, microservices, databases, queues, and generates accurate PlantUML code instantly.</p>
-      </div>
-      <div class="row-line py-5 grid md:grid-cols-3 gap-x-6 gap-y-1.5">
-        <h3 class="flex items-center gap-3 text-[1.0625rem] font-bold">
-          <svg class="accent-ink w-5 h-5 flex-none" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M8 6l-6 6 6 6M16 6l6 6-6 6"/></svg>
-          Edit Before Rendering
-        </h3>
-        <p class="ink-2 md:col-span-2 text-[0.9375rem] leading-relaxed">Review and tweak the generated PlantUML code before rendering. Full control over every component, relationship, and label. Re-render without hitting the AI again.</p>
-      </div>
-      <div class="row-line py-5 grid md:grid-cols-3 gap-x-6 gap-y-1.5">
-        <h3 class="flex items-center gap-3 text-[1.0625rem] font-bold">
-          <svg class="accent-ink w-5 h-5 flex-none" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
-          Export Anywhere
-        </h3>
-        <p class="ink-2 md:col-span-2 text-[0.9375rem] leading-relaxed">Download as PNG or SVG. Drop into Confluence, Notion, README files, or presentations. Clean, professional diagrams every time — with official AWS, GCP, and Azure icons.</p>
-      </div>
-      <div class="row-line py-5 grid md:grid-cols-3 gap-x-6 gap-y-1.5">
-        <h3 class="flex items-center gap-3 text-[1.0625rem] font-bold">
-          <svg class="accent-ink w-5 h-5 flex-none" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20 4v5h-5M4 20v-5h5M19 9a8 8 0 00-14-2M5 15a8 8 0 0014 2"/></svg>
-          Iterative Refinement
-        </h3>
-        <p class="ink-2 md:col-span-2 text-[0.9375rem] leading-relaxed">Not quite right? Refine your prompt and regenerate. Add a cache layer, swap databases, change the flow — iterate until it matches your mental model perfectly.</p>
-      </div>
-      <div class="row-line py-5 grid md:grid-cols-3 gap-x-6 gap-y-1.5">
-        <h3 class="flex items-center gap-3 text-[1.0625rem] font-bold">
-          <svg class="accent-ink w-5 h-5 flex-none" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M6 11h12v9H6zM9 11V7a3 3 0 016 0v4"/></svg>
-          Privacy First
-        </h3>
-        <p class="ink-2 md:col-span-2 text-[0.9375rem] leading-relaxed">Diagrams are generated on the fly and delivered directly to your browser. Logged-in users get their history saved — anonymous sessions leave no trace.</p>
-      </div>
-      <div class="row-line py-5 grid md:grid-cols-3 gap-x-6 gap-y-1.5">
-        <h3 class="flex items-center gap-3 text-[1.0625rem] font-bold">
-          <svg class="accent-ink w-5 h-5 flex-none" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-          Persistent History
-        </h3>
-        <p class="ink-2 md:col-span-2 text-[0.9375rem] leading-relaxed">Every diagram you generate is saved. Logged-in users get full history across sessions — go back, restore, and re-render any past diagram from any device.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===================== HOW IT WORKS ===================== -->
-  <section id="how-it-works" class="scroll-mt-28 grid lg:grid-cols-4 gap-x-14 gap-y-6">
-    <div class="lg:col-span-1 flex flex-col gap-3">
-      <span class="eyebrow">02 / How it works</span>
-      <h2 class="sec-title">Three steps. That's it.</h2>
-      <p class="ink-2 leading-relaxed">From idea to a polished architecture diagram in under 10 seconds.</p>
-    </div>
-    <div class="lg:col-span-3 grid md:grid-cols-3 gap-4">
-      <div class="glass rounded-3xl p-6 flex flex-col gap-2.5">
-        <span class="text-[3.25rem] leading-none font-medium tracking-tight text-brand-600 dark:text-brand-400">1</span>
-        <h3 class="text-lg font-bold">Describe</h3>
-        <p class="ink-2 text-[0.9375rem] leading-relaxed">Write what you're building in plain English. "AWS VPC with ECS, ALB, and RDS" — that's all it takes. Be as detailed or as brief as you want.</p>
-      </div>
-      <div class="glass rounded-3xl p-6 flex flex-col gap-2.5">
-        <span class="text-[3.25rem] leading-none font-medium tracking-tight text-brand-600 dark:text-brand-400">2</span>
-        <h3 class="text-lg font-bold">Generate</h3>
-        <p class="ink-2 text-[0.9375rem] leading-relaxed">Hit Generate. AI converts your description into PlantUML code. Review it, edit if needed, or let it render automatically. You stay in control.</p>
-      </div>
-      <div class="glass rounded-3xl p-6 flex flex-col gap-2.5">
-        <span class="text-[3.25rem] leading-none font-medium tracking-tight text-brand-600 dark:text-brand-400">3</span>
-        <h3 class="text-lg font-bold">Download</h3>
-        <p class="ink-2 text-[0.9375rem] leading-relaxed">Export as PNG or SVG. Drop it in your docs, share with the team, or iterate further. Professional diagrams — no Lucidchart subscription needed.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===================== GALLERY ===================== -->
-  <section id="gallery" class="scroll-mt-28 grid lg:grid-cols-4 gap-x-14 gap-y-6">
-    <div class="lg:col-span-1 flex flex-col items-start gap-3">
-      <span class="eyebrow">03 / Gallery</span>
-      <span class="pill pill-green">Real diagrams from the generator</span>
-      <h2 class="sec-title">See What It Creates</h2>
-      <p class="ink-2 leading-relaxed">Each diagram below was generated by describing the architecture in plain English — nothing else.</p>
-      <a href="#generator" class="btn-primary !min-h-[48px] mt-2">Generate Yours →</a>
-    </div>
-    <div class="lg:col-span-3 grid md:grid-cols-2 gap-4 content-start" id="gallery-grid">
-      <!-- Cards injected by gallery.js -->
-    </div>
-  </section>
-
-  <!-- ===================== TESTIMONIALS ===================== -->
-  <section id="testimonials" class="scroll-mt-28 grid lg:grid-cols-4 gap-x-14 gap-y-6">
-    <div class="lg:col-span-1 flex flex-col gap-3">
-      <span class="eyebrow">04 / Testimonials</span>
-      <h2 class="sec-title">Engineers love it</h2>
-      <p class="ink-2 leading-relaxed">Hear from the teams using SketchMyInfra to document their infrastructure.</p>
-    </div>
-    <div class="lg:col-span-3">
-      <div class="grid md:grid-cols-3 gap-4">
-        <div class="testimonial-card p-6 flex flex-col">
-          <div class="flex items-center gap-1 mb-3 text-amber-400">
-            <svg class="w-4 h-4" fill="currentColor"><use href="#icon-star"/></svg>
-            <svg class="w-4 h-4" fill="currentColor"><use href="#icon-star"/></svg>
-            <svg class="w-4 h-4" fill="currentColor"><use href="#icon-star"/></svg>
-            <svg class="w-4 h-4" fill="currentColor"><use href="#icon-star"/></svg>
-            <svg class="w-4 h-4" fill="currentColor"><use href="#icon-star"/></svg>
-          </div>
-          <p class="text-[0.9375rem] leading-relaxed mb-5 flex-1">"We used to spend 30 minutes per diagram in Lucidchart. Now our SREs describe the architecture and have a diagram in 5 seconds. It's changed how we do design reviews."</p>
-          <div class="flex items-center gap-3">
-            <div class="w-11 h-11 bg-brand-600 rounded-full flex items-center justify-center text-sm font-bold text-white">PR</div>
-            <div>
-              <p class="text-[0.9375rem] font-bold">Priya Raghavan</p>
-              <p class="text-xs text-gray-500">Staff SRE, Fintech Startup</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="testimonial-card p-6 flex flex-col">
-          <div class="flex items-center gap-1 mb-3 text-amber-400">
-            <svg class="w-4 h-4" fill="currentColor"><use href="#icon-star"/></svg>
-            <svg class="w-4 h-4" fill="currentColor"><use href="#icon-star"/></svg>
-            <svg class="w-4 h-4" fill="currentColor"><use href="#icon-star"/></svg>
-            <svg class="w-4 h-4" fill="currentColor"><use href="#icon-star"/></svg>
-            <svg class="w-4 h-4" fill="currentColor"><use href="#icon-star"/></svg>
-          </div>
-          <p class="text-[0.9375rem] leading-relaxed mb-5 flex-1">"I was skeptical, but the PlantUML output is surprisingly accurate. It even uses the right AWS icons. I used it to document our entire ECS migration in an afternoon."</p>
-          <div class="flex items-center gap-3">
-            <div class="w-11 h-11 bg-emerald-700 rounded-full flex items-center justify-center text-sm font-bold text-white">MC</div>
-            <div>
-              <p class="text-[0.9375rem] font-bold">Marcus Chen</p>
-              <p class="text-xs text-gray-500">DevOps Lead, Series B SaaS</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="testimonial-card p-6 flex flex-col">
-          <div class="flex items-center gap-1 mb-3 text-amber-400">
-            <svg class="w-4 h-4" fill="currentColor"><use href="#icon-star"/></svg>
-            <svg class="w-4 h-4" fill="currentColor"><use href="#icon-star"/></svg>
-            <svg class="w-4 h-4" fill="currentColor"><use href="#icon-star"/></svg>
-            <svg class="w-4 h-4" fill="currentColor"><use href="#icon-star"/></svg>
-            <svg class="w-4 h-4" fill="currentColor"><use href="#icon-star"/></svg>
-          </div>
-          <p class="text-[0.9375rem] leading-relaxed mb-5 flex-1">"Finally, a tool that understands my intent. I typed 'Kubernetes cluster with ingress, 3 deployments, and a managed Postgres' and got exactly what I needed for our RFC."</p>
-          <div class="flex items-center gap-3">
-            <div class="w-11 h-11 bg-cyan-700 rounded-full flex items-center justify-center text-sm font-bold text-white">SK</div>
-            <div>
-              <p class="text-[0.9375rem] font-bold">Sarah Kim</p>
-              <p class="text-xs text-gray-500">Platform Engineer, E-commerce</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Live user feedback cards injected here by feedback.js -->
-      <div id="feedback-list" class="grid md:grid-cols-3 gap-4 mt-4"></div>
-    </div>
-  </section>
-
-  <!-- ===================== BLOG ===================== -->
-  <section id="blog" class="scroll-mt-28 grid lg:grid-cols-4 gap-x-14 gap-y-6">
-    <div class="lg:col-span-1 flex flex-col gap-3">
-      <span class="eyebrow">05 / Blog</span>
-      <h2 class="sec-title">From the Blog</h2>
-      <p class="ink-2 leading-relaxed">Thoughts on infrastructure, diagrams, and DevOps.</p>
-    </div>
-    <div class="glass lg:col-span-3 rounded-[1.75rem] px-7 py-2">
-      <!-- LinkedIn post 1 -->
-      <a href="https://www.linkedin.com/posts/sketchmyinfra_devops-buildinpublic-cloudarchitecture-activity-7447541244446142464-NpzP?utm_source=share&amp;utm_medium=member_desktop&amp;rcm=ACoAAC1aJ8sBDb_Y4-OryxsDT4wDrcAIsLzTpIk" class="group py-5 flex flex-wrap items-center gap-x-6 gap-y-2 hover:no-underline" target="_blank" rel="noopener noreferrer">
-        <div class="flex-1 min-w-[16rem] flex flex-col items-start gap-1.5">
-          <span class="tag">LinkedIn</span>
-          <p class="text-[1.1875rem] font-bold group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">The 30-Minute Lie</p>
-          <p class="ink-2 text-[0.9375rem] leading-relaxed">Why your architecture diagram is already out of date — and what to do about it.</p>
-        </div>
-        <span class="accent-ink text-[0.9375rem] font-semibold min-h-[44px] flex items-center">Read on LinkedIn →</span>
-      </a>
-
-      <!-- LinkedIn post 2 -->
-      <a href="https://www.linkedin.com/posts/sketchmyinfra_devops-buildinpublic-platformengineering-activity-7447571012801495040-1YrJ?utm_source=share&amp;utm_medium=member_desktop&amp;rcm=ACoAAC1aJ8sBDb_Y4-OryxsDT4wDrcAIsLzTpIk" class="group row-line py-5 flex flex-wrap items-center gap-x-6 gap-y-2 hover:no-underline" target="_blank" rel="noopener noreferrer">
-        <div class="flex-1 min-w-[16rem] flex flex-col items-start gap-1.5">
-          <span class="tag">LinkedIn</span>
-          <p class="text-[1.1875rem] font-bold group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">The Last Manual Artifact</p>
-          <p class="ink-2 text-[0.9375rem] leading-relaxed">Architecture diagrams are the last thing engineers maintain by hand. They shouldn't be.</p>
-        </div>
-        <span class="accent-ink text-[0.9375rem] font-semibold min-h-[44px] flex items-center">Read on LinkedIn →</span>
-      </a>
-
-      <!-- Dev.to post -->
-      <a href="https://dev.to/aakashio/your-architecture-diagram-is-lying-to-you-224k" class="group row-line py-5 flex flex-wrap items-center gap-x-6 gap-y-2 hover:no-underline" target="_blank" rel="noopener noreferrer">
-        <div class="flex-1 min-w-[16rem] flex flex-col items-start gap-1.5">
-          <span class="tag tag-green">Dev.to</span>
-          <p class="text-[1.1875rem] font-bold group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">Your Architecture Diagram Is Lying to You</p>
-          <p class="ink-2 text-[0.9375rem] leading-relaxed">How manual diagrams drift from reality — and how AI generation keeps them honest.</p>
-        </div>
-        <span class="accent-ink text-[0.9375rem] font-semibold min-h-[44px] flex items-center">Read on Dev.to →</span>
-      </a>
-    </div>
-  </section>
-
-  </main>
-
-  <!-- ===================== FOOTER ===================== -->
-  <footer class="site-footer max-w-[1200px] mx-auto mt-24 px-6 pt-7 pb-10">
-    <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-      <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none">
-            <path d="M6 18l1.5-4.5L11 17l-5 1z" fill="#fbbf24"/>
-            <path d="M7.5 13.5l7.5-7.5 3 3-7.5 7.5z" fill="white" opacity="0.9"/>
-            <circle cx="18" cy="6" r="2.5" fill="#34d399" opacity="0.85"/>
-            <circle cx="6" cy="6" r="2" fill="#818cf8" opacity="0.7"/>
-          </svg>
-        </div>
-        <span class="font-bold">SketchMyInfra</span>
-      </div>
-      <div class="flex flex-wrap items-center justify-center">
-        <a href="#features" class="nav-link !text-sm">Features</a>
-        <a href="#how-it-works" class="nav-link !text-sm">How It Works</a>
-        <a href="#generator" class="nav-link !text-sm">Generator</a>
-        <a href="#blog" class="nav-link !text-sm">Blog</a>
-      </div>
-    </div>
-    <p class="muted text-sm text-center md:text-left mt-3">sketchmyinfra.com — Built by engineers, for engineers. Powered by AI &amp; PlantUML.</p>
-    <div class="muted flex flex-col md:flex-row items-center justify-between gap-2 mt-3 text-sm">
-      <span>&copy; 2026 SketchMyInfra</span>
-      <div class="flex flex-wrap items-center justify-center md:pr-36">
-        <a href="/about/" class="nav-link !text-sm">About</a>
-        <a href="/draw/" target="_blank" class="nav-link !text-sm">Draw</a>
-        <a href="/feedback/" class="nav-link !text-sm">Feedback</a>
-        <a href="/releases/" class="nav-link !text-sm">Releases</a>
-      </div>
-    </div>
+  <!-- ===================== STATUS BAR ===================== -->
+  <footer class="h-status flex-none px-4 border-t border-smi-border bg-smi-surface flex items-center gap-4 text-[11px] text-smi-ink-3">
+    <span>&copy; 2026 SketchMyInfra</span>
+    <a href="/releases/" class="hidden sm:inline hover:text-smi-ink no-underline">Releases</a>
+    <!-- Shown by feedback.js (showFeedbackForm) -->
+    <a id="feedback-fab" href="/feedback/" class="hidden hover:text-smi-ink no-underline">Feedback</a>
+    <span class="ml-auto hidden sm:inline font-mono">Ctrl/⌘ + Enter to generate</span>
   </footer>
 
   <!-- Toast Container -->
-  <div id="toast-container" class="fixed top-24 right-4 z-50 space-y-2"></div>
+  <div id="toast-container" class="fixed top-16 right-4 z-50 space-y-2"></div>
 
   <!-- Image Zoom Modal -->
   <div id="zoom-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 cursor-zoom-out">
-    <img id="zoom-image" class="max-w-[95vw] max-h-[95vh] object-contain" alt="Zoomed diagram" />
+    <img id="zoom-image" class="max-w-[95vw] max-h-[95vh] object-contain bg-white rounded-lg" alt="Zoomed diagram" />
   </div>
-
-  <!-- Floating Feedback Button -->
-  <a id="feedback-fab" href="/feedback/" class="hidden fixed bottom-6 right-6 z-40 bg-brand-600 hover:bg-brand-500 text-white rounded-full px-5 py-3 shadow-lg shadow-brand-600/30 hover:shadow-brand-500/40 transition-all flex items-center gap-2 text-sm font-semibold no-underline hover:no-underline">
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg>
-    Feedback
-  </a>
 
   <!-- Scripts — ?v= cache-buster, bump on each deploy -->
   <script src="js/mock.js?v=4"></script>
@@ -697,18 +305,6 @@
   <script src="js/history.js?v=5"></script>
   <script src="js/feedback.js?v=1"></script>
   <script src="js/auth.js?v=6"></script>
-  <script src="js/gallery.js?v=2"></script>
-
-  <!-- Lightbox -->
-  <div id="gallery-lightbox" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onclick="closeLightbox()">
-    <div class="relative max-w-4xl w-full" onclick="event.stopPropagation()">
-      <button onclick="closeLightbox()" class="absolute -top-10 right-0 text-white/70 hover:text-white text-sm flex items-center gap-1">
-        <span>✕</span> Close
-      </button>
-      <img class="lb-img w-full h-auto max-h-[80vh] object-contain rounded-xl bg-white/5 p-4">
-      <p class="lb-caption mt-3 text-center text-xs text-gray-400"></p>
-    </div>
-  </div>
   <script src="js/app.js?v=9"></script>
 </body>
 </html>
