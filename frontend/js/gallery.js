@@ -5,15 +5,15 @@
 const GALLERY_ITEMS = [
   {
     prompt: "AWS SSM Session Manager port forwarding — secure bastion-free access to private resources",
-    img: "flows/ssm-port-forwarding.png",
+    img: "/flows/ssm-port-forwarding.png",
   },
   {
     prompt: "AWS EventBridge event-driven architecture — routing events between services with rules and targets",
-    img: "flows/eventbridge.png",
+    img: "/flows/eventbridge.png",
   },
   {
     prompt: "Dev and prod environment separation — isolated workloads sharing a single cluster",
-    img: "flows/dev-and-prod.png",
+    img: "/flows/dev-and-prod.png",
   },
 ];
 

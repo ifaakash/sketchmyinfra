@@ -11,6 +11,18 @@ let currentImageUri = '';
 let currentPrompt = '';
 let isGenerating = false;
 
+// Marketing sections moved to /about/. URL fragments never reach the server,
+// so old links like /#features can only be redirected here, client-side.
+// hashchange covers fragment-only navigation, which doesn't reload the page.
+const MOVED_SECTIONS = ['features', 'how-it-works', 'gallery', 'testimonials', 'blog'];
+function redirectMovedSection() {
+  if (MOVED_SECTIONS.includes(window.location.hash.slice(1))) {
+    window.location.replace('/about/' + window.location.hash);
+  }
+}
+redirectMovedSection();
+window.addEventListener('hashchange', redirectMovedSection);
+
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   bindEvents();
