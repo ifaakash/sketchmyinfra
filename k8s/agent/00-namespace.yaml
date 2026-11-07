@@ -1,0 +1,12 @@
+# Isolated namespace for AI debugger Jobs.
+# Pod Security "restricted" rejects any pod that isn't non-root, cap-dropped,
+# seccomp'd — even if the dispatcher token leaks, nobody can schedule a
+# privileged pod here.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: agent
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/warn: restricted
