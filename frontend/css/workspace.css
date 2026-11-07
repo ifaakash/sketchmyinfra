@@ -183,9 +183,69 @@
   white-space: nowrap;
 }
 
+/* ----- Pieces ported from style.css (the workspace no longer loads it) ----- */
+
+/* Generate-button spinner (inserted by setGenerateLoading in ui.js) */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: smi-spin 0.6s linear infinite;
+}
+
+/* Loading placeholder */
+.shimmer {
+  background: linear-gradient(110deg, var(--smi-surface-2) 8%, var(--smi-border-soft) 18%, var(--smi-surface-2) 33%);
+  background-size: 200% 100%;
+  animation: smi-shimmer 1.5s linear infinite;
+}
+
+/* Toasts (showToast in ui.js removes them on animationend) */
+.toast { animation: smi-toast-in 0.3s ease-out; }
+.toast-out { animation: smi-toast-out 0.3s ease-in forwards; }
+
+/* History rows (markup built by history.js) */
+.smi-app .history-item {
+  display: flex;
+  align-items: center;
+  gap: var(--smi-space-2);
+  padding: var(--smi-space-2);
+  border-radius: var(--smi-radius);
+  cursor: pointer;
+}
+.smi-app .history-item:hover { background: var(--smi-surface-2); }
+.smi-app .history-item.active { background: var(--smi-selected); }
+.smi-app .history-item p:first-child { color: var(--smi-ink); font-size: var(--smi-text-sm); }
+.smi-app .history-item p:last-child { color: var(--smi-ink-3); font-size: var(--smi-text-xs); }
+
+/* Theme switch smoothing (toggleTheme adds .transitioning for 350ms) */
+html.transitioning,
+html.transitioning * {
+  transition: background-color 0.3s, border-color 0.3s, color 0.3s !important;
+}
+
+@keyframes smi-spin { to { transform: rotate(360deg); } }
+@keyframes smi-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes smi-toast-in {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes smi-toast-out {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(100%); }
+}
+
+/* Near-zero durations rather than `none`: toasts are removed on animationend,
+   which never fires if the animation is disabled outright. */
 @media (prefers-reduced-motion: reduce) {
-  .smi-app * {
-    transition: none !important;
-    animation: none !important;
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
