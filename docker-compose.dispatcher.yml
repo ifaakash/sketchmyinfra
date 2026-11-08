@@ -33,7 +33,7 @@ services:
       # Real agent (agent/), imported into k3s with `k3s ctr images import`.
       # Empty command = the image's CMD. For the old placeholder:
       #   AGENT_IMAGE=busybox:1.37 AGENT_COMMAND='["cat","/incident/incident.json"]'
-      AGENT_IMAGE: ${AGENT_IMAGE:-smi-agent:0.1.0}
+      AGENT_IMAGE: ${AGENT_IMAGE:-smi-agent:0.1.1}
       AGENT_COMMAND: ${AGENT_COMMAND:-[]}
     # EVIDENCE_DATABASE_URL (read-only role password) lives here, not in git.
     # Optional: without it the dispatcher runs with log evidence only.

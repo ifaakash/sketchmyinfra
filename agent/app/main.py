@@ -9,7 +9,9 @@ import json
 import logging
 import os
 import re
+import socket
 import sys
+import time
 from datetime import datetime, timezone
 
 from app import repo
@@ -77,6 +79,28 @@ def read_files(cfg: Settings, picks: list[str], tree: set[str]) -> dict[str, str
     return files
 
 
+NETWORK_HOSTS = ("github.com", "api.github.com", "generativelanguage.googleapis.com")
+
+
+def wait_for_network(timeout: float = 60, interval: float = 1) -> float:
+    """Block until every host resolves; return the seconds waited.
+
+    k3s (kube-router) programs NetworkPolicy rules for a new pod shortly
+    after it starts, so the first DNS lookups can be dropped. Seen in drills
+    as "Could not resolve host" in the first second of the pod's life.
+    """
+    start = time.monotonic()
+    while True:
+        try:
+            for host in NETWORK_HOSTS:
+                socket.getaddrinfo(host, 443, proto=socket.IPPROTO_TCP)
+            return time.monotonic() - start
+        except OSError as e:
+            if time.monotonic() - start >= timeout:
+                raise RuntimeError(f"network not ready after {timeout:.0f}s: {e}") from e
+            time.sleep(interval)
+
+
 def run(cfg: Settings) -> int:
     missing = [n for n, v in (("GITHUB_TOKEN", cfg.github_token), ("GEMINI_API_KEY", cfg.gemini_api_key)) if not v]
     if missing:
@@ -87,6 +111,7 @@ def run(cfg: Settings) -> int:
     alertname = incident.get("alertname", "unknown")
     branch_prefix = f"agent/{slugify(alertname)}-"
     logger.info("Incident %s: %s", alertname, evidence_stats(incident))
+    logger.info("Network ready after %.1fs", wait_for_network())
 
     if not cfg.dry_run and (existing := repo.open_agent_prs(cfg.repo, branch_prefix)):
         logger.info("Open agent PR already exists for %s, skipping: %s", alertname, existing)

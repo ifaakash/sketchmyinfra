@@ -122,3 +122,66 @@ def test_clean_env_drops_secrets(monkeypatch):
     env = clean_env()
     assert "GITHUB_TOKEN" not in env and "GEMINI_API_KEY" not in env
     assert env["HOME"] == "/work"
+
+
+def test_gemini_retries_transport_errors(monkeypatch):
+    import httpx
+
+    from app import llm
+
+    monkeypatch.setattr(llm, "RETRY_DELAYS", (0, 0))
+    g = llm.Gemini.__new__(llm.Gemini)
+    calls = []
+
+    def flaky(prompt, schema):
+        calls.append(1)
+        if len(calls) < 3:
+            raise httpx.ConnectError("[Errno 101] Network is unreachable")
+        return "ok"
+
+    g._ask_once = flaky
+    assert g._ask("p", llm.FilePick) == "ok"
+    assert len(calls) == 3
+
+
+def test_gemini_gives_up_after_retries(monkeypatch):
+    import httpx
+
+    from app import llm
+
+    monkeypatch.setattr(llm, "RETRY_DELAYS", (0,))
+    g = llm.Gemini.__new__(llm.Gemini)
+
+    def down(prompt, schema):
+        raise httpx.ConnectError("down")
+
+    g._ask_once = down
+    with pytest.raises(httpx.ConnectError):
+        g._ask("p", llm.FilePick)
+
+
+def test_wait_for_network_retries_until_dns_works(monkeypatch):
+    import socket
+
+    attempts = []
+
+    def flaky_dns(host, *a, **kw):
+        attempts.append(host)
+        if len(attempts) < 3:
+            raise socket.gaierror(-3, "Temporary failure in name resolution")
+        return [(socket.AF_INET, None, None, "", ("1.2.3.4", 443))]
+
+    monkeypatch.setattr(socket, "getaddrinfo", flaky_dns)
+    assert main.wait_for_network(timeout=5, interval=0) >= 0
+    assert len(attempts) == 2 + len(main.NETWORK_HOSTS)
+
+
+def test_wait_for_network_times_out(monkeypatch):
+    import socket
+
+    def no_dns(*a, **kw):
+        raise socket.gaierror(-3, "Temporary failure in name resolution")
+
+    monkeypatch.setattr(socket, "getaddrinfo", no_dns)
+    with pytest.raises(RuntimeError, match="network not ready"):
+        main.wait_for_network(timeout=0, interval=0)
