@@ -12,7 +12,6 @@ services:
       - prometheus-data:/prometheus
     networks:
       - smi
-    # Come back after a Pi reboot / Docker restart, unless stopped by hand
     restart: unless-stopped
 
   alertmanager:
@@ -24,9 +23,6 @@ services:
       # and be readable by the container user (nobody): chmod 644
       - ./secrets/telegram_bot_token:/etc/alertmanager/secrets/telegram_bot_token:ro
       - ../dispatcher/secrets/dispatcher_token:/etc/alertmanager/secrets/dispatcher_token:ro
-      # Silences + notification log. Named so it also survives `compose down`
-      # (the image's anonymous volume doesn't): otherwise silences are lost and
-      # Telegram gets every still-firing alert again
       - alertmanager-data:/alertmanager
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
