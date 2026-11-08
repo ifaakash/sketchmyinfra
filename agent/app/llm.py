@@ -6,12 +6,19 @@ prompt: the file list is cheap, the contents of ~8 files are enough.
 
 import json
 import logging
+import time
+
+import httpx
 
 from pydantic import BaseModel, Field
 
 from app.edits import Edit
 
 logger = logging.getLogger(__name__)
+
+# Network blips (one bad DNS answer, a dropped connection) shouldn't cost a
+# whole incident: the Job has no retries (backoffLimit 0) by design.
+RETRY_DELAYS = (2, 5, 10)
 
 SYSTEM = """You are an on-call engineer fixing a production bug in SketchMyInfra,
 a FastAPI service that turns prompts into diagrams via the Gemini API.
@@ -49,6 +56,15 @@ class Gemini:
         self.model = model
 
     def _ask(self, prompt: str, schema: type[BaseModel]) -> BaseModel:
+        for delay in RETRY_DELAYS:
+            try:
+                return self._ask_once(prompt, schema)
+            except httpx.TransportError as e:
+                logger.warning("Gemini call failed (%s), retrying in %ss", e, delay)
+                time.sleep(delay)
+        return self._ask_once(prompt, schema)
+
+    def _ask_once(self, prompt: str, schema: type[BaseModel]) -> BaseModel:
         from google.genai import types
 
         response = self.client.models.generate_content(

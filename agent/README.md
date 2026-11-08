@@ -19,8 +19,8 @@ app/repo.py     git clone/push (token via scoped credential helper) + gh pr
 ## Build and import into k3s (on the Pi)
 
 ```bash
-docker build -t smi-agent:0.1.0 agent/
-docker save smi-agent:0.1.0 | sudo k3s ctr images import -
+docker build -t smi-agent:0.1.1 agent/
+docker save smi-agent:0.1.1 | sudo k3s ctr images import -
 sudo k3s ctr images ls | grep smi-agent
 ```
 Bump the tag on every change. With the same tag, k3s keeps using the copy it already has (`IfNotPresent`).
@@ -57,5 +57,5 @@ To smoke test the image with the same restrictions the pod has (fake keys: it cl
 ```bash
 docker run --rm --read-only --user 1000:1000 --cap-drop ALL --tmpfs /work --tmpfs /tmp \
   -e HOME=/work -e AGENT_DRY_RUN=true -e GITHUB_TOKEN=dummy -e GEMINI_API_KEY=bad \
-  -v "$PWD/incident.json:/incident/incident.json:ro" smi-agent:0.1.0
+  -v "$PWD/incident.json:/incident/incident.json:ro" smi-agent:0.1.1
 ```

@@ -122,3 +122,39 @@ def test_clean_env_drops_secrets(monkeypatch):
     env = clean_env()
     assert "GITHUB_TOKEN" not in env and "GEMINI_API_KEY" not in env
     assert env["HOME"] == "/work"
+
+
+def test_gemini_retries_transport_errors(monkeypatch):
+    import httpx
+
+    from app import llm
+
+    monkeypatch.setattr(llm, "RETRY_DELAYS", (0, 0))
+    g = llm.Gemini.__new__(llm.Gemini)
+    calls = []
+
+    def flaky(prompt, schema):
+        calls.append(1)
+        if len(calls) < 3:
+            raise httpx.ConnectError("[Errno 101] Network is unreachable")
+        return "ok"
+
+    g._ask_once = flaky
+    assert g._ask("p", llm.FilePick) == "ok"
+    assert len(calls) == 3
+
+
+def test_gemini_gives_up_after_retries(monkeypatch):
+    import httpx
+
+    from app import llm
+
+    monkeypatch.setattr(llm, "RETRY_DELAYS", (0,))
+    g = llm.Gemini.__new__(llm.Gemini)
+
+    def down(prompt, schema):
+        raise httpx.ConnectError("down")
+
+    g._ask_once = down
+    with pytest.raises(httpx.ConnectError):
+        g._ask("p", llm.FilePick)
