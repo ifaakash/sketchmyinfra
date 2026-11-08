@@ -16,7 +16,7 @@ class Settings:
     work_dir: Path = field(default_factory=lambda: Path(os.environ.get("WORK_DIR", "/work")))
     repo: str = field(default_factory=lambda: os.environ.get("AGENT_REPO", "ifaakash/sketchmyinfra"))
     base_branch: str = field(default_factory=lambda: os.environ.get("AGENT_BASE_BRANCH", "main"))
-    model: str = field(default_factory=lambda: os.environ.get("AGENT_MODEL", "gemini-2.5-flash"))
+    model: str = field(default_factory=lambda: os.environ.get("AGENT_MODEL", "gemini-3.6-flash"))
     # Dry run: do everything except push + open the PR (diff goes to the log)
     dry_run: bool = field(default_factory=lambda: _bool("AGENT_DRY_RUN", False))
     github_token: str = field(default_factory=lambda: os.environ.get("GITHUB_TOKEN", ""))

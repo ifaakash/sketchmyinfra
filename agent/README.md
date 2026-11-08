@@ -43,7 +43,7 @@ kubectl apply -f k8s/agent/secret.yaml
 | `GITHUB_TOKEN`, `GEMINI_API_KEY` | none (required) | `agent-secrets` |
 | `AGENT_DRY_RUN` | `false` | `agent-secrets` |
 | `AGENT_REPO` | `ifaakash/sketchmyinfra` | image env / Secret |
-| `AGENT_MODEL` | `gemini-2.5-flash` | image env / Secret |
+| `AGENT_MODEL` | `gemini-3.6-flash` | image env / Secret |
 
 ## Local test
 
