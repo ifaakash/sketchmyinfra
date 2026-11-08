@@ -158,3 +158,30 @@ def test_gemini_gives_up_after_retries(monkeypatch):
     g._ask_once = down
     with pytest.raises(httpx.ConnectError):
         g._ask("p", llm.FilePick)
+
+
+def test_wait_for_network_retries_until_dns_works(monkeypatch):
+    import socket
+
+    attempts = []
+
+    def flaky_dns(host, *a, **kw):
+        attempts.append(host)
+        if len(attempts) < 3:
+            raise socket.gaierror(-3, "Temporary failure in name resolution")
+        return [(socket.AF_INET, None, None, "", ("1.2.3.4", 443))]
+
+    monkeypatch.setattr(socket, "getaddrinfo", flaky_dns)
+    assert main.wait_for_network(timeout=5, interval=0) >= 0
+    assert len(attempts) == 2 + len(main.NETWORK_HOSTS)
+
+
+def test_wait_for_network_times_out(monkeypatch):
+    import socket
+
+    def no_dns(*a, **kw):
+        raise socket.gaierror(-3, "Temporary failure in name resolution")
+
+    monkeypatch.setattr(socket, "getaddrinfo", no_dns)
+    with pytest.raises(RuntimeError, match="network not ready"):
+        main.wait_for_network(timeout=0, interval=0)
