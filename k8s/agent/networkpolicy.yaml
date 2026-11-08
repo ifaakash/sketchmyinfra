@@ -22,6 +22,12 @@ spec:
           podSelector:
             matchLabels:
               k8s-app: kube-dns
+        # Pods query the kube-dns Service IP; on this k3s the policy is
+        # matched against that IP, not the CoreDNS pod's, so the selector
+        # alone blocks DNS. Still cluster DNS only, no external resolvers.
+        # (kubectl -n kube-system get svc kube-dns)
+        - ipBlock:
+            cidr: 10.43.0.10/32
       ports:
         - { protocol: UDP, port: 53 }
         - { protocol: TCP, port: 53 }
