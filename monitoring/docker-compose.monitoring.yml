@@ -12,6 +12,7 @@ services:
       - prometheus-data:/prometheus
     networks:
       - smi
+    restart: unless-stopped
 
   alertmanager:
     image: prom/alertmanager:latest
@@ -22,14 +23,15 @@ services:
       # and be readable by the container user (nobody): chmod 644
       - ./secrets/telegram_bot_token:/etc/alertmanager/secrets/telegram_bot_token:ro
       - ../dispatcher/secrets/dispatcher_token:/etc/alertmanager/secrets/dispatcher_token:ro
+      - alertmanager-data:/alertmanager
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
-      # Optional: Add storage retention if you want alert history to persist across restarts
       - '--storage.path=/alertmanager'
     ports:
       - "9093:9093"
     networks:
       - smi
+    restart: unless-stopped
 
 networks:
   smi:
@@ -39,3 +41,4 @@ networks:
 
 volumes:
   prometheus-data:
+  alertmanager-data:
