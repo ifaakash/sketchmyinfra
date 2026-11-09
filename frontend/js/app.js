@@ -36,11 +36,23 @@ document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
   initScrollReveal();
   renderHistory();
+  prefillPromptFromUrl();
 
   if (USE_MOCKS) {
     showToast('Running in mock mode (localhost)', 'info', 3000);
   }
 });
+
+// Shareable "try this prompt" links: /?prompt=... fills the input. It never
+// generates on its own, so link previews and crawlers don't spend the quota.
+const MAX_PROMPT_LENGTH = 2000; // matches GenerateRequest.prompt in the API
+function prefillPromptFromUrl() {
+  const prompt = new URLSearchParams(window.location.search).get('prompt')?.trim();
+  const input = $('#prompt-input');
+  if (!prompt || !input) return;
+  input.value = prompt.slice(0, MAX_PROMPT_LENGTH);
+  input.focus();
+}
 
 function bindEvents() {
   // Generate button
