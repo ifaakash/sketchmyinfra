@@ -41,6 +41,7 @@ async function loadFeedback() {
           </div>
         </div>`;
     }).join('');
+    document.getElementById('testimonials')?.classList.replace('hidden', 'flex');
   } catch { /* silent */ }
 }
 
