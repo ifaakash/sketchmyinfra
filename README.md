@@ -142,7 +142,7 @@ infrastructure diagram generator, cloud architecture diagram, PlantUML AI, AWS a
 
 ## License
 
-MIT
+[MIT](LICENSE)
 
 ---
 
