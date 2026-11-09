@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://sketchmyinfra.com/sitemap.xml
+Sitemap: https://www.sketchmyinfra.com/sitemap.xml
