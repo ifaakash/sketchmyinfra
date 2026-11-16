@@ -39,7 +39,7 @@ function buildCard(item) {
     </div>
     <div class="px-5 py-4 border-t border-gray-200 dark:border-gray-800">
       <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-        <span class="font-mono text-brand-400 mr-1.5">&gt;</span>${escapeHtml(item.prompt)}
+        <span class="font-mono text-smi-accent-text mr-1.5">&gt;</span>${escapeHtml(item.prompt)}
       </p>
     </div>
   `;

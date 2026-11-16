@@ -3,47 +3,60 @@
  * load alongside glass.css (which owns --bg, --ink, ...) during the migration.
  * Dark mode follows the existing `.dark` class on <html> (see initTheme in app.js).
  * All text/background pairs below are checked against WCAG AA (4.5:1).
+ * Also loaded by about/feedback/releases and the SEO pages (via tw-config.js).
  */
 
-/* ----- Tokens ----- */
+/* ----- Tokens -----
+ * Brand: navy #14213D, cream #F4EDE0, coral #FF6B5B.
+ * Rule: coral is a FILL (buttons, highlights) with navy text on it (5.7:1).
+ * Never white on coral (2.8:1) or coral text on cream (2.4:1): both fail AA.
+ * Text links use --smi-accent-text, a darker coral that passes on cream.
+ */
 :root {
+  /* Brand primitives (use the semantic tokens below in components) */
+  --smi-navy: #14213D;
+  --smi-cream: #F4EDE0;
+  --smi-coral: #FF6B5B;
+
   /* Surfaces */
-  --smi-bg: #f6f7f9;          /* app ground, behind panels */
-  --smi-surface: #ffffff;     /* panels, header, cards */
-  --smi-surface-2: #f0f2f5;   /* segmented controls, inline code */
-  --smi-canvas: #fbfcfd;      /* diagram area + code block */
-  --smi-canvas-dot: #d5dae1;
-  --smi-selected: #eef3ff;    /* active list row */
+  --smi-bg: #F4EDE0;          /* cream: app ground, behind panels */
+  --smi-surface: #FFFBF5;     /* panels, header, cards */
+  --smi-surface-2: #EFE6D6;   /* segmented controls, inline code */
+  --smi-canvas: #F8F2E8;      /* diagram area + code block */
+  --smi-canvas-dot: #DDD1BC;
+  --smi-selected: #FDE6E1;    /* active list row: coral tint */
 
   /* Lines */
-  --smi-border: #e3e6eb;
-  --smi-border-strong: #c9cfd8;  /* inputs */
-  --smi-border-soft: #eef0f3;
+  --smi-border: #E6DCCB;
+  --smi-border-strong: #CBBDA6;  /* inputs */
+  --smi-border-soft: #EFE7DA;
 
   /* Text */
-  --smi-ink: #14171c;         /* 17.9:1 on surface */
-  --smi-ink-2: #4a5260;       /* 7.9:1 secondary */
-  --smi-ink-3: #5f6775;       /* 5.7:1 labels, meta */
-  --smi-ink-faint: #8b93a1;   /* line numbers only — decorative, not body text */
+  --smi-ink: #14213D;         /* navy, 15.5:1 on surface */
+  --smi-ink-2: #3B4864;       /* 8.9:1 secondary */
+  --smi-ink-3: #56617A;       /* 6.0:1 labels, meta (5.0 on surface-2) */
+  --smi-ink-faint: #8E96A8;   /* line numbers only — decorative, not body text */
 
   /* Accent */
-  --smi-accent: #2558e8;       /* button background; white text 5.8:1 */
-  --smi-accent-hover: #1a43b8;
-  --smi-accent-text: #2558e8;  /* links, active tab text */
-  --smi-on-accent: #ffffff;
-  --smi-strong: #14171c;       /* secondary solid button */
-  --smi-on-strong: #ffffff;
-  --smi-ring: rgba(37, 88, 232, 0.35);
+  --smi-accent: #FF6B5B;       /* coral fill; navy text 5.7:1 */
+  --smi-accent-hover: #FF8475; /* navy text 6.7:1 */
+  --smi-accent-text: #B5382B;  /* deep coral for links/active text, 5.7:1 on surface */
+  --smi-on-accent: #14213D;
+  --smi-accent-soft: #FFE3DE;  /* coral wash: badges, highlights */
+  --smi-strong: #14213D;       /* navy solid button */
+  --smi-strong-hover: #22335A;
+  --smi-on-strong: #F4EDE0;    /* 13.7:1 */
+  --smi-ring: rgba(255, 107, 91, 0.5);
 
   /* Status */
-  --smi-ok: #1f9d55;
-  --smi-warn: #c2410c;         /* 5.2:1 */
-  --smi-warn-bg: #fff4ec;
+  --smi-ok: #2A7046;
+  --smi-warn: #A9480F;         /* 5.6:1 */
+  --smi-warn-bg: #FCEBDD;
 
   /* Code syntax */
-  --smi-code-keyword: #8a5cf6;
-  --smi-code-directive: #2558e8;
-  --smi-code-string: #1f7a45;
+  --smi-code-keyword: #B5382B;
+  --smi-code-directive: #14213D;
+  --smi-code-string: #2A7046;
 
   /* Type */
   --smi-font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -83,42 +96,46 @@
   --smi-codepanel-w: 380px;
 
   /* Elevation */
-  --smi-shadow-sm: 0 1px 2px rgba(20, 23, 28, 0.08);
-  --smi-shadow: 0 8px 24px rgba(20, 23, 28, 0.08);
-  --smi-shadow-sheet: 0 -8px 32px rgba(20, 23, 28, 0.16);
+  --smi-shadow-sm: 0 1px 2px rgba(20, 33, 61, 0.08);
+  --smi-shadow: 0 8px 24px rgba(20, 33, 61, 0.10);
+  --smi-shadow-sheet: 0 -8px 32px rgba(20, 33, 61, 0.18);
 }
 
+/* Dark = navy-based: navy surfaces, cream text, coral accents */
 .dark {
-  --smi-bg: #0e1015;
-  --smi-surface: #161920;
-  --smi-surface-2: #1c2029;
-  --smi-canvas: #12151b;
-  --smi-canvas-dot: #2a2f3a;
-  --smi-selected: #1a2440;
+  --smi-bg: #0B1426;
+  --smi-surface: #14213D;     /* the brand navy */
+  --smi-surface-2: #1B2B4B;
+  --smi-canvas: #0F1A31;
+  --smi-canvas-dot: #24365C;
+  --smi-selected: #33283F;    /* coral tint on navy */
 
-  --smi-border: #2a2f3a;
-  --smi-border-strong: #3a404c;
-  --smi-border-soft: #20242d;
+  --smi-border: #24365C;
+  --smi-border-strong: #34497A;
+  --smi-border-soft: #1A2846;
 
-  --smi-ink: #e8eaee;         /* 14.6:1 */
-  --smi-ink-2: #b4bac6;       /* 9.0:1 */
-  --smi-ink-3: #8f97a5;       /* 6.0:1 */
-  --smi-ink-faint: #5f6775;
+  --smi-ink: #F4EDE0;         /* cream, 13.7:1 on surface */
+  --smi-ink-2: #CDC6B8;       /* 9.4:1 */
+  --smi-ink-3: #A8A396;       /* 6.4:1 (5.6 on surface-2) */
+  --smi-ink-faint: #6E7790;
 
-  --smi-accent: #2558e8;       /* kept: white on a lighter blue fails AA (4.4:1) */
-  --smi-accent-hover: #3d6ff5;
-  --smi-accent-text: #7fa3ff;  /* 7.2:1 */
-  --smi-strong: #e8eaee;
-  --smi-on-strong: #14171c;
-  --smi-ring: rgba(127, 163, 255, 0.45);
+  --smi-accent: #FF6B5B;       /* same coral, navy text */
+  --smi-accent-hover: #FF8475;
+  --smi-accent-text: #FF8A7D;  /* 7.0:1 on surface */
+  --smi-on-accent: #14213D;
+  --smi-accent-soft: #3A2A3A;
+  --smi-strong: #F4EDE0;       /* cream solid button */
+  --smi-strong-hover: #FFFFFF;
+  --smi-on-strong: #14213D;
+  --smi-ring: rgba(255, 138, 125, 0.55);
 
-  --smi-ok: #3fbf75;
-  --smi-warn: #f08a4b;         /* 7.1:1 */
-  --smi-warn-bg: #2a1c14;
+  --smi-ok: #5FCB8C;
+  --smi-warn: #F4A261;         /* 7.8:1 */
+  --smi-warn-bg: #2E2421;
 
-  --smi-code-keyword: #b49aff;
-  --smi-code-directive: #7fa3ff;
-  --smi-code-string: #6fcf97;
+  --smi-code-keyword: #FF8A7D;
+  --smi-code-directive: #9DB4E8;
+  --smi-code-string: #8FD9AE;
 
   --smi-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --smi-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);

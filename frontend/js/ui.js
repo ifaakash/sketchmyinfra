@@ -75,7 +75,7 @@ function togglePumlEdit() {
 
   const isReadOnly = textarea.readOnly;
   textarea.readOnly = !isReadOnly;
-  textarea.classList.toggle('border-indigo-500/50', isReadOnly);
+  textarea.classList.toggle('border-smi-accent', isReadOnly);
   textarea.classList.toggle('border-gray-700/50', !isReadOnly);
   btn.textContent = isReadOnly ? 'Done' : 'Edit';
   actions?.classList.toggle('hidden', !isReadOnly);
@@ -196,10 +196,10 @@ const GITHUB_ICON = `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor
  */
 function signInButtonsHtml(size = 'md') {
   const pad = size === 'sm' ? 'text-xs px-3 py-1.5' : 'text-sm px-5 py-2.5';
-  const base = `${pad} text-white font-medium rounded-lg transition-colors text-center inline-flex items-center justify-center gap-2 no-underline`;
+  const base = `${pad} font-medium rounded-lg transition-colors text-center inline-flex items-center justify-center gap-2 no-underline`;
   return (
-    `<a href="/api/auth/google/login" class="bg-brand-600 hover:bg-brand-500 ${base}">${GOOGLE_ICON}Login with Google</a>` +
-    `<a href="/api/auth/github/login" class="bg-gray-700 hover:bg-gray-600 ${base}">${GITHUB_ICON}Login with GitHub</a>`
+    `<a href="/api/auth/google/login" class="bg-smi-accent hover:bg-smi-accent-hover text-smi-on-accent ${base}">${GOOGLE_ICON}Login with Google</a>` +
+    `<a href="/api/auth/github/login" class="bg-smi-strong hover:bg-smi-strong-hover text-smi-on-strong ${base}">${GITHUB_ICON}Login with GitHub</a>`
   );
 }
 
@@ -305,8 +305,8 @@ function showUpgradePrompt(limit, lastImageUri = null) {
   if (detailEl) {
     detailEl.innerHTML =
       `<p class="mb-3">You\u2019ve hit the free tier limit. But we see you, you\u2019re building something real.</p>` +
-      `<div class="bg-gradient-to-r from-brand-600/10 to-emerald-500/10 border border-brand-500/20 rounded-xl p-4 mb-4 text-left">` +
-        `<p class="text-sm font-semibold text-brand-400 mb-1">SketchMyInfra Pro</p>` +
+      `<div class="bg-smi-accent-soft border border-smi-border rounded-xl p-4 mb-4 text-left">` +
+        `<p class="text-sm font-semibold text-smi-accent-text mb-1">SketchMyInfra Pro</p>` +
         `<ul class="text-xs text-gray-700 dark:text-gray-300 space-y-1 mb-2">` +
           `<li>Unlimited diagram generations</li>` +
           `<li>Priority rendering</li>` +
@@ -314,7 +314,7 @@ function showUpgradePrompt(limit, lastImageUri = null) {
           `<li>Early supporter pricing: <strong class="text-gray-900 dark:text-emerald-400">$5/month</strong></li>` +
         `</ul>` +
       `</div>` +
-      `<button id="btn-notify-pro" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-medium text-sm px-5 py-2.5 rounded-lg transition-colors mb-2">` +
+      `<button id="btn-notify-pro" class="w-full bg-smi-accent hover:bg-smi-accent-hover text-smi-on-accent font-medium text-sm px-5 py-2.5 rounded-lg transition-colors mb-2">` +
         `Count me in \u2022 notify me at launch</button>` +
       `<p class="text-xs text-gray-500 dark:text-gray-500">We\u2019re building this right now. Stay tuned for early access.</p>`;
   }
@@ -349,8 +349,8 @@ function showUpgradePrompt(limit, lastImageUri = null) {
         }
 
         btn.textContent = '\u2705 You\u2019re on the early list!';
-        btn.classList.remove('bg-brand-600', 'hover:bg-brand-500');
-        btn.classList.add('bg-emerald-700', 'cursor-default');
+        btn.classList.remove('bg-smi-accent', 'hover:bg-smi-accent-hover', 'text-smi-on-accent');
+        btn.classList.add('bg-emerald-700', 'text-white', 'cursor-default');
       });
     }
   }, 0);
