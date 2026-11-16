@@ -133,6 +133,7 @@ async function restoreFromHistory(index) {
   showPumlCode(entry.puml);
   // History doesn't keep the IR, so this diagram can't be opened in the editor
   if (typeof setEditableIr === 'function') setEditableIr(null);
+  if (typeof setDiagramGeneration === 'function') setDiagramGeneration(null);
 
   if (entry.imageDataUri) {
     showDiagram(entry.imageDataUri);

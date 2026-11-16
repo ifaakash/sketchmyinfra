@@ -11,7 +11,7 @@ Flow:
 State (CSRF) is a short-lived signed JWT — no server-side storage needed.
 """
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.responses import RedirectResponse
@@ -128,13 +128,16 @@ async def callback(
     user = result.scalar_one_or_none()
 
     if user is None:
+        # New signups start on a Pro trial so "sign in to edit" unlocks the
+        # editor right away; _is_pro() drops them to free once it expires.
         user = User(
             email=info.email,
             name=info.name,
             avatar_url=info.avatar_url,
             oauth_provider=info.provider,
             oauth_id=info.oauth_id,
-            tier="free",
+            tier="pro",
+            trial_expires_at=datetime.now(timezone.utc) + timedelta(days=settings.pro_trial_days),
         )
         db.add(user)
     else:

@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     rate_limit_anonymous: int = 3
     rate_limit_free: int = 5
 
+    # Pro trial every new signup gets (days)
+    pro_trial_days: int = 1
+
     # Admin
     admin_api_key: str = ""
 

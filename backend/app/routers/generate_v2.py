@@ -20,11 +20,13 @@ from app.generators.plantuml_gen import generate_plantuml
 from app.ir.router import route
 from app.ir.schema import DiagramTrack
 from app.metrics import record_editor_open, record_generation
-from app.middleware.auth import get_current_user_optional
+from app.middleware.auth import get_current_user, get_current_user_optional
 from app.models import Generation, User
 from app.schemas import (
+    ClaimedGeneration,
     GenerateRequest,
     GenerateV2Response,
+    GenerationRating,
     GenerationStatsItem,
     GenerationStatsResponse,
     GenerationStatusCounts,
@@ -322,6 +324,109 @@ async def record_opened_in_editor(
     exists = await db.execute(select(Generation.id).where(Generation.id == generation_id))
     if exists.scalar_one_or_none() is None:
         raise HTTPException(status_code=404, detail="Generation not found")
+
+
+@router.post("/generations/{generation_id}/rating", status_code=204)
+async def rate_generation(
+    generation_id: uuid.UUID,
+    body: GenerationRating,
+    db: AsyncSession = Depends(get_db),
+):
+    """Record the inline 👍/👎 under a diagram.
+
+    Public like opened-in-editor: most raters are anonymous, and the UUID is
+    only known to whoever generated it. A second vote replaces the first.
+    """
+    thumbs_down = body.rating == -1
+    result = await db.execute(
+        update(Generation)
+        .where(Generation.id == generation_id)
+        .values(
+            rating=body.rating,
+            rating_reasons=body.reasons if thumbs_down else None,
+            rating_comment=body.comment if thumbs_down else None,
+            rated_at=datetime.now(timezone.utc),
+        )
+        .returning(Generation.id)
+    )
+    if result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Generation not found")
+    await db.commit()
+
+
+@router.post("/generations/{generation_id}/downloaded", status_code=204)
+async def record_downloaded(
+    generation_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """Mark a generation as downloaded. Idempotent: only the first download counts."""
+    result = await db.execute(
+        update(Generation)
+        .where(Generation.id == generation_id, Generation.downloaded_at.is_(None))
+        .values(downloaded_at=datetime.now(timezone.utc))
+        .returning(Generation.id)
+    )
+    if result.scalar_one_or_none() is not None:
+        await db.commit()
+        return
+
+    exists = await db.execute(select(Generation.id).where(Generation.id == generation_id))
+    if exists.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Generation not found")
+
+
+CLAIM_WINDOW = timedelta(hours=24)
+
+
+@router.post("/generations/{generation_id}/claim", response_model=ClaimedGeneration)
+async def claim_generation(
+    generation_id: uuid.UUID,
+    request: Request,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Attach a diagram generated before sign-in to the new session's account.
+
+    The frontend stashes the generation id before the OAuth redirect and claims
+    it on return. Only a recent, unowned, successful row from the same IP can be
+    claimed, so a leaked id can't pull someone else's diagram into an account.
+    Claiming again as the same user returns the row (page reloads are safe).
+    """
+    ip = _get_client_ip(request)
+    result = await db.execute(
+        update(Generation)
+        .where(
+            Generation.id == generation_id,
+            Generation.user_id.is_(None),
+            Generation.status == "success",
+            Generation.ip_address == cast(ip, INET),
+            Generation.created_at > datetime.now(timezone.utc) - CLAIM_WINDOW,
+        )
+        .values(user_id=user.id)
+        .returning(Generation)
+    )
+    gen = result.scalar_one_or_none()
+    if gen is not None:
+        await db.commit()
+    else:
+        owned = await db.execute(
+            select(Generation).where(Generation.id == generation_id, Generation.user_id == user.id)
+        )
+        gen = owned.scalar_one_or_none()
+        if gen is None:
+            # One answer for unknown, someone else's, too old or another IP
+            raise HTTPException(status_code=404, detail="Nothing to claim")
+
+    has_graph = bool(gen.ir_data and gen.ir_data.get("graph"))
+    return ClaimedGeneration(
+        generation_id=gen.id,
+        prompt=gen.prompt,
+        code=gen.puml_code,
+        renderer=gen.renderer,
+        editable=has_graph,
+        # Same rule as /generate: the IR is what makes editing possible, so Pro only
+        ir=gen.ir_data if has_graph and _is_pro(user) else None,
+    )
 
 
 @router.get("/generations/stats", response_model=GenerationStatsResponse)
