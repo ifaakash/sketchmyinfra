@@ -148,6 +148,88 @@
   outline-offset: 2px;
 }
 
+/* ----- App shell -----
+ * The page is exactly one viewport tall and never scrolls. Every pane owns its
+ * own scroll (or, for the canvas, its own zoom/pan). This is what stops a tall
+ * diagram from stretching the page. 100vh first as a fallback for browsers
+ * without dvh; dvh tracks the mobile URL bar so the tab bar isn't hidden.
+ */
+.smi-shell {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Three columns: prompt | canvas | code. min-height: 0 lets grid children
+   shrink below their content height, which is what makes them scroll. */
+.smi-workspace {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: var(--smi-sidebar-w) minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr);
+}
+#puml-panel { width: var(--smi-codepanel-w); }
+.smi-workspace[data-code="closed"] #puml-panel { display: none; }
+
+@media (max-width: 1279px) {
+  :root {
+    --smi-sidebar-w: 288px;
+    --smi-codepanel-w: 320px;
+  }
+}
+
+/* Phones: one pane at a time, picked by the bottom tab bar (js/workspace.js) */
+@media (max-width: 767px) {
+  .smi-workspace { grid-template-columns: minmax(0, 1fr); }
+  /* [data-view] raises specificity above Tailwind's .flex, which loads later */
+  .smi-workspace[data-view] > * { display: none; }
+  .smi-workspace[data-view="prompt"] > #prompt-pane,
+  .smi-workspace[data-view="diagram"] > #generator,
+  .smi-workspace[data-view="code"] > #puml-panel:not(.hidden) { display: flex; }
+  #puml-panel { width: auto; border-left: 0; }
+}
+
+/* Bottom tab bar (phones) */
+.smi-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: var(--smi-text-xs);
+  font-weight: 500;
+  color: var(--smi-ink-3);
+}
+.smi-tab[aria-selected="true"] { color: var(--smi-accent-text); font-weight: 600; }
+.smi-tab:disabled { opacity: 0.4; }
+
+/* ----- Diagram canvas (zoom/pan driven by js/canvas.js) ----- */
+.smi-viewport {
+  overflow: hidden;
+  touch-action: none;   /* we handle pinch/drag ourselves */
+  cursor: grab;
+  outline: none;
+}
+.smi-viewport.is-panning { cursor: grabbing; }
+.smi-viewport:focus-visible { box-shadow: inset 0 0 0 2px var(--smi-ring); }
+.smi-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.smi-stage img {
+  display: block;
+  max-width: none;      /* natural size; the transform does the scaling */
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.smi-viewport:fullscreen { background-color: var(--smi-canvas); }
+
 /* Dotted diagram canvas */
 .smi-dots {
   background-color: var(--smi-canvas);

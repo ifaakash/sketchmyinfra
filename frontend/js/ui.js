@@ -23,6 +23,11 @@ function showPanel(name) {
       el.classList.toggle('hidden', key !== name);
     }
   });
+  // Phones show one pane at a time: anything happening on the canvas
+  // (loading, result, error) brings the Diagram tab forward
+  if (name !== 'empty' && typeof setWorkspaceView === 'function') {
+    setWorkspaceView('diagram');
+  }
 }
 
 /**
@@ -46,6 +51,7 @@ function showPumlCode(code) {
     $('#puml-actions')?.classList.add('hidden');
     $('#btn-edit-puml').textContent = 'Edit';
   }
+  if (typeof setCodeAvailable === 'function') setCodeAvailable(true);
 }
 
 /**
@@ -54,6 +60,7 @@ function showPumlCode(code) {
 function hidePumlCode() {
   const panel = $('#puml-panel');
   if (panel) panel.classList.add('hidden');
+  if (typeof setCodeAvailable === 'function') setCodeAvailable(false);
 }
 
 /**
@@ -94,6 +101,9 @@ function showDiagram(dataUri) {
     img.src = dataUri;
   }
   showPanel('diagram');
+  // canvas.js fits on the image's load event; an image that is already
+  // loaded (same src again) won't fire it, so fit now too
+  if (img?.complete) window.diagramCanvas?.fit();
 }
 
 /**

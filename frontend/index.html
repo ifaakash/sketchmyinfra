@@ -34,9 +34,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="/js/tw-config.js?v=1"></script>
-  <link rel="stylesheet" href="/css/workspace.css?v=2">
+  <link rel="stylesheet" href="/css/workspace.css?v=3">
 </head>
-<body class="smi-app min-h-screen flex flex-col">
+<!-- smi-shell: the page is exactly one viewport tall and never scrolls; panes scroll on their own -->
+<body class="smi-app smi-shell">
 
   <h1 class="smi-sr-only">AI Architecture Diagram Generator</h1>
 
@@ -83,10 +84,11 @@
   </header>
 
   <!-- ===================== WORKSPACE ===================== -->
-  <div class="flex-1 flex flex-wrap min-h-0">
+  <!-- data-view: which pane shows on phones (prompt|diagram|code). data-code: code column open/closed on desktop. Both set by js/workspace.js -->
+  <div id="workspace" class="smi-workspace" data-view="prompt" data-code="open">
 
     <!-- Left: prompt, templates, history -->
-    <aside aria-label="Prompt" class="flex-[1_1_300px] max-w-[var(--smi-sidebar-w)] max-md:max-w-none min-w-0 bg-smi-surface border-r border-smi-border p-4 flex flex-col gap-5">
+    <aside id="prompt-pane" aria-label="Prompt" class="min-w-0 min-h-0 overflow-y-auto bg-smi-surface border-r border-smi-border p-4 flex flex-col gap-5">
       <section class="flex flex-col gap-2">
         <label for="prompt-input" class="smi-label">Describe your infra</label>
         <textarea
@@ -130,14 +132,14 @@
           <h2 class="smi-label">Recent</h2>
           <button id="btn-clear-history" class="text-[12px] text-smi-ink-3 hover:text-smi-ink">Clear</button>
         </div>
-        <div id="history-list" class="flex flex-col gap-0.5 max-h-72 overflow-y-auto">
+        <div id="history-list" class="flex flex-col gap-0.5">
           <p id="history-empty" class="text-smi-ink-3 text-[12px] py-3">No diagrams yet</p>
         </div>
       </section>
     </aside>
 
     <!-- Center: diagram canvas -->
-    <main id="generator" class="smi-dots flex-[999_1_420px] min-w-0 min-h-[520px] flex flex-col">
+    <main id="generator" class="smi-dots min-w-0 min-h-0 flex flex-col overflow-hidden">
 
       <div id="empty-state" class="flex-1 flex flex-col items-center justify-center p-8 text-center">
         <svg class="w-12 h-12 mb-4 text-smi-ink-faint" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M10 6.5h4a2.5 2.5 0 0 1 2.5 2.5v5"/></svg>
@@ -151,7 +153,8 @@
       </div>
 
       <div id="diagram-state" class="hidden flex-1 flex flex-col min-h-0">
-        <div class="flex flex-wrap items-center gap-1.5 px-4 py-3">
+        <!-- Toolbar: flex-none, outside the viewport, so it never scrolls away -->
+        <div class="flex-none flex flex-wrap items-center gap-1.5 px-4 py-2.5 border-b border-smi-border bg-smi-surface">
           <button id="btn-download-png" class="h-8 px-3 rounded-lg border border-smi-border bg-smi-surface text-[12px] font-medium text-smi-ink hover:border-smi-border-strong">PNG</button>
           <button id="btn-download-svg" class="h-8 px-3 rounded-lg border border-smi-border bg-smi-surface text-[12px] font-medium text-smi-ink hover:border-smi-border-strong">SVG</button>
           <span class="flex-1"></span>
@@ -162,13 +165,41 @@
           </button>
           <button id="btn-iterate" class="h-8 px-3 rounded-lg border border-smi-border bg-smi-surface text-[12px] font-medium text-smi-ink hover:border-smi-border-strong">Iterate</button>
           <button id="btn-new" class="h-8 px-3 rounded-lg bg-smi-strong text-smi-on-strong text-[12px] font-semibold">New</button>
+          <button id="btn-toggle-code" type="button" aria-pressed="true" aria-controls="puml-panel" class="hidden md:inline-flex h-8 px-2.5 rounded-lg border border-smi-border bg-smi-surface text-[12px] font-medium text-smi-ink items-center gap-1.5 hover:border-smi-border-strong aria-pressed:bg-smi-surface-2" title="Show or hide the code panel">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>
+            Code
+          </button>
         </div>
-        <div class="flex-1 overflow-auto px-6 pb-6 flex items-start justify-center">
-          <!-- Diagrams render on white in both themes: PlantUML/D2 output assumes a light background -->
-          <img id="diagram-image" class="max-w-full h-auto bg-white rounded-xl border border-smi-border shadow-smi p-4 cursor-zoom-in" alt="AI-generated architecture diagram" />
-        </div>
-        <!-- Inline rating for a fresh generation. Shown by feedback.js (showRatingRow). -->
-        <div id="rating-row" class="hidden flex-none px-6 pb-4 flex flex-col items-center gap-2 text-[13px]">
+
+        <!-- Canvas viewport: fixed size, content is moved with a CSS transform (js/canvas.js) -->
+        <div id="diagram-viewport" class="smi-viewport relative flex-1 min-h-0" tabindex="0" aria-label="Diagram canvas. Drag to pan, Ctrl+scroll or pinch to zoom, 0 to fit.">
+          <div id="diagram-stage" class="smi-stage">
+            <!-- Diagrams render on white in both themes: PlantUML/D2 output assumes a light background -->
+            <img id="diagram-image" class="bg-white rounded-xl border border-smi-border shadow-smi p-4" alt="AI-generated architecture diagram" draggable="false" />
+          </div>
+
+          <!-- Zoom controls -->
+          <div class="absolute top-3 right-3 flex items-center gap-0.5 p-0.5 rounded-lg border border-smi-border bg-smi-surface shadow-smi-sm" role="toolbar" aria-label="Zoom">
+            <button id="btn-zoom-out" type="button" class="w-8 h-8 grid place-items-center rounded-md text-smi-ink-2 hover:text-smi-ink hover:bg-smi-surface-2" title="Zoom out (−)" aria-label="Zoom out">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
+            </button>
+            <button id="btn-zoom-reset" type="button" class="h-8 min-w-[52px] px-1 rounded-md font-mono text-[11px] text-smi-ink-2 hover:text-smi-ink hover:bg-smi-surface-2" title="Actual size (1)" aria-label="Reset to 100%">
+              <span id="zoom-level">100%</span>
+            </button>
+            <button id="btn-zoom-in" type="button" class="w-8 h-8 grid place-items-center rounded-md text-smi-ink-2 hover:text-smi-ink hover:bg-smi-surface-2" title="Zoom in (+)" aria-label="Zoom in">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+            <span class="w-px h-5 bg-smi-border mx-0.5" aria-hidden="true"></span>
+            <button id="btn-zoom-fit" type="button" class="w-8 h-8 grid place-items-center rounded-md text-smi-ink-2 hover:text-smi-ink hover:bg-smi-surface-2" title="Fit to screen (0)" aria-label="Fit to screen">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+            </button>
+            <button id="btn-fullscreen" type="button" class="hidden w-8 h-8 place-items-center rounded-md text-smi-ink-2 hover:text-smi-ink hover:bg-smi-surface-2" title="Full screen (F)" aria-label="Toggle full screen">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+            </button>
+          </div>
+
+        <!-- Inline rating for a fresh generation. Shown by feedback.js (showRatingRow). Floats over the canvas so it is always in view. -->
+        <div id="rating-row" class="hidden absolute bottom-3 left-1/2 -translate-x-1/2 w-max max-w-[calc(100%-24px)] px-4 py-2.5 rounded-xl border border-smi-border bg-smi-surface shadow-smi flex flex-col items-center gap-2 text-[13px]">
           <div id="rating-ask" class="flex items-center gap-2">
             <span class="text-smi-ink-2">Was this diagram useful?</span>
             <button type="button" data-rating="1" aria-label="Yes, useful" class="rating-btn h-8 w-10 rounded-lg border border-smi-border bg-smi-surface text-[15px] hover:border-smi-border-strong">👍</button>
@@ -190,6 +221,7 @@
           </form>
           <p id="rating-thanks" class="hidden text-smi-ok font-medium"></p>
         </div>
+        </div><!-- /#diagram-viewport -->
       </div>
 
       <div id="error-state" class="hidden flex-1 relative overflow-hidden">
@@ -209,8 +241,8 @@
     </main>
 
     <!-- Right: generated code (hidden until a diagram exists) -->
-    <aside id="puml-panel" aria-label="Generated code" class="hidden flex-[1_1_320px] max-w-[var(--smi-codepanel-w)] max-xl:max-w-none min-w-0 bg-smi-surface border-l border-smi-border flex flex-col">
-      <div class="h-11 flex items-center gap-2 px-3 border-b border-smi-border">
+    <aside id="puml-panel" aria-label="Generated code" class="hidden min-w-0 min-h-0 bg-smi-surface border-l border-smi-border flex flex-col">
+      <div class="h-11 flex-none flex items-center gap-2 px-3 border-b border-smi-border">
         <span id="puml-label" class="font-semibold text-smi-ink">Diagram Code</span>
         <span class="flex-1"></span>
         <button id="btn-copy-puml" class="h-8 px-2.5 rounded-md border border-smi-border text-[12px] font-medium text-smi-ink-2 hover:text-smi-ink">Copy</button>
@@ -218,33 +250,44 @@
       </div>
       <textarea
         id="puml-code"
-        class="smi-code flex-1 w-full min-h-[320px] p-3 border-0 resize-none focus:outline-none"
+        class="smi-code flex-1 w-full min-h-0 p-3 border-0 resize-none focus:outline-none"
         spellcheck="false"
         aria-label="Diagram code"
         readonly
       ></textarea>
-      <div id="puml-actions" class="hidden p-3 border-t border-smi-border">
+      <div id="puml-actions" class="hidden flex-none p-3 border-t border-smi-border">
         <button id="btn-render" class="h-10 w-full rounded-lg bg-smi-accent hover:bg-smi-accent-hover text-smi-on-accent font-semibold">Re-render diagram</button>
       </div>
     </aside>
   </div>
 
   <!-- ===================== STATUS BAR ===================== -->
-  <footer class="h-status flex-none px-4 border-t border-smi-border bg-smi-surface flex items-center gap-4 text-[11px] text-smi-ink-3">
+  <!-- Phones: one pane at a time. Replaces the status bar below md. -->
+  <nav id="mobile-tabs" class="md:hidden flex-none h-14 grid grid-cols-3 border-t border-smi-border bg-smi-surface" role="tablist" aria-label="Workspace view">
+    <button type="button" role="tab" data-view="prompt" aria-selected="true" aria-controls="prompt-pane" class="smi-tab">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7"/></svg>
+      Prompt
+    </button>
+    <button type="button" role="tab" data-view="diagram" aria-selected="false" aria-controls="generator" class="smi-tab">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M10 6.5h4a2.5 2.5 0 0 1 2.5 2.5v5"/></svg>
+      Diagram
+    </button>
+    <button type="button" role="tab" data-view="code" aria-selected="false" aria-controls="puml-panel" class="smi-tab" disabled>
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>
+      Code
+    </button>
+  </nav>
+
+  <footer class="hidden md:flex h-status flex-none px-4 border-t border-smi-border bg-smi-surface items-center gap-4 text-[11px] text-smi-ink-3">
     <span>&copy; 2026 SketchMyInfra</span>
-    <a href="/releases/" class="hidden sm:inline hover:text-smi-ink no-underline">Releases</a>
+    <a href="/releases/" class="hover:text-smi-ink no-underline">Releases</a>
     <!-- Shown by feedback.js (showFeedbackForm) -->
     <a id="feedback-fab" href="/feedback/" class="hidden hover:text-smi-ink no-underline">Feedback</a>
-    <span class="ml-auto hidden sm:inline font-mono">Ctrl/⌘ + Enter to generate</span>
+    <span class="ml-auto font-mono">⌘/Ctrl+↵ generate · 0 fit · +/− zoom · drag to pan</span>
   </footer>
 
   <!-- Toast Container -->
   <div id="toast-container" class="fixed top-16 right-4 z-50 space-y-2"></div>
-
-  <!-- Image Zoom Modal -->
-  <div id="zoom-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 cursor-zoom-out">
-    <img id="zoom-image" class="max-w-[95vw] max-h-[95vh] object-contain bg-white rounded-lg" alt="Zoomed diagram" />
-  </div>
 
   <!-- Pro upsell for Open in Editor. Payments aren't live yet, so this collects interest. -->
   <div id="pro-modal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="pro-modal-title">
@@ -300,10 +343,12 @@
   <!-- Scripts — ?v= cache-buster, bump on each deploy -->
   <script src="/js/mock.js?v=4"></script>
   <script src="/js/api.js?v=7"></script>
-  <script src="/js/ui.js?v=7"></script>
+  <script src="/js/workspace.js?v=1"></script>
+  <script src="/js/canvas.js?v=1"></script>
+  <script src="/js/ui.js?v=8"></script>
   <script src="/js/history.js?v=7"></script>
   <script src="/js/feedback.js?v=3"></script>
   <script src="/js/auth.js?v=7"></script>
-  <script src="/js/app.js?v=18"></script>
+  <script src="/js/app.js?v=19"></script>
 </body>
 </html>

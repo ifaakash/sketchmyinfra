@@ -121,19 +121,8 @@ function bindEvents() {
     showToast('History cleared', 'info', 2000);
   });
 
-  // Image zoom
-  $('#diagram-image')?.addEventListener('click', () => {
-    const modal = $('#zoom-modal');
-    const zoomImg = $('#zoom-image');
-    if (modal && zoomImg && currentImageUri) {
-      zoomImg.src = currentImageUri;
-      modal.classList.remove('hidden');
-    }
-  });
-
-  $('#zoom-modal')?.addEventListener('click', () => {
-    $('#zoom-modal')?.classList.add('hidden');
-  });
+  // Image zoom/pan lives in js/canvas.js (the old click-to-zoom modal
+  // conflicted with drag-to-pan and is gone)
 
   // Theme toggle
   $('#btn-theme')?.addEventListener('click', toggleTheme);
@@ -384,8 +373,8 @@ function handleIterate() {
     input.focus();
     input.setSelectionRange(input.value.length, input.value.length);
   }
-  // Scroll to generator section
-  document.getElementById('generator')?.scrollIntoView({ behavior: 'smooth' });
+  // Phones: the prompt lives on its own tab
+  if (typeof setWorkspaceView === 'function') setWorkspaceView('prompt');
   showToast('Edit your prompt and generate again', 'info', 2000);
 }
 
@@ -404,6 +393,7 @@ function handleNew() {
   setDiagramGeneration(null);
   hidePumlCode();
   showPanel('empty');
+  if (typeof setWorkspaceView === 'function') setWorkspaceView('prompt');
   input?.focus();
 }
 
