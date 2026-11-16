@@ -13,8 +13,8 @@ const toolbarStyle = {
   alignItems: "center",
   justifyContent: "space-between",
   padding: "0 1rem",
-  background: "#0b1121",
-  borderBottom: "1px solid #1a2744",
+  background: "var(--d-bar)",
+  borderBottom: "1px solid var(--d-divider)",
   flexShrink: 0,
 };
 
@@ -24,7 +24,7 @@ const backBtn = {
   gap: 6,
   background: "none",
   border: "none",
-  color: "#9ca3af",
+  color: "var(--d-ink-2)",
   cursor: "pointer",
   fontSize: "0.8rem",
   fontWeight: 500,
@@ -36,7 +36,7 @@ const backBtn = {
 const titleInput = {
   background: "transparent",
   border: "1px solid transparent",
-  color: "#e5e7eb",
+  color: "var(--d-ink)",
   fontSize: "0.95rem",
   fontWeight: 600,
   padding: "4px 8px",
@@ -71,9 +71,9 @@ const shareBtn = {
 
 function SaveStatus({ status }) {
   const config = {
-    saved: { color: "#34d399", bg: "rgba(52,211,153,0.1)", label: "Saved", dot: true },
-    saving: { color: "#fbbf24", bg: "rgba(251,191,36,0.1)", label: "Saving...", dot: true },
-    unsaved: { color: "#6b7280", bg: "rgba(107,114,128,0.1)", label: "Unsaved", dot: false },
+    saved: { color: "var(--d-ok)", bg: "rgba(52,211,153,0.1)", label: "Saved", dot: true },
+    saving: { color: "var(--d-warn)", bg: "rgba(251,191,36,0.1)", label: "Saving...", dot: true },
+    unsaved: { color: "var(--d-muted)", bg: "rgba(107,114,128,0.1)", label: "Unsaved", dot: false },
   }[status];
 
   return (
@@ -302,13 +302,13 @@ export default function Editor({ theme, user }) {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "#070f20",
-          color: "#9ca3af",
+          background: "var(--d-bg)",
+          color: "var(--d-ink-2)",
           gap: 16,
         }}
       >
         <p style={{ fontSize: "1.1rem" }}>{loadError}</p>
-        <button style={{ ...shareBtn, background: "#374151" }} onClick={() => navigate("/")}>
+        <button style={{ ...shareBtn, background: "var(--d-btn-bg)", color: "var(--d-ink)" }} onClick={() => navigate("/")}>
           Back to Gallery
         </button>
       </div>
@@ -323,8 +323,8 @@ export default function Editor({ theme, user }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#070f20",
-          color: "#6b7280",
+          background: "var(--d-bg)",
+          color: "var(--d-muted)",
         }}
       >
         Loading...
@@ -339,15 +339,15 @@ export default function Editor({ theme, user }) {
           <button
             style={backBtn}
             onClick={() => navigate("/")}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "#e5e7eb")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--d-ink)")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--d-ink-2)")}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
             Gallery
           </button>
-          <div style={{ width: 1, height: 20, background: "#1a2744" }} />
+          <div style={{ width: 1, height: 20, background: "var(--d-divider)" }} />
           <input
             type="text"
             value={title}
@@ -365,8 +365,9 @@ export default function Editor({ theme, user }) {
           <button
             style={{
               ...shareBtn,
-              background: saveStatus === "saving" ? "#374151" : "#1e293b",
-              border: "1px solid #374151",
+              background: saveStatus === "saving" ? "var(--d-btn-hover)" : "var(--d-btn-bg)",
+              color: "var(--d-ink)",
+              border: "1px solid var(--d-btn-border)",
               opacity: saveStatus === "saving" ? 0.6 : 1,
               cursor: saveStatus === "saving" ? "default" : "pointer",
             }}
@@ -374,10 +375,10 @@ export default function Editor({ theme, user }) {
             disabled={saveStatus === "saving"}
             title="Save (Ctrl+S)"
             onMouseEnter={(e) => {
-              if (saveStatus !== "saving") e.target.style.background = "#334155";
+              if (saveStatus !== "saving") e.target.style.background = "var(--d-btn-hover)";
             }}
             onMouseLeave={(e) => {
-              if (saveStatus !== "saving") e.target.style.background = "#1e293b";
+              if (saveStatus !== "saving") e.target.style.background = "var(--d-btn-bg)";
             }}
           >
             <svg
@@ -413,10 +414,10 @@ export default function Editor({ theme, user }) {
           role="alert"
           style={{
             padding: "8px 1rem",
-            background: "#3b1d1d",
-            color: "#fca5a5",
+            background: "var(--d-danger-bg)",
+            color: "var(--d-danger)",
             fontSize: "0.8rem",
-            borderBottom: "1px solid #7f1d1d",
+            borderBottom: "1px solid var(--d-danger-border)",
           }}
         >
           {importError}

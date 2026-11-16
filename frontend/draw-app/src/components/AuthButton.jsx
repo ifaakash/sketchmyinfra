@@ -20,7 +20,7 @@ const linkStyle = {
   padding: "4px 10px",
   fontSize: "0.8rem",
   fontWeight: 500,
-  color: "#9ca3af",
+  color: "var(--d-ink-2)",
   textDecoration: "none",
   borderRadius: 6,
   transition: "color 0.15s, background 0.15s",
@@ -47,7 +47,7 @@ const initialAvatarStyle = {
 const logoutBtn = {
   background: "none",
   border: "none",
-  color: "#6b7280",
+  color: "var(--d-muted)",
   fontSize: "0.8rem",
   fontWeight: 500,
   cursor: "pointer",
@@ -82,7 +82,7 @@ export default function AuthButton({ user, onAuthChange }) {
           style={linkStyle}
           title="Sign in with Google"
           onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "var(--d-ink-2)")}
         >
           {googleIcon}
           <span>Google</span>
@@ -92,7 +92,7 @@ export default function AuthButton({ user, onAuthChange }) {
           style={linkStyle}
           title="Sign in with GitHub"
           onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "#9ca3af")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "var(--d-ink-2)")}
         >
           {githubIcon}
           <span>GitHub</span>
@@ -115,7 +115,7 @@ export default function AuthButton({ user, onAuthChange }) {
         style={{
           fontSize: "0.8rem",
           fontWeight: 500,
-          color: "#d1d5db",
+          color: "var(--d-ink)",
           maxWidth: 120,
           overflow: "hidden",
           textOverflow: "ellipsis",
@@ -128,8 +128,8 @@ export default function AuthButton({ user, onAuthChange }) {
         style={logoutBtn}
         onClick={handleLogout}
         disabled={loggingOut}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "#e5e7eb")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = "#6b7280")}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "var(--d-ink)")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "var(--d-muted)")}
       >
         {loggingOut ? "..." : "Logout"}
       </button>
