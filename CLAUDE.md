@@ -26,7 +26,7 @@ Whenever implementation depends on a framework, SDK, library or API, delegate to
 | Diagram Rendering | PlantUML server (Jetty, server-side) + Mermaid.js (client-side) |
 | Database | PostgreSQL 16, Alembic migrations |
 | Auth | OAuth 2.0 (Google, GitHub), JWT sessions (HS256), HttpOnly cookies |
-| Infra | k3s on Raspberry Pi 5, Traefik ingress, Cloudflare Tunnel |
+| Infra | Production (sketchmyinfra.com): Docker Compose on Raspberry Pi 5, behind Cloudflare Tunnel |
 
 ## Common Commands
 
