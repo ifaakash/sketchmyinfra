@@ -22,26 +22,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            surface: '#070f20',
-            border: '#1a3464',
-            brand: { 50: '#eef2ff', 100: '#e0e7ff', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 800: '#1e2a6e', 900: '#0f1840' },
-            night: { 800: '#0a1628', 900: '#060d1b', 950: '#030810' },
-          },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-            mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
-          }
-        }
-      }
-    }
-  </script>
-  <link rel="stylesheet" href="../css/style.css?v=4">
+  <script src="/js/tw-config.js?v=2"></script>
+  <link rel="stylesheet" href="../css/style.css?v=5">
 </head>
 <body class="text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300 bg-pattern">
 
@@ -49,21 +31,13 @@
   <nav class="fixed top-0 inset-x-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-800/50">
     <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
       <a href="/" class="flex items-center gap-2.5 group">
-        <div class="w-9 h-9 bg-brand-600 rounded-lg flex items-center justify-center group-hover:bg-brand-500 transition-colors">
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
-            <path d="M6 18l1.5-4.5L11 17l-5 1z" fill="#fbbf24"/>
-            <path d="M7.5 13.5l7.5-7.5 3 3-7.5 7.5z" fill="white" opacity="0.9"/>
-            <circle cx="18" cy="6" r="2.5" fill="#34d399" opacity="0.85"/>
-            <circle cx="6" cy="6" r="2" fill="#818cf8" opacity="0.7"/>
-            <line x1="8" y1="6" x2="15.5" y2="6" stroke="white" stroke-width="0.8" opacity="0.4"/>
-          </svg>
-        </div>
+        <svg class="w-7 h-7 text-brand-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M10 6.5h4a2.5 2.5 0 0 1 2.5 2.5v5"/></svg>
         <span class="text-xl font-bold tracking-tight">SketchMyInfra</span>
       </a>
       <div class="flex items-center gap-6">
         <a href="/" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Home</a>
         <a href="/draw/" target="_blank" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Draw</a>
-        <a href="/#generator" class="bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors">Try Free</a>
+        <a href="/#generator" class="bg-brand-500 hover:bg-brand-400 text-gray-900 text-sm font-medium px-5 py-2 rounded-lg transition-colors">Try Free</a>
       </div>
     </div>
   </nav>
@@ -82,7 +56,7 @@
       </p>
       <button id="open-feedback-btn"
         onclick="document.getElementById('feedback-form-section').scrollIntoView({behavior:'smooth'})"
-        class="bg-brand-600 hover:bg-brand-500 text-white font-semibold px-8 py-3 rounded-xl transition-colors">
+        class="bg-brand-500 hover:bg-brand-400 text-gray-900 font-semibold px-8 py-3 rounded-xl transition-colors">
         Share Your Feedback
       </button>
     </div>
@@ -94,7 +68,7 @@
       <div id="fb-page-list" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         <!-- Populated by JS -->
       </div>
-      <p id="fb-page-empty" class="text-center text-gray-500 py-16 text-sm hidden">No feedback yet. Be the first!</p>
+      <p id="fb-page-empty" class="text-center text-gray-500 py-16 text-sm hidden dark:text-gray-400">No feedback yet. Be the first!</p>
     </div>
   </section>
 
@@ -107,7 +81,7 @@
           <svg class="w-8 h-8 text-brand-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
         </div>
         <h3 class="text-xl font-bold mb-2">Login to share feedback</h3>
-        <p class="text-gray-500 text-sm mb-6">Sign in with Google or GitHub to submit your feedback.</p>
+        <p class="text-gray-500 text-sm mb-6 dark:text-gray-400">Sign in with Google or GitHub to submit your feedback.</p>
         <div class="flex justify-center gap-3">
           <a href="/api/auth/google/login" class="flex items-center gap-2 text-sm font-medium bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 px-5 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M21.8 10.2h-9.6v3.9h5.5c-.25 1.4-1.55 4.1-5.5 4.1-3.3 0-6-2.75-6-6.15s2.7-6.15 6-6.15c1.9 0 3.15.8 3.87 1.5l2.65-2.55C17.05 3.3 14.85 2.4 12.2 2.4 6.9 2.4 2.6 6.7 2.6 12s4.3 9.6 9.6 9.6c5.55 0 9.2-3.9 9.2-9.4 0-.63-.07-1.1-.15-1.55z" fill="currentColor"/></svg>
@@ -123,7 +97,7 @@
       <!-- Feedback form (shown when logged in) -->
       <div id="fb-form" class="hidden">
         <h3 class="text-xl font-bold mb-1 text-center">Share your experience</h3>
-        <p class="text-gray-500 text-sm mb-6 text-center">Your feedback is displayed publicly and helps others decide.</p>
+        <p class="text-gray-500 text-sm mb-6 text-center dark:text-gray-400">Your feedback is displayed publicly and helps others decide.</p>
 
         <div class="border border-gray-200 dark:border-gray-800 rounded-2xl p-6 bg-white/5 dark:bg-white/[0.02]">
           <div class="mb-5">
@@ -143,7 +117,7 @@
               placeholder="What did you like? What could be better? What's missing?"></textarea>
           </div>
           <button id="fb-page-submit"
-            class="w-full bg-brand-600 hover:bg-brand-500 text-white font-semibold px-6 py-3 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+            class="w-full bg-brand-500 hover:bg-brand-400 text-gray-900 font-semibold px-6 py-3 rounded-xl transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed">
             Submit Feedback
           </button>
           <p id="fb-page-status" class="mt-3 text-sm text-center hidden"></p>
@@ -156,7 +130,7 @@
           <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         </div>
         <h3 class="text-xl font-bold mb-2">Thanks for your feedback!</h3>
-        <p class="text-gray-500 text-sm">You've already shared your experience. We appreciate it.</p>
+        <p class="text-gray-500 text-sm dark:text-gray-400">You've already shared your experience. We appreciate it.</p>
       </div>
     </div>
   </section>
@@ -164,12 +138,12 @@
   <!-- FOOTER -->
   <footer class="border-t border-gray-200/50 dark:border-gray-800/50 py-12">
     <div class="max-w-5xl mx-auto px-6 text-center">
-      <a href="/" class="text-sm text-gray-500 hover:text-gray-300 transition-colors">sketchmyinfra.com</a>
-      <span class="text-gray-700 mx-2">·</span>
-      <a href="/about/" class="text-sm text-gray-500 hover:text-gray-300 transition-colors">About</a>
-      <span class="text-gray-700 mx-2">·</span>
-      <a href="/releases/" class="text-sm text-gray-500 hover:text-gray-300 transition-colors">Releases</a>
-      <p class="text-xs text-gray-600 mt-4">Built by engineers, for engineers. Powered by AI & PlantUML.</p>
+      <a href="/" class="text-sm text-gray-500 hover:text-gray-300 transition-colors dark:text-gray-400">sketchmyinfra.com</a>
+      <span class="text-gray-700 mx-2 dark:text-gray-400">·</span>
+      <a href="/about/" class="text-sm text-gray-500 hover:text-gray-300 transition-colors dark:text-gray-400">About</a>
+      <span class="text-gray-700 mx-2 dark:text-gray-400">·</span>
+      <a href="/releases/" class="text-sm text-gray-500 hover:text-gray-300 transition-colors dark:text-gray-400">Releases</a>
+      <p class="text-xs text-gray-600 mt-4 dark:text-gray-400">Built by engineers, for engineers. Powered by AI & PlantUML.</p>
     </div>
   </footer>
 
@@ -270,7 +244,7 @@
         list.innerHTML = items.map(fb => {
           const avatar = fb.avatar_url
             ? `<img src="${esc(fb.avatar_url)}" class="w-9 h-9 rounded-full object-cover" alt="">`
-            : `<div class="w-9 h-9 bg-brand-600 rounded-full flex items-center justify-center text-sm font-bold text-white">${esc((fb.name||'?')[0].toUpperCase())}</div>`;
+            : `<div class="w-9 h-9 bg-brand-500 rounded-full flex items-center justify-center text-sm font-bold text-gray-900">${esc((fb.name||'?')[0].toUpperCase())}</div>`;
           const stars = Array.from({length:5},(_,i)=>
             `<svg class="w-4 h-4 ${i<fb.rating?'text-amber-400':'text-gray-300 dark:text-gray-700'}" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>`
           ).join('');
@@ -283,7 +257,7 @@
                 ${avatar}
                 <div>
                   <p class="text-sm font-medium">${esc(fb.name)}</p>
-                  <p class="text-xs text-gray-500">SketchMyInfra user</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">SketchMyInfra user</p>
                 </div>
               </div>
             </div>`;

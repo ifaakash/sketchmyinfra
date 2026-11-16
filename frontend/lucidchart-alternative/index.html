@@ -38,26 +38,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            surface: '#070f20',
-            border: '#1a3464',
-            brand: { 50: '#eef2ff', 100: '#e0e7ff', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 800: '#1e2a6e', 900: '#0f1840' },
-            night: { 800: '#0a1628', 900: '#060d1b', 950: '#030810' },
-          },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-            mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
-          }
-        }
-      }
-    }
-  </script>
-  <link rel="stylesheet" href="../css/style.css?v=4">
+  <script src="/js/tw-config.js?v=2"></script>
+  <link rel="stylesheet" href="../css/style.css?v=5">
 </head>
 <body class="text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300 bg-pattern">
 
@@ -65,22 +47,14 @@
   <nav class="fixed top-0 inset-x-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-800/50">
     <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
       <a href="/" class="flex items-center gap-2.5 group">
-        <div class="w-9 h-9 bg-brand-600 rounded-lg flex items-center justify-center group-hover:bg-brand-500 transition-colors">
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
-            <path d="M6 18l1.5-4.5L11 17l-5 1z" fill="#fbbf24"/>
-            <path d="M7.5 13.5l7.5-7.5 3 3-7.5 7.5z" fill="white" opacity="0.9"/>
-            <circle cx="18" cy="6" r="2.5" fill="#34d399" opacity="0.85"/>
-            <circle cx="6" cy="6" r="2" fill="#818cf8" opacity="0.7"/>
-            <line x1="8" y1="6" x2="15.5" y2="6" stroke="white" stroke-width="0.8" opacity="0.4"/>
-          </svg>
-        </div>
+        <svg class="w-7 h-7 text-brand-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M10 6.5h4a2.5 2.5 0 0 1 2.5 2.5v5"/></svg>
         <span class="text-xl font-bold tracking-tight">SketchMyInfra</span>
       </a>
       <div class="flex items-center gap-6">
         <a href="/" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Home</a>
         <a href="/about/" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">About</a>
         <a href="/draw/" target="_blank" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Draw</a>
-        <a href="/#generator" class="bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors">Try Free</a>
+        <a href="/#generator" class="bg-brand-500 hover:bg-brand-400 text-gray-900 text-sm font-medium px-5 py-2 rounded-lg transition-colors">Try Free</a>
       </div>
     </div>
   </nav>
@@ -99,7 +73,7 @@
         Tired of dragging boxes and connecting arrows in Lucidchart? SketchMyInfra generates production-ready AWS, GCP, and Azure architecture diagrams from a plain English description — in seconds, for free.
       </p>
       <div class="flex flex-wrap gap-4">
-        <a href="/#generator" class="inline-block bg-brand-600 hover:bg-brand-500 text-white font-semibold px-8 py-3.5 rounded-xl transition-colors text-lg">
+        <a href="/#generator" class="inline-block bg-brand-500 hover:bg-brand-400 text-gray-900 font-semibold px-8 py-3.5 rounded-xl transition-colors text-lg">
           Generate a Free Diagram →
         </a>
         <a href="/about/" class="inline-block border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium px-8 py-3.5 rounded-xl hover:border-brand-400 transition-colors text-lg">
@@ -129,7 +103,7 @@
             <tr class="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
               <td class="px-5 py-3.5 font-medium">Price</td>
               <td class="px-5 py-3.5 text-center text-emerald-400 font-semibold">Free</td>
-              <td class="px-5 py-3.5 text-center text-gray-500">$9–$20/mo</td>
+              <td class="px-5 py-3.5 text-center text-gray-500 dark:text-gray-400">$9–$20/mo</td>
               <td class="px-5 py-3.5 text-center text-emerald-400 font-semibold">Free</td>
             </tr>
             <tr class="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
@@ -171,8 +145,8 @@
             <tr class="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
               <td class="px-5 py-3.5 font-medium">Time to first diagram</td>
               <td class="px-5 py-3.5 text-center text-emerald-400 font-semibold">&lt; 30 seconds</td>
-              <td class="px-5 py-3.5 text-center text-gray-500">10–30 min</td>
-              <td class="px-5 py-3.5 text-center text-gray-500">10–30 min</td>
+              <td class="px-5 py-3.5 text-center text-gray-500 dark:text-gray-400">10–30 min</td>
+              <td class="px-5 py-3.5 text-center text-gray-500 dark:text-gray-400">10–30 min</td>
             </tr>
             <tr class="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
               <td class="px-5 py-3.5 font-medium">Works for quick docs/RFC</td>
@@ -254,14 +228,14 @@
     <div class="max-w-2xl mx-auto">
       <h2 class="text-3xl font-extrabold mb-4">Try the free Lucidchart alternative</h2>
       <p class="text-gray-500 dark:text-gray-400 mb-8">Describe your infrastructure in plain English and get a diagram in seconds. No signup, no drag-and-drop.</p>
-      <a href="/#generator" class="inline-block bg-brand-600 hover:bg-brand-500 text-white font-semibold px-10 py-4 rounded-xl transition-colors text-lg">
+      <a href="/#generator" class="inline-block bg-brand-500 hover:bg-brand-400 text-gray-900 font-semibold px-10 py-4 rounded-xl transition-colors text-lg">
         Generate Your Free Diagram →
       </a>
     </div>
   </section>
 
   <!-- FOOTER -->
-  <footer class="border-t border-gray-200 dark:border-gray-800 py-10 px-6 text-center text-sm text-gray-500 dark:text-gray-500">
+  <footer class="border-t border-gray-200 dark:border-gray-800 py-10 px-6 text-center text-sm text-gray-500 dark:text-gray-400">
     <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
       <span>© 2026 SketchMyInfra</span>
       <div class="flex items-center gap-6">

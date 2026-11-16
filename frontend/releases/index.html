@@ -22,26 +22,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            surface: '#070f20',
-            border: '#1a3464',
-            brand: { 50: '#eef2ff', 100: '#e0e7ff', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 800: '#1e2a6e', 900: '#0f1840' },
-            night: { 800: '#0a1628', 900: '#060d1b', 950: '#030810' },
-          },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-            mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
-          }
-        }
-      }
-    }
-  </script>
-  <link rel="stylesheet" href="../css/style.css?v=4">
+  <script src="/js/tw-config.js?v=2"></script>
+  <link rel="stylesheet" href="../css/style.css?v=5">
 </head>
 <body class="text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300 bg-pattern">
 
@@ -49,21 +31,13 @@
   <nav class="fixed top-0 inset-x-0 z-50 bg-white/80 dark:bg-gray-950/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-800/50">
     <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
       <a href="/" class="flex items-center gap-2.5 group">
-        <div class="w-9 h-9 bg-brand-600 rounded-lg flex items-center justify-center group-hover:bg-brand-500 transition-colors">
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
-            <path d="M6 18l1.5-4.5L11 17l-5 1z" fill="#fbbf24"/>
-            <path d="M7.5 13.5l7.5-7.5 3 3-7.5 7.5z" fill="white" opacity="0.9"/>
-            <circle cx="18" cy="6" r="2.5" fill="#34d399" opacity="0.85"/>
-            <circle cx="6" cy="6" r="2" fill="#818cf8" opacity="0.7"/>
-            <line x1="8" y1="6" x2="15.5" y2="6" stroke="white" stroke-width="0.8" opacity="0.4"/>
-          </svg>
-        </div>
+        <svg class="w-7 h-7 text-brand-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M10 6.5h4a2.5 2.5 0 0 1 2.5 2.5v5"/></svg>
         <span class="text-xl font-bold tracking-tight">SketchMyInfra</span>
       </a>
       <div class="flex items-center gap-6">
         <a href="/" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Home</a>
         <a href="/draw/" target="_blank" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">Draw</a>
-        <a href="/#generator" class="bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors">Try Free</a>
+        <a href="/#generator" class="bg-brand-500 hover:bg-brand-400 text-gray-900 text-sm font-medium px-5 py-2 rounded-lg transition-colors">Try Free</a>
       </div>
     </div>
   </nav>
@@ -89,7 +63,7 @@
 
       <!-- Release: International Language Support -->
       <article class="relative pl-8 pb-12 border-l-2 border-brand-600/30">
-        <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand-600 border-2 border-surface"></div>
+        <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand-600 border-2 border-gray-950"></div>
         <div class="flex flex-wrap items-center gap-3 mb-4">
           <time class="text-sm font-mono text-gray-500 dark:text-gray-400">Jun 1, 2026</time>
           <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">Bug Fix</span>
@@ -116,7 +90,7 @@
 
       <!-- Release: PlantUML Rendering Resilience -->
       <article class="relative pl-8 pb-12 border-l-2 border-gray-200 dark:border-gray-800">
-        <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand-600 border-2 border-surface"></div>
+        <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand-600 border-2 border-gray-950"></div>
         <div class="flex flex-wrap items-center gap-3 mb-4">
           <time class="text-sm font-mono text-gray-500 dark:text-gray-400">May 31, 2026</time>
           <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">Bug Fix</span>
@@ -143,7 +117,7 @@
 
       <!-- Release: Admin Dashboard & Generation Analytics -->
       <article class="relative pl-8 pb-12 border-l-2 border-gray-200 dark:border-gray-800">
-        <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand-600 border-2 border-surface"></div>
+        <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand-600 border-2 border-gray-950"></div>
         <div class="flex flex-wrap items-center gap-3 mb-4">
           <time class="text-sm font-mono text-gray-500 dark:text-gray-400">May 29, 2026</time>
           <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">New Feature</span>
@@ -170,7 +144,7 @@
 
       <!-- Release: Drawing Persistence & Sharing -->
       <article class="relative pl-8 pb-12 border-l-2 border-gray-200 dark:border-gray-800">
-        <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand-600 border-2 border-surface"></div>
+        <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand-600 border-2 border-gray-950"></div>
         <div class="flex flex-wrap items-center gap-3 mb-4">
           <time class="text-sm font-mono text-gray-500 dark:text-gray-400">May 15, 2026</time>
           <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">New Feature</span>
@@ -201,7 +175,7 @@
 
       <!-- Release: Freehand Drawing -->
       <article class="relative pl-8 pb-12 border-l-2 border-gray-200 dark:border-gray-800">
-        <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand-600 border-2 border-surface"></div>
+        <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand-600 border-2 border-gray-950"></div>
         <div class="flex flex-wrap items-center gap-3 mb-4">
           <time class="text-sm font-mono text-gray-500 dark:text-gray-400">May 10, 2026</time>
           <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">New Feature</span>
@@ -232,7 +206,7 @@
 
       <!-- Release: Feedback System -->
       <article class="relative pl-8 pb-12 border-l-2 border-gray-200 dark:border-gray-800">
-        <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-gray-400 dark:bg-gray-600 border-2 border-surface"></div>
+        <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-gray-400 dark:bg-gray-600 border-2 border-gray-950"></div>
         <div class="flex flex-wrap items-center gap-3 mb-4">
           <time class="text-sm font-mono text-gray-500 dark:text-gray-400">Apr 23, 2026</time>
           <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">Improvement</span>
@@ -245,7 +219,7 @@
 
       <!-- Release: OAuth Login -->
       <article class="relative pl-8 pb-12 border-l-2 border-gray-200 dark:border-gray-800">
-        <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-gray-400 dark:bg-gray-600 border-2 border-surface"></div>
+        <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-gray-400 dark:bg-gray-600 border-2 border-gray-950"></div>
         <div class="flex flex-wrap items-center gap-3 mb-4">
           <time class="text-sm font-mono text-gray-500 dark:text-gray-400">Apr 8, 2026</time>
           <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">New Feature</span>
@@ -258,7 +232,7 @@
 
       <!-- Release: Launch -->
       <article class="relative pl-8 border-l-2 border-gray-200 dark:border-gray-800">
-        <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-gray-400 dark:bg-gray-600 border-2 border-surface"></div>
+        <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-gray-400 dark:bg-gray-600 border-2 border-gray-950"></div>
         <div class="flex flex-wrap items-center gap-3 mb-4">
           <time class="text-sm font-mono text-gray-500 dark:text-gray-400">Mar 2026</time>
           <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">Launch</span>
@@ -273,7 +247,7 @@
   </section>
 
   <!-- FOOTER -->
-  <footer class="border-t border-gray-200 dark:border-gray-800 py-10 px-6 text-center text-sm text-gray-500 dark:text-gray-500">
+  <footer class="border-t border-gray-200 dark:border-gray-800 py-10 px-6 text-center text-sm text-gray-500 dark:text-gray-400">
     <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
       <span>&copy; 2026 SketchMyInfra</span>
       <div class="flex items-center gap-6">

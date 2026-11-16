@@ -47,7 +47,7 @@ with a synthetic 900×2400 diagram.
 
 ## P2 — polish and identity
 
-### 7. No visual identity — `open`
+### 7. No visual identity — `fixed (feat/brand-navy-coral)`
 - Generic SaaS blue (#2558e8) + grey. Nothing memorable; looks like a template.
 - Candidate palette (from an Instagram reel): navy `#14213D`, cream `#F4EDE0`, coral `#FF6B5B`. Contrast check below.
 
@@ -55,7 +55,7 @@ with a synthetic 900×2400 diagram.
 - Generation takes several seconds with no sense of progress. Show staged steps
   ("Understanding prompt → Picking icons → Rendering") and keep the previous diagram visible underneath.
 
-### 9. Mixed visual languages — `open`
+### 9. Mixed visual languages — `fixed (feat/brand-navy-coral)`
 - Amber/orange gradient for PRO, blue for primary, black for secondary, emoji 👍👎. Too many accents.
 
 ### 10. Dark mode can't follow the OS — `open`
@@ -69,6 +69,15 @@ with a synthetic 900×2400 diagram.
 ### 12. Local mock mode is stale — `open`
 - `js/mock.js` returns `{puml}` but `app.js` reads `result.code` / `result.image`, so localhost generate shows an empty
   diagram. Makes UI testing harder than it should be.
+
+### 13. "Trusted by teams at Shopify, Datadog, Stripe…" strip on /about/ — `open`
+- Logo wall implies customers the product may not have (<50 users). Same credibility risk as the placeholder
+  testimonials removed on 2026-11-09. Verify or remove before any community launch.
+
+### 14. SEO pages are dark-only — `open`
+- feedback / releases / aws-architecture-diagram-generator / lucidchart-alternative hard-code `<html class="dark">`
+  and use unprefixed dark-only classes (e.g. 21× `text-emerald-400` on releases). They're navy-branded now but
+  ignore the light/dark toggle. Making them theme-aware means rewriting their markup onto `smi-*` tokens.
 
 ## Palette contrast check (WCAG AA = 4.5:1 for body text, 3:1 for large text / UI)
 
