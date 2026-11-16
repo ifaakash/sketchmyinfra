@@ -1,8 +1,8 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Integer, String, Text, ForeignKey, Index
-from sqlalchemy.dialects.postgresql import UUID, INET, JSONB
+from sqlalchemy import DateTime, Integer, SmallInteger, String, Text, ForeignKey, Index
+from sqlalchemy.dialects.postgresql import ARRAY, UUID, INET, JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -60,6 +60,13 @@ class Generation(Base):
     )
     # First time the diagram was opened in the draw-app; NULL = never opened.
     opened_in_editor_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Inline 👍/👎 under the diagram: 1 or -1, reasons only on 👎. Last vote wins.
+    rating: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    rating_reasons: Mapped[list[str] | None] = mapped_column(ARRAY(Text), nullable=True)
+    rating_comment: Mapped[str | None] = mapped_column(Text, nullable=True)
+    rated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # First PNG/SVG download; NULL = never downloaded.
+    downloaded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
         Index("idx_generations_user_date", "user_id", "created_at", postgresql_where=(user_id.isnot(None))),

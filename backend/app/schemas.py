@@ -1,4 +1,5 @@
 import uuid
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -100,6 +101,24 @@ class RenderErrorReport(BaseModel):
     prompt: str = Field(..., min_length=1, max_length=2000)
     renderer: str = Field(..., pattern="^(plantuml|d2|excalidraw)$")
     error_message: str = Field(..., max_length=1000)
+
+
+RatingReason = Literal["wrong_icons", "missing_components", "messy_layout", "not_what_i_meant"]
+
+
+class GenerationRating(BaseModel):
+    rating: Literal[1, -1] = Field(..., description="1 = thumbs up, -1 = thumbs down")
+    reasons: list[RatingReason] = Field(default_factory=list, max_length=4)
+    comment: str | None = Field(default=None, max_length=1000)
+
+
+class ClaimedGeneration(BaseModel):
+    generation_id: uuid.UUID
+    prompt: str
+    code: str | None
+    renderer: str
+    editable: bool
+    ir: dict | None = Field(default=None, description="Pro users only, same as GenerateV2Response.ir")
 
 
 class GenerationStatusCounts(BaseModel):

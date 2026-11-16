@@ -21,6 +21,13 @@ document.addEventListener('DOMContentLoaded', () => {
   refreshAuth();
 });
 
+// Every sign-in link (navbar, rate-limit wall, save nudge, edit modal) leaves
+// the page, so stash the diagram on screen first; app.js claims it on return.
+document.addEventListener('click', (e) => {
+  const link = e.target.closest?.('a[href^="/api/auth/"][href$="/login"]');
+  if (link && typeof stashPendingClaim === 'function') stashPendingClaim();
+});
+
 async function refreshAuth() {
   try {
     const res = await fetch('/api/auth/me', {
@@ -32,6 +39,7 @@ async function refreshAuth() {
       renderLoggedIn(user);
       if (typeof loadHistoryFromAPI === 'function') loadHistoryFromAPI();
       if (typeof showFeedbackForm === 'function') showFeedbackForm(true);
+      if (typeof claimPendingDiagram === 'function') claimPendingDiagram();
     } else {
       window.currentUser = null;
       renderLoggedOut();
@@ -77,7 +85,10 @@ function renderLoggedOut() {
 function renderLoggedIn(user) {
   // Avatar: prefer provider-supplied URL, fall back to initial in a colored circle.
   const initial = (user.name || user.email || '?').trim().charAt(0).toUpperCase();
-  const isPro = user.tier === 'pro';
+  // New signups are tier "pro" on a trial, so an expired trial must show FREE
+  const isPro = typeof isProUser === 'function'
+    ? isProUser(user)
+    : user.tier === 'pro' && (!user.trial_expires_at || new Date(user.trial_expires_at) > new Date());
 
   const avatarHtml = user.avatar_url
     ? `<img src="${escapeHtml(user.avatar_url)}" alt="" class="w-8 h-8 rounded-full object-cover" />`

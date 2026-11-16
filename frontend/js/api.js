@@ -127,3 +127,42 @@ function reportRenderError(prompt, renderer, errorMessage) {
     credentials: 'include',
   }).catch(() => {}); // silent
 }
+
+/**
+ * Record the inline 👍/👎 under a diagram. Fire-and-forget.
+ * @param {string} generationId
+ * @param {{rating: 1|-1, reasons?: string[], comment?: string}} body
+ */
+function apiRateGeneration(generationId, body) {
+  if (USE_MOCKS || !generationId) return;
+  fetch(`${API_BASE}/api/generations/${encodeURIComponent(generationId)}/rating`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    credentials: 'include',
+  }).catch(() => {}); // silent
+}
+
+/**
+ * Record that a generated diagram was downloaded. Fire-and-forget; the
+ * backend only counts the first download.
+ */
+function apiMarkDownloaded(generationId) {
+  if (USE_MOCKS || !generationId) return;
+  fetch(`${API_BASE}/api/generations/${encodeURIComponent(generationId)}/downloaded`, {
+    method: 'POST',
+    credentials: 'include',
+  }).catch(() => {}); // silent
+}
+
+/**
+ * Attach a diagram generated before sign-in to the signed-in account.
+ * @returns {Promise<{generation_id: string, prompt: string, code: string|null, renderer: string, editable: boolean, ir: object|null}>}
+ */
+async function apiClaimGeneration(generationId) {
+  const response = await fetch(`${API_BASE}/api/generations/${encodeURIComponent(generationId)}/claim`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+  return handleResponse(response);
+}

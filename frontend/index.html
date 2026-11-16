@@ -167,6 +167,29 @@
           <!-- Diagrams render on white in both themes: PlantUML/D2 output assumes a light background -->
           <img id="diagram-image" class="max-w-full h-auto bg-white rounded-xl border border-smi-border shadow-smi p-4 cursor-zoom-in" alt="AI-generated architecture diagram" />
         </div>
+        <!-- Inline rating for a fresh generation. Shown by feedback.js (showRatingRow). -->
+        <div id="rating-row" class="hidden flex-none px-6 pb-4 flex flex-col items-center gap-2 text-[13px]">
+          <div id="rating-ask" class="flex items-center gap-2">
+            <span class="text-smi-ink-2">Was this diagram useful?</span>
+            <button type="button" data-rating="1" aria-label="Yes, useful" class="rating-btn h-8 w-10 rounded-lg border border-smi-border bg-smi-surface text-[15px] hover:border-smi-border-strong">👍</button>
+            <button type="button" data-rating="-1" aria-label="No, not useful" class="rating-btn h-8 w-10 rounded-lg border border-smi-border bg-smi-surface text-[15px] hover:border-smi-border-strong">👎</button>
+          </div>
+          <form id="rating-reasons" class="hidden w-full max-w-md flex flex-col items-center gap-2" novalidate>
+            <span class="text-smi-ink-2">What went wrong? Pick any that apply.</span>
+            <div class="flex flex-wrap justify-center gap-1.5">
+              <button type="button" data-reason="wrong_icons" aria-pressed="false" class="rating-reason h-7 px-2.5 rounded-full border border-smi-border bg-smi-surface text-[12px] text-smi-ink-2">Wrong icons</button>
+              <button type="button" data-reason="missing_components" aria-pressed="false" class="rating-reason h-7 px-2.5 rounded-full border border-smi-border bg-smi-surface text-[12px] text-smi-ink-2">Missing components</button>
+              <button type="button" data-reason="messy_layout" aria-pressed="false" class="rating-reason h-7 px-2.5 rounded-full border border-smi-border bg-smi-surface text-[12px] text-smi-ink-2">Messy layout</button>
+              <button type="button" data-reason="not_what_i_meant" aria-pressed="false" class="rating-reason h-7 px-2.5 rounded-full border border-smi-border bg-smi-surface text-[12px] text-smi-ink-2">Not what I meant</button>
+            </div>
+            <div class="flex w-full gap-2">
+              <input id="rating-comment" type="text" maxlength="1000" placeholder="Anything else? (optional)" aria-label="Optional comment"
+                class="flex-1 min-w-0 h-8 px-3 rounded-lg border border-smi-border bg-smi-bg text-smi-ink text-[12px] focus:outline-none focus:border-smi-border-strong" />
+              <button type="submit" class="h-8 px-3 rounded-lg bg-smi-strong text-smi-on-strong text-[12px] font-semibold">Send</button>
+            </div>
+          </form>
+          <p id="rating-thanks" class="hidden text-smi-ok font-medium"></p>
+        </div>
       </div>
 
       <div id="error-state" class="hidden flex-1 relative overflow-hidden">
@@ -263,13 +286,24 @@
     </div>
   </div>
 
+  <!-- Anonymous Open in Editor: sign in, get the Pro trial, come back to the same diagram (app.js claims it) -->
+  <div id="signin-modal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="signin-modal-title">
+    <div class="relative w-full max-w-sm bg-smi-surface border border-smi-border rounded-2xl shadow-smi p-6">
+      <button id="signin-modal-close" type="button" aria-label="Close" class="absolute top-3 right-3 w-8 h-8 rounded-lg text-smi-ink-3 hover:text-smi-ink hover:bg-smi-surface-2 text-xl leading-none">&times;</button>
+      <span class="inline-block text-xs font-semibold px-1.5 py-0.5 rounded-md bg-gradient-to-r from-amber-400 to-orange-400 text-white leading-none mb-3">FREE PRO TRIAL</span>
+      <h3 id="signin-modal-title" class="text-[18px] font-bold text-smi-ink mb-1">Sign in to edit this diagram</h3>
+      <p class="text-smi-ink-2 text-[13px] mb-5">New accounts start with a free Pro trial, so you can open this diagram in the editor right away. It's saved to your account too.</p>
+      <div id="signin-modal-buttons" class="flex flex-col gap-2"></div>
+    </div>
+  </div>
+
   <!-- Scripts — ?v= cache-buster, bump on each deploy -->
   <script src="/js/mock.js?v=4"></script>
-  <script src="/js/api.js?v=6"></script>
-  <script src="/js/ui.js?v=6"></script>
-  <script src="/js/history.js?v=6"></script>
-  <script src="/js/feedback.js?v=2"></script>
-  <script src="/js/auth.js?v=6"></script>
-  <script src="/js/app.js?v=17"></script>
+  <script src="/js/api.js?v=7"></script>
+  <script src="/js/ui.js?v=7"></script>
+  <script src="/js/history.js?v=7"></script>
+  <script src="/js/feedback.js?v=3"></script>
+  <script src="/js/auth.js?v=7"></script>
+  <script src="/js/app.js?v=18"></script>
 </body>
 </html>

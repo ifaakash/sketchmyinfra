@@ -85,4 +85,87 @@ function showFeedbackNudge() {
   setTimeout(() => { if (toast.parentNode) toast.remove(); }, 15000);
 }
 
-document.addEventListener('DOMContentLoaded', initFeedback);
+/*
+ * Inline rating under a freshly generated diagram (#rating-row). Anyone can
+ * rate, signed in or not. 👎 is recorded on the click, then the reason chips
+ * refine it, so a vote counts even if they never press Send.
+ */
+let ratingGenerationId = null;
+
+function showRatingRow(generationId) {
+  if (!generationId) {
+    hideRatingRow();
+    return;
+  }
+  ratingGenerationId = generationId;
+  document.getElementById('rating-ask')?.classList.remove('hidden');
+  document.getElementById('rating-reasons')?.classList.add('hidden');
+  document.getElementById('rating-thanks')?.classList.add('hidden');
+  document.querySelectorAll('.rating-reason').forEach(chip => setReasonPressed(chip, false));
+  const comment = document.getElementById('rating-comment');
+  if (comment) comment.value = '';
+  document.getElementById('rating-row')?.classList.remove('hidden');
+}
+
+function hideRatingRow() {
+  ratingGenerationId = null;
+  document.getElementById('rating-row')?.classList.add('hidden');
+}
+
+function setReasonPressed(chip, pressed) {
+  chip.setAttribute('aria-pressed', String(pressed));
+  chip.classList.toggle('border-smi-accent', pressed);
+  chip.classList.toggle('text-smi-accent-text', pressed);
+  chip.classList.toggle('bg-smi-selected', pressed);
+  chip.classList.toggle('border-smi-border', !pressed);
+  chip.classList.toggle('text-smi-ink-2', !pressed);
+  chip.classList.toggle('bg-smi-surface', !pressed);
+}
+
+function showRatingThanks(text) {
+  document.getElementById('rating-ask')?.classList.add('hidden');
+  document.getElementById('rating-reasons')?.classList.add('hidden');
+  const thanks = document.getElementById('rating-thanks');
+  if (thanks) {
+    thanks.textContent = text;
+    thanks.classList.remove('hidden');
+  }
+}
+
+function bindRatingRow() {
+  document.querySelectorAll('.rating-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!ratingGenerationId) return;
+      const rating = Number(btn.dataset.rating);
+      apiRateGeneration(ratingGenerationId, { rating });
+      if (rating === 1) {
+        showRatingThanks('Thanks!');
+        setTimeout(showSaveNudge, 600);
+      } else {
+        document.getElementById('rating-ask')?.classList.add('hidden');
+        document.getElementById('rating-reasons')?.classList.remove('hidden');
+      }
+    });
+  });
+
+  document.querySelectorAll('.rating-reason').forEach(chip => {
+    chip.addEventListener('click', () => {
+      setReasonPressed(chip, chip.getAttribute('aria-pressed') !== 'true');
+    });
+  });
+
+  document.getElementById('rating-reasons')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!ratingGenerationId) return;
+    const reasons = [...document.querySelectorAll('.rating-reason[aria-pressed="true"]')]
+      .map(chip => chip.dataset.reason);
+    const comment = document.getElementById('rating-comment')?.value.trim() || undefined;
+    apiRateGeneration(ratingGenerationId, { rating: -1, reasons, comment });
+    showRatingThanks('Thanks, this helps fix it.');
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initFeedback();
+  bindRatingRow();
+});

@@ -17,6 +17,10 @@ let isGenerating = false;
 let currentIr = null;
 let currentGenerationId = null;
 let currentEditable = false;
+// Generation row behind the diagram on screen, IR or not: what the rating,
+// download tracking and sign-in claim refer to. Null once the diagram on
+// screen isn't the generated one (hand-edited code, history, New).
+let currentDiagramGenerationId = null;
 
 // Marketing sections moved to /about/. URL fragments never reach the server,
 // so old links like /#features can only be redirected here, client-side.
@@ -107,6 +111,7 @@ function bindEvents() {
   $('#btn-iterate')?.addEventListener('click', handleIterate);
   $('#btn-open-editor')?.addEventListener('click', handleOpenEditor);
   bindProModal();
+  bindSignInModal();
   $('#btn-new')?.addEventListener('click', handleNew);
   $('#btn-retry')?.addEventListener('click', handleGenerate);
 
@@ -255,16 +260,11 @@ async function handleGenerate() {
     currentImageUri = result.image || '';
     setEditableIr(result.ir, result.generation_id, result.editable);
     showPumlCode(currentCode);
-
-    // Update code panel label
-    const codeLabel = $('#puml-label');
-    if (codeLabel) {
-      const labels = { plantuml: 'PlantUML Code', d2: 'D2 Code', mermaid: 'Mermaid Code' };
-      codeLabel.textContent = labels[currentRenderer] || 'Diagram Code';
-    }
+    setCodeLabel(currentRenderer);
 
     // Show result
     showDiagram(currentImageUri);
+    setDiagramGeneration(result.generation_id);
     showToast('Diagram generated successfully', 'success', 2000);
     $('#btn-retry')?.classList.remove('hidden');
 
@@ -355,6 +355,7 @@ async function handleReRender() {
     // Hand-edited code has drifted from the IR, so the editor would open
     // the original diagram, not this one
     setEditableIr(null);
+    setDiagramGeneration(null);
 
     showDiagram(currentImageUri);
     showToast('Diagram re-rendered', 'success', 2000);
@@ -400,9 +401,107 @@ function handleNew() {
   currentImageUri = '';
   currentPrompt = '';
   setEditableIr(null);
+  setDiagramGeneration(null);
   hidePumlCode();
   showPanel('empty');
   input?.focus();
+}
+
+function setCodeLabel(renderer) {
+  const codeLabel = $('#puml-label');
+  if (codeLabel) {
+    const labels = { plantuml: 'PlantUML Code', d2: 'D2 Code', mermaid: 'Mermaid Code' };
+    codeLabel.textContent = labels[renderer] || 'Diagram Code';
+  }
+}
+
+/**
+ * Track the generation behind the diagram on screen and offer the rating
+ * for it. Pass null when the diagram on screen didn't come from it.
+ */
+function setDiagramGeneration(generationId, { askRating = true } = {}) {
+  currentDiagramGenerationId = generationId || null;
+  if (currentDiagramGenerationId && askRating) showRatingRow(currentDiagramGenerationId);
+  else hideRatingRow();
+}
+
+/*
+ * Keep the diagram across sign-in. OAuth is a full-page redirect, so the
+ * diagram on screen is stashed when a login link is clicked (auth.js) and
+ * claimed into the account when the page comes back signed in. The image
+ * goes too so it shows without a re-render; it's dropped if storage is full.
+ */
+const PENDING_CLAIM_KEY = 'smi_pending_claim';
+
+function stashPendingClaim() {
+  if (window.currentUser || !currentDiagramGenerationId) return;
+  const stash = {
+    generation_id: currentDiagramGenerationId,
+    renderer: currentRenderer,
+    imageDataUri: currentImageUri,
+  };
+  try {
+    localStorage.setItem(PENDING_CLAIM_KEY, JSON.stringify(stash));
+  } catch {
+    try {
+      localStorage.setItem(PENDING_CLAIM_KEY, JSON.stringify({ ...stash, imageDataUri: null }));
+    } catch { /* storage blocked: sign-in still works, the diagram just isn't carried over */ }
+  }
+}
+
+async function claimPendingDiagram() {
+  let stash = null;
+  try {
+    stash = JSON.parse(localStorage.getItem(PENDING_CLAIM_KEY));
+    localStorage.removeItem(PENDING_CLAIM_KEY);
+  } catch { /* unreadable stash: nothing to claim */ }
+  if (!stash?.generation_id) return;
+
+  let claim;
+  try {
+    claim = await apiClaimGeneration(stash.generation_id);
+  } catch {
+    return; // too old, other network or already someone else's: nothing to restore
+  }
+  // Don't replace a diagram they started on this page while the claim ran
+  if (currentImageUri || isGenerating) return;
+
+  let image = stash.imageDataUri;
+  if (!image && claim.code) {
+    try {
+      showPanel('loading');
+      setLoadingText('Restoring your diagram...');
+      const result = claim.renderer === 'd2'
+        ? await apiRenderD2(claim.code, 'svg')
+        : await apiRender(claim.code, 'svg');
+      image = result.image;
+    } catch {
+      showPanel('empty');
+      return;
+    }
+  }
+  if (!image) return;
+
+  currentPrompt = claim.prompt;
+  currentRenderer = claim.renderer;
+  currentCode = claim.code || '';
+  currentPuml = currentCode;
+  currentImageUri = image;
+  const input = $('#prompt-input');
+  if (input) input.value = claim.prompt;
+  showPumlCode(currentCode);
+  setCodeLabel(currentRenderer);
+  setEditableIr(claim.ir, claim.generation_id, claim.editable);
+  showDiagram(image);
+  // They already saw (and maybe answered) the rating before signing in
+  setDiagramGeneration(claim.generation_id, { askRating: false });
+  if (typeof loadHistoryFromAPI === 'function') loadHistoryFromAPI();
+
+  showToast(
+    claim.ir ? 'Saved to your account. Open in Editor is unlocked.' : 'Saved to your account.',
+    'success',
+    4000,
+  );
 }
 
 /**
@@ -424,9 +523,12 @@ function setEditableIr(ir, generationId = null, editable = !!ir) {
  */
 function handleOpenEditor() {
   if (!currentEditable) return;
-  // Pro feature, enforced by the API: free users get no IR, so they get the upsell
+  // Pro feature, enforced by the API: free users get no IR. Signed-out users
+  // are offered sign-in (new accounts start on a Pro trial); signed-in users
+  // without Pro get the waitlist upsell.
   if (!isProUser()) {
-    showProModal();
+    if (window.currentUser) showProModal();
+    else showSignInModal();
     return;
   }
   // Pro, but this diagram was generated before they signed in
@@ -475,6 +577,7 @@ async function handleDownload(format) {
       const pngUri = await svgToPngDataUri(currentImageUri);
       downloadDataUri(pngUri, filename);
       showToast(`Downloaded ${filename}`, 'success', 2000);
+      afterDownload();
     } catch (err) {
       showToast('PNG export failed — try SVG instead', 'error', 3000);
     }
@@ -483,6 +586,17 @@ async function handleDownload(format) {
 
   downloadDataUri(currentImageUri, filename);
   showToast(`Downloaded ${filename}`, 'success', 2000);
+  afterDownload();
+}
+
+/**
+ * They got what they came for: count it, and offer to keep the diagram.
+ */
+function afterDownload() {
+  // Only a fresh generation can be claimed, so only it gets the "keep it" offer
+  if (!currentDiagramGenerationId) return;
+  apiMarkDownloaded(currentDiagramGenerationId);
+  setTimeout(showSaveNudge, 800);
 }
 
 /**
