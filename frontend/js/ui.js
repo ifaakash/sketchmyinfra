@@ -504,15 +504,18 @@ function showToast(message, type = 'info', duration = 4000) {
 }
 
 /**
- * Download a data URI as a file.
+ * Download a Blob as a file. A short blob: URL, not a data: URL — Chrome caps
+ * URLs at 2MB and a 2x PNG of a real diagram is well past that.
  */
-function downloadDataUri(dataUri, filename) {
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.href = dataUri;
+  link.href = url;
   link.download = filename;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 /**
@@ -527,24 +530,41 @@ async function copyToClipboard(text) {
   }
 }
 
+// Largest canvas Safari will draw (16.7M px); bigger ones come out blank
+const MAX_CANVAS_PIXELS = 16777216;
+
 /**
- * Convert an SVG data URI to PNG data URI via Canvas.
- * Uses 2x scale for retina-quality output.
+ * Convert an SVG data URI to a PNG Blob via Canvas, at 2x for retina unless
+ * that would exceed the canvas limit. The size comes from the SVG itself:
+ * an <img>'s width/height is a 300x150 guess for a size-less (D2) SVG.
  */
-function svgToPngDataUri(svgDataUri) {
+function svgToPngBlob(svgDataUri) {
   return new Promise((resolve, reject) => {
+    const svg = parseSvgDataUri(svgDataUri);
+    const size = svg && svgSize(svg);
+    if (!size) {
+      reject(new Error('Not an SVG with a known size'));
+      return;
+    }
     const img = new Image();
     img.onload = () => {
-      const scale = 2;
+      const { w, h } = size;
+      const scale = Math.min(2, Math.sqrt(MAX_CANVAS_PIXELS / (w * h)));
       const canvas = document.createElement('canvas');
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
+      canvas.width = Math.round(w * scale);
+      canvas.height = Math.round(h * scale);
       const ctx = canvas.getContext('2d');
+      // Diagrams assume a light background; PNG would otherwise be transparent
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.scale(scale, scale);
-      ctx.drawImage(img, 0, 0);
-      resolve(canvas.toDataURL('image/png'));
+      ctx.drawImage(img, 0, 0, w, h);
+      canvas.toBlob(
+        (blob) => (blob ? resolve(blob) : reject(new Error('Diagram too large for PNG'))),
+        'image/png',
+      );
     };
     img.onerror = () => reject(new Error('Failed to convert SVG to PNG'));
-    img.src = svgDataUri;
+    img.src = withIntrinsicSize(svgDataUri);
   });
 }

@@ -32,6 +32,19 @@ with a synthetic 900×2400 diagram.
 - **Fix:** toolbar pinned at the top of the canvas pane (or a floating bottom bar like Figma); rating as a small
   floating pill on the canvas.
 
+### 13. GCP / D2 diagrams invisible on the canvas — `fixed (fix/d2-diagram-visibility)`
+- **Measured:** a D2 SVG `<img>` laid out at **33×33px** (just its padding) inside the canvas stage.
+- **Why it happens:** D2 writes only a `viewBox` on its outer `<svg>`, no `width`/`height`, unless `--scale` is
+  passed. Such an image has no natural size, and the absolutely positioned, shrink-to-fit stage gives it none.
+  PlantUML (AWS/Azure) SVGs carry a size, which is why they worked.
+- **Fix:** `showDiagram` sets `width`/`height` from the `viewBox` before display (`withIntrinsicSize` in `js/ui.js`).
+
+### 14. PNG download cut off / wrong size — `fixed (fix/png-download-full)`
+- **Measured:** a 1200×800 D2 diagram exported as a 450×300 PNG. A 3000×2000 PlantUML diagram became a 6.6MB
+  `data:` URL handed to `<a download>`, past Chrome's 2MB URL cap.
+- **Fix:** size the canvas from the SVG itself, download through a `blob:` URL, and cap the scale at Safari's
+  16.7MP canvas limit.
+
 ## P1 — layout and responsiveness
 
 ### 4. Three panes wrap instead of resizing — `fixed (feat/app-shell-layout)`

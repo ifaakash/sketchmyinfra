@@ -549,8 +549,9 @@ function handleOpenEditor() {
 
 /**
  * Download the current diagram.
- * SVG: use the already-rendered data URI directly.
+ * SVG: the already-rendered data URI, saved as a Blob.
  * PNG: convert SVG to PNG client-side via Canvas (works for all renderers).
+ * Both go out as blob: URLs; a multi-MB data: URL gets cut off.
  */
 async function handleDownload(format) {
   if (!currentImageUri) {
@@ -564,8 +565,7 @@ async function handleDownload(format) {
   if (format === 'png') {
     showToast('Preparing PNG…', 'info', 2000);
     try {
-      const pngUri = await svgToPngDataUri(currentImageUri);
-      downloadDataUri(pngUri, filename);
+      downloadBlob(await svgToPngBlob(currentImageUri), filename);
       showToast(`Downloaded ${filename}`, 'success', 2000);
       afterDownload();
     } catch (err) {
@@ -574,7 +574,12 @@ async function handleDownload(format) {
     return;
   }
 
-  downloadDataUri(currentImageUri, filename);
+  try {
+    downloadBlob(await (await fetch(currentImageUri)).blob(), filename);
+  } catch {
+    showToast('SVG export failed', 'error', 3000);
+    return;
+  }
   showToast(`Downloaded ${filename}`, 'success', 2000);
   afterDownload();
 }
