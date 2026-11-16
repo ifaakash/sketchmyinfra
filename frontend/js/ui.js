@@ -92,13 +92,72 @@ function getPumlCode() {
   return $('#puml-code')?.value || '';
 }
 
+const SVG_DATA_PREFIX = 'data:image/svg+xml;base64,';
+
+/** Size from the root's width/height attributes in px; null if missing or %. */
+function svgAttrSize(svg) {
+  const attr = (name) => {
+    const v = svg.getAttribute(name);
+    return v && !v.trim().endsWith('%') ? parseFloat(v) : NaN;
+  };
+  const [w, h] = [attr('width'), attr('height')];
+  return w > 0 && h > 0 ? { w, h } : null;
+}
+
+/**
+ * Size of an <svg> root in px: its width/height attributes, else its viewBox.
+ * Returns null when neither gives a usable size.
+ */
+function svgSize(svg) {
+  let { w, h } = svgAttrSize(svg) || {};
+  if (!(w > 0 && h > 0)) {
+    const vb = (svg.getAttribute('viewBox') || '').trim().split(/[\s,]+/).map(Number);
+    [w, h] = [vb[2], vb[3]];
+  }
+  return w > 0 && h > 0 ? { w, h } : null;
+}
+
+/** Parse an SVG data URI into its root <svg> element, or null. */
+function parseSvgDataUri(dataUri) {
+  if (!dataUri?.startsWith(SVG_DATA_PREFIX)) return null;
+  try {
+    const bytes = Uint8Array.from(atob(dataUri.slice(SVG_DATA_PREFIX.length)), c => c.charCodeAt(0));
+    const doc = new DOMParser().parseFromString(new TextDecoder().decode(bytes), 'image/svg+xml');
+    const svg = doc.documentElement;
+    return svg.nodeName === 'svg' && !doc.querySelector('parsererror') ? svg : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * D2 omits width/height on its outer <svg> (only viewBox, so it "fits to
+ * screen"). As an <img> that has no natural size: it collapses in the canvas
+ * stage and draws at a default size on a <canvas>. Give it the viewBox size.
+ * PlantUML SVGs already carry a size and come back unchanged.
+ */
+function withIntrinsicSize(dataUri) {
+  const svg = parseSvgDataUri(dataUri);
+  if (!svg || svgAttrSize(svg)) return dataUri;
+  const size = svgSize(svg);
+  if (!size) return dataUri;
+  svg.setAttribute('width', size.w);
+  svg.setAttribute('height', size.h);
+  const bytes = new TextEncoder().encode(new XMLSerializer().serializeToString(svg));
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  }
+  return SVG_DATA_PREFIX + btoa(binary);
+}
+
 /**
  * Display the rendered diagram image.
  */
 function showDiagram(dataUri) {
   const img = $('#diagram-image');
   if (img) {
-    img.src = dataUri;
+    img.src = withIntrinsicSize(dataUri);
   }
   showPanel('diagram');
   // canvas.js fits on the image's load event; an image that is already
