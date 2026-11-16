@@ -16,7 +16,7 @@ const S = {
   wrapper: {
     height: "calc(100vh - 56px)",
     overflowY: "auto",
-    background: "#070f20",
+    background: "var(--d-bg)",
     padding: "2rem",
   },
   container: { maxWidth: 1100, margin: "0 auto" },
@@ -26,7 +26,7 @@ const S = {
     alignItems: "center",
     marginBottom: "1.5rem",
   },
-  title: { fontSize: "1.5rem", fontWeight: 700, color: "#f3f4f6" },
+  title: { fontSize: "1.5rem", fontWeight: 700, color: "var(--d-title)" },
   newBtn: {
     display: "inline-flex",
     alignItems: "center",
@@ -47,8 +47,8 @@ const S = {
     gap: "1.25rem",
   },
   card: {
-    background: "#0f1729",
-    border: "1px solid #1a3464",
+    background: "var(--d-card)",
+    border: "1px solid var(--d-border)",
     borderRadius: 14,
     overflow: "hidden",
     cursor: "pointer",
@@ -60,7 +60,7 @@ const S = {
     position: "relative",
     width: "100%",
     height: 200,
-    background: "#111827",
+    background: "var(--d-thumb)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -93,11 +93,11 @@ const S = {
   thumbPlaceholder: {
     width: "100%",
     height: 200,
-    background: "#111827",
+    background: "var(--d-thumb)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    color: "#374151",
+    color: "var(--d-faint)",
   },
   cardBody: {
     padding: "1rem 1.25rem",
@@ -105,44 +105,44 @@ const S = {
     flexDirection: "column",
     gap: 8,
     flex: 1,
-    borderTop: "1px solid #1a2744",
+    borderTop: "1px solid var(--d-divider)",
   },
   cardTitle: {
     fontSize: "0.95rem",
     fontWeight: 600,
-    color: "#e5e7eb",
+    color: "var(--d-ink)",
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
   },
-  cardMeta: { fontSize: "0.75rem", color: "#6b7280" },
+  cardMeta: { fontSize: "0.75rem", color: "var(--d-muted)" },
   cardActions: { display: "flex", gap: 8, marginTop: "auto" },
   smallBtn: {
     padding: "4px 10px",
     fontSize: "0.75rem",
     fontWeight: 500,
-    border: "1px solid #374151",
+    border: "1px solid var(--d-btn-border)",
     borderRadius: 6,
     cursor: "pointer",
     background: "transparent",
-    color: "#9ca3af",
+    color: "var(--d-ink-2)",
     transition: "all 0.15s",
   },
   deleteBtn: {
     padding: "4px 10px",
     fontSize: "0.75rem",
     fontWeight: 500,
-    border: "1px solid #7f1d1d",
+    border: "1px solid var(--d-danger-border)",
     borderRadius: 6,
     cursor: "pointer",
     background: "transparent",
-    color: "#f87171",
+    color: "var(--d-danger)",
     transition: "all 0.15s",
   },
   sectionLabel: {
     fontSize: "0.8rem",
     fontWeight: 600,
-    color: "#6b7280",
+    color: "var(--d-muted)",
     textTransform: "uppercase",
     letterSpacing: "0.05em",
     marginBottom: "0.75rem",
@@ -151,11 +151,11 @@ const S = {
   empty: {
     textAlign: "center",
     padding: "4rem 1rem",
-    color: "#6b7280",
+    color: "var(--d-muted)",
   },
   migrateBanner: {
-    background: "#1e1b4b",
-    border: "1px solid #3730a3",
+    background: "var(--d-note-bg)",
+    border: "1px solid var(--d-note-border)",
     borderRadius: 10,
     padding: "0.85rem 1.25rem",
     marginBottom: "1rem",
@@ -163,7 +163,7 @@ const S = {
     justifyContent: "space-between",
     alignItems: "center",
     fontSize: "0.85rem",
-    color: "#c7d2fe",
+    color: "var(--d-note-text)",
   },
   migrateBtn: {
     padding: "6px 14px",
@@ -224,7 +224,7 @@ const S = {
 };
 
 const placeholderIcon = (
-  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#374151" strokeWidth="1.5">
+  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
     <rect x="3" y="3" width="18" height="18" rx="2" />
     <path d="M8 12h8M12 8v8" />
   </svg>
@@ -248,7 +248,7 @@ function DrawingCard({ drawing, isLocal, onDelete, onShare, copiedId, onPreview 
         if (hint) hint.style.display = "flex";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.borderColor = "#1a3464";
+        e.currentTarget.style.borderColor = "var(--d-border)";
         e.currentTarget.style.transform = "none";
         e.currentTarget.style.boxShadow = "none";
         const hint = e.currentTarget.querySelector("[data-zoom-hint]");
@@ -407,7 +407,7 @@ export default function Gallery({ user }) {
 
   if (loading || user === undefined) {
     return (
-      <div style={{ ...S.wrapper, display: "flex", alignItems: "center", justifyContent: "center", color: "#6b7280" }}>
+      <div style={{ ...S.wrapper, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--d-muted)" }}>
         Loading drawings...
       </div>
     );
@@ -439,15 +439,15 @@ export default function Gallery({ user }) {
         {isEmpty && (
           <div style={S.empty}>
             <div style={{ marginBottom: "1rem", opacity: 0.4 }}>
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4b5563" strokeWidth="1.5">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <rect x="3" y="3" width="18" height="18" rx="2" />
                 <path d="M8 12h8M12 8v8" />
               </svg>
             </div>
-            <p style={{ fontSize: "1.1rem", color: "#9ca3af", marginBottom: 8 }}>
+            <p style={{ fontSize: "1.1rem", color: "var(--d-ink-2)", marginBottom: 8 }}>
               No drawings yet
             </p>
-            <p style={{ fontSize: "0.85rem", color: "#6b7280" }}>
+            <p style={{ fontSize: "0.85rem", color: "var(--d-muted)" }}>
               Create your first freehand drawing to get started.
             </p>
           </div>
@@ -494,7 +494,7 @@ export default function Gallery({ user }) {
           <>
             {!user && <div style={S.sectionLabel}>Saved Locally</div>}
             {!user && (
-              <p style={{ fontSize: "0.8rem", color: "#6b7280", marginBottom: "1rem", marginTop: "-0.5rem" }}>
+              <p style={{ fontSize: "0.8rem", color: "var(--d-muted)", marginBottom: "1rem", marginTop: "-0.5rem" }}>
                 Sign in to save drawings to the cloud and share them.
               </p>
             )}

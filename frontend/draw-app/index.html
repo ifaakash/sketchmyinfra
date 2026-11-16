@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full dark">
+<html lang="en" class="h-full">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -15,11 +15,61 @@
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    /* Page colors for the React pages' inline styles (var(--d-*)). Light is the
+       default; App.jsx sets html[data-theme="dark"] from the toggle. */
+    :root {
+      --d-bg: #f6f7f9;           /* gallery, loading and error screens */
+      --d-bar: #ffffff;          /* editor / shared-view toolbar */
+      --d-card: #ffffff;
+      --d-thumb: #f0f2f5;
+      --d-border: #e3e6eb;
+      --d-divider: #eef0f3;
+      --d-title: #14171c;
+      --d-ink: #14171c;
+      --d-ink-2: #4a5260;
+      --d-muted: #5f6775;
+      --d-faint: #c9cfd8;
+      --d-btn-bg: #e3e6eb;       /* secondary solid button */
+      --d-btn-hover: #d5dae1;
+      --d-btn-border: #c9cfd8;
+      --d-danger: #b91c1c;
+      --d-danger-border: #fecaca;
+      --d-danger-bg: #fef2f2;
+      --d-ok: #15803d;
+      --d-warn: #b45309;
+      --d-note-bg: #eef2ff;
+      --d-note-border: #c7d2fe;
+      --d-note-text: #3730a3;
+    }
+    html[data-theme="dark"] {
+      --d-bg: #070f20;
+      --d-bar: #0b1121;
+      --d-card: #0f1729;
+      --d-thumb: #111827;
+      --d-border: #1a3464;
+      --d-divider: #1a2744;
+      --d-title: #f3f4f6;
+      --d-ink: #e5e7eb;
+      --d-ink-2: #9ca3af;
+      --d-muted: #6b7280;
+      --d-faint: #374151;
+      --d-btn-bg: #1e293b;
+      --d-btn-hover: #334155;
+      --d-btn-border: #374151;
+      --d-danger: #f87171;
+      --d-danger-border: #7f1d1d;
+      --d-danger-bg: #3b1d1d;
+      --d-ok: #34d399;
+      --d-warn: #fbbf24;
+      --d-note-bg: #1e1b4b;
+      --d-note-border: #3730a3;
+      --d-note-text: #c7d2fe;
+    }
     html[data-theme="dark"] body { background: #070f20; }
     body {
       font-family: 'Inter', system-ui, sans-serif;
       background: #ffffff;
-      color: #e5e7eb;
+      color: var(--d-ink);
       height: 100vh;
       overflow: hidden;
       display: flex;

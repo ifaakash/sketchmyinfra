@@ -11,8 +11,8 @@ const barStyle = {
   alignItems: "center",
   justifyContent: "space-between",
   padding: "0 1rem",
-  background: "#0b1121",
-  borderBottom: "1px solid #1a2744",
+  background: "var(--d-bar)",
+  borderBottom: "1px solid var(--d-divider)",
   flexShrink: 0,
 };
 
@@ -74,14 +74,14 @@ export default function SharedView({ theme, user }) {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "#070f20",
-          color: "#9ca3af",
+          background: "var(--d-bg)",
+          color: "var(--d-ink-2)",
           gap: 16,
         }}
       >
         <p style={{ fontSize: "1.1rem" }}>{error}</p>
         <button
-          style={{ ...btnStyle, background: "#374151", color: "#e5e7eb" }}
+          style={{ ...btnStyle, background: "var(--d-btn-bg)", color: "var(--d-ink)" }}
           onClick={() => navigate("/")}
         >
           Back to Gallery
@@ -98,8 +98,8 @@ export default function SharedView({ theme, user }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#070f20",
-          color: "#6b7280",
+          background: "var(--d-bg)",
+          color: "var(--d-muted)",
         }}
       >
         Loading shared drawing...
@@ -123,13 +123,13 @@ export default function SharedView({ theme, user }) {
           >
             Shared
           </span>
-          <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "#e5e7eb" }}>
+          <span style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--d-ink)" }}>
             {drawing.title}
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button
-            style={{ ...btnStyle, background: "#374151", color: "#e5e7eb" }}
+            style={{ ...btnStyle, background: "var(--d-btn-bg)", color: "var(--d-ink)" }}
             onClick={() => navigate("/")}
           >
             Gallery
